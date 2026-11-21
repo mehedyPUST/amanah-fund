@@ -1143,14 +1143,14 @@ export function DashboardShell() {
       >
         <MobileDashboardShellSkeleton />
 
-        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
+        <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs">
           <AmanahLogo size="sm" decorative />
           <div className="min-w-0 flex-1 space-y-1">
             <Skeleton width={96} height={14} />
             <Skeleton width={72} height={10} />
           </div>
         </div>
-        <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
+        <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
           <Skeleton width={190} height={20} />
           <div className="flex items-center gap-2">
             <Skeleton width={76} height={32} borderRadius={8} />
@@ -1159,7 +1159,7 @@ export function DashboardShell() {
             <Skeleton width={140} height={34} borderRadius={8} />
           </div>
         </div>
-        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5">
+        <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs p-3.5">
           <div className="space-y-2">
             {Array.from({ length: 10 }).map((_, idx) => (
               <Skeleton key={idx} height={34} borderRadius={8} />
@@ -1171,7 +1171,7 @@ export function DashboardShell() {
             <Skeleton height={34} borderRadius={8} />
           </div>
         </aside>
-        <main className="hidden lg:block lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-4 space-y-3">
+        <main className="hidden lg:block lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs p-4 space-y-3">
           <Skeleton height={82} borderRadius={12} />
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
             {[1, 2, 3, 4].map((i) => (
@@ -1640,7 +1640,7 @@ export function DashboardShell() {
     >
       {/* GRID 1 */}
       <div
-        className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] z-30 ${
+        className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] z-30 ${
           sidebarCollapsed ? 'px-2 justify-center' : 'px-4 justify-start gap-2.5'
         }`}
       >
@@ -1658,7 +1658,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[52px] sm:h-[54px] lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/84 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[52px] sm:h-[54px] lg:h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
         <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
             <button
@@ -1819,7 +1819,7 @@ export function DashboardShell() {
       {/* GRID 3 */}
       <aside
         id="dashboard-desktop-sidebar"
-        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)]"
+        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)]"
       >
         <nav
           className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
@@ -1842,7 +1842,7 @@ export function DashboardShell() {
                 onClick={() => navigateToPage('my-profile', false)}
                 title={`${user.name} · ${user.memberCode}`}
                 aria-label={user.name}
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs hover:brightness-105 transition-all cursor-pointer shrink-0"
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs hover:brightness-105 transition-all cursor-pointer shrink-0"
               >
                 {(user.name || 'AM')
                   .split(/\s+/)
@@ -1882,7 +1882,7 @@ export function DashboardShell() {
                 onClick={() => navigateToPage('my-profile', false)}
                 className="w-full text-left min-w-0 rounded-xl border border-slate-200/75 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/45 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 p-2.5 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-[11px] font-bold flex items-center justify-center shadow-2xs shrink-0">
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white text-[11px] font-bold flex items-center justify-center shadow-2xs shrink-0">
                   {(user.name || 'AM')
                     .split(/\s+/)
                     .filter(Boolean)
@@ -1997,7 +1997,7 @@ export function DashboardShell() {
                       className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-500/30 shrink-0"
                     />
                   ) : (
-                    <span className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
                       {(user.name || 'AM')
                         .split(/\s+/)
                         .filter(Boolean)
@@ -2091,7 +2091,7 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1 lg:bg-white/88 lg:dark:bg-slate-900/82 lg:backdrop-blur-xl lg:rounded-2xl lg:border lg:border-slate-200/80 lg:dark:border-slate-800/80 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 lg:shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:lg:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1 lg:bg-white/95 lg:dark:bg-slate-900/92 lg:backdrop-blur-xl lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-slate-800/85 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 lg:shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:lg:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] overflow-hidden"
       >
         <div
           ref={mainScrollRef}
@@ -2275,7 +2275,7 @@ export function DashboardShell() {
                       navigateToPage('ballot', false);
                       setLiveLoanPulseId(null);
                     }}
-                    className="group px-4 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                    className="group px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                   >
                     <span>{tDash('alerts.openVoting')}</span>
                     <ArrowRight

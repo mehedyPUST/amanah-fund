@@ -162,7 +162,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
+          ? 'bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
           : ''
       }`}
     >
@@ -211,7 +211,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                     <motion.span
                       layoutId="how-it-works-role-tab"
                       transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 shadow-sm shadow-emerald-600/25 border border-emerald-500/70"
+                      className="absolute inset-0 rounded-lg bg-emerald-700 dark:bg-emerald-600 shadow-xs border border-emerald-600/80 dark:border-emerald-500/80"
                       aria-hidden="true"
                     />
                   )}
@@ -233,15 +233,11 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           >
             {currentGuide.steps.map((step, idx) => {
               const Icon = step.Icon;
-              const stepHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];
+              const stepHue: CardHue = (['emerald', 'teal', 'emerald', 'teal'] as const)[idx % 4];
               const iconBoxClass =
-                stepHue === 'violet'
-                  ? 'bg-violet-500/18 dark:bg-violet-400/20 border border-violet-400/70 dark:border-violet-400/40 text-violet-700 dark:text-violet-300'
-                  : stepHue === 'teal'
-                    ? 'bg-teal-500/18 dark:bg-teal-400/20 border border-teal-400/70 dark:border-teal-400/40 text-teal-700 dark:text-teal-300'
-                    : stepHue === 'amber'
-                      ? 'bg-amber-500/18 dark:bg-amber-400/20 border border-amber-400/70 dark:border-amber-400/40 text-amber-700 dark:text-amber-300'
-                      : 'bg-emerald-500/18 dark:bg-emerald-400/20 border border-emerald-400/70 dark:border-emerald-400/40 text-emerald-700 dark:text-emerald-300';
+                stepHue === 'teal'
+                  ? 'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300'
+                  : 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300';
               return (
                 <MotionCard
                   key={step.number}
@@ -294,7 +290,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}
-              className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/25 active:scale-[0.98] transition-all whitespace-nowrap"
+              className="group px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
               <ArrowRight

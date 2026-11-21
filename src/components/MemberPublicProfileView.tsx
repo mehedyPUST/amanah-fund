@@ -230,7 +230,7 @@ export function MemberPublicProfileView({
           <Skeleton width={130} height={36} />
           <Skeleton width={150} height={36} />
         </div>
-        <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
+        <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
           <div className="flex items-center gap-4">
             <Skeleton width={72} height={72} borderRadius={12} />
             <div className="space-y-2">
@@ -244,7 +244,7 @@ export function MemberPublicProfileView({
             ))}
           </div>
         </section>
-        <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
+        <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
           <Skeleton height={220} />
         </section>
       </div>
@@ -253,7 +253,7 @@ export function MemberPublicProfileView({
 
   if (error || !profile) {
     return (
-      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
+      <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
         <button
           type="button"
           onClick={onBack}
@@ -320,7 +320,7 @@ export function MemberPublicProfileView({
             <button
               type="button"
               onClick={onOpenOwnProfile}
-              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150"
+              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150"
             >
               <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('editMyProfile')}</span>
@@ -330,7 +330,7 @@ export function MemberPublicProfileView({
       </div>
 
       {/* Member Identity & Quick Metrics Banner */}
-      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+      <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {profile.photoUrl && !photoBroken ? (
@@ -467,7 +467,7 @@ export function MemberPublicProfileView({
 
           <div>
             <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">{t('kpiCommunityActivity')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {t('postsCount', { count: about.postsCount })}
             </div>
             <div className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums">
@@ -493,7 +493,7 @@ export function MemberPublicProfileView({
               aria-label={t('fundSectionAria')}
               className={`${
                 showAbout ? 'xl:col-span-7' : ''
-              } bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
+              } bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -674,10 +674,10 @@ export function MemberPublicProfileView({
               aria-label={t('aboutSectionAria')}
               className={`${
                 showFund ? 'xl:col-span-5' : ''
-              } bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
+              } bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
             >
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
                   <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('aboutEyebrow')}</span>
                 </div>
@@ -780,8 +780,8 @@ export function MemberPublicProfileView({
                 )}
               </dl>
 
-              <div className="rounded-lg border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 p-3.5 flex items-start gap-2.5 text-[11px] text-slate-600 dark:text-slate-400">
-                <Lock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+              <div className="rounded-lg border border-teal-200/80 dark:border-teal-900/60 bg-teal-50/50 dark:bg-teal-950/20 p-3.5 flex items-start gap-2.5 text-[11px] text-slate-600 dark:text-slate-400">
+                <Lock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
                 <span>{t('kycPrivacyNotice')}</span>
               </div>
             </section>
@@ -795,7 +795,7 @@ export function MemberPublicProfileView({
           aria-label={t('postsSectionAria')}
           className="space-y-4"
         >
-          <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
@@ -817,7 +817,7 @@ export function MemberPublicProfileView({
           </div>
 
           {communityPosts.length === 0 ? (
-            <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-2 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
+            <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-2 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
               <MessageSquare className="w-7 h-7 text-slate-400 mx-auto" />
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {t('noPostsTitle')}
@@ -844,10 +844,10 @@ export function MemberPublicProfileView({
                 return (
                   <article
                     key={post.id}
-                    className={`bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] ${
+                    className={`bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] ${
                       post.isPinned
                         ? 'border-emerald-300/80 dark:border-emerald-800/80'
-                        : 'border-slate-200/80 dark:border-slate-800/80'
+                        : 'border-slate-200/85 dark:border-slate-800/85'
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">

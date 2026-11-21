@@ -1484,12 +1484,12 @@ export function BalanceSheetView({
       aria-label="Current month balance sheet summary"
       className="balance-sheet-printable grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3"
     >
-      <div className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] transition-all min-w-0">
+      <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between gap-1.5 sm:gap-2 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] transition-all min-w-0">
         <div className="flex items-center justify-between gap-1.5">
-          <span className="text-[11px] sm:text-xs font-semibold text-violet-800/90 dark:text-violet-200 truncate">
+          <span className="text-[11px] sm:text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
             Prev. Opening Savings
           </span>
-          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-violet-500/15 text-violet-700 dark:text-violet-300 inline-flex items-center justify-center shrink-0">
+          <span className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-200/75 dark:bg-slate-800 text-slate-700 dark:text-slate-300 inline-flex items-center justify-center shrink-0">
             <Landmark className="w-3 h-3 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
           </span>
         </div>
@@ -1839,7 +1839,7 @@ export function BalanceSheetView({
               type="button"
               onClick={handleExportPdf}
               disabled={!sheet}
-              className="h-8 px-2.5 sm:px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-2xs disabled:opacity-50 inline-flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
+              className="h-8 px-2.5 sm:px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-2xs disabled:opacity-50 inline-flex items-center gap-1 sm:gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-1"
             >
               <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
               <span>PDF</span>
@@ -3259,7 +3259,7 @@ export function BalanceSheetView({
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'balance-sheet'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
+                  ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-semibold shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
               }`}
             >
@@ -3278,7 +3278,7 @@ export function BalanceSheetView({
               }}
               className={`h-8 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'variables-summary'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-xs'
+                  ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-semibold shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
               }`}
             >

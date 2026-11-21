@@ -30,10 +30,10 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
     <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
       <div className="flex items-center justify-between gap-2">
         <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
-          <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+          <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
           <span>{t('heading', { count: nominees.length })}</span>
         </div>
-        <span className="text-[11px] font-mono text-indigo-700 dark:text-indigo-400">
+        <span className="text-[11px] font-mono text-teal-700 dark:text-teal-400">
           {t('totalShare', { percent: totalShare })}
         </span>
       </div>
@@ -44,7 +44,7 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
           return (
             <div
               key={`${nominee.name}-${idx}`}
-              className="rounded-xl border border-indigo-200/75 dark:border-indigo-900/50 bg-indigo-50/35 dark:bg-indigo-950/20 p-3.5 space-y-3 text-xs shadow-2xs"
+              className="rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-slate-50/75 dark:bg-slate-950/60 p-3.5 space-y-3 text-xs shadow-2xs"
             >
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-2">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">

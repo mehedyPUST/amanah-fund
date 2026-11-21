@@ -8,10 +8,8 @@ import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
-const HERO_IMAGE_URL =
-  'https://i.ibb.co.com/cc8kRKR3/Qard-Hasan-Banking-can-be-an-alternative.png';
-const INVESTMENT_IMAGE_URL =
-  'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
+import heroTreasuryImg from '../assets/images/hero_cooperative_treasury_1795273325549.jpg';
+import halalCampusImg from '../assets/images/halal_investment_campus_1795273325541.jpg';
 
 export function Hero({
   includeLifecycle = true,
@@ -47,7 +45,7 @@ export function Hero({
       meta: tHero('terms.contribMeta'),
       value: tHero('terms.contribValue'),
       sublabel: tHero('terms.contribSub'),
-      hue: 'violet',
+      hue: 'teal',
     },
     {
       key: 'quorum',
@@ -55,7 +53,7 @@ export function Hero({
       meta: tHero('terms.quorumMeta'),
       value: tHero('terms.quorumValue'),
       sublabel: tHero('terms.quorumSub'),
-      hue: 'teal',
+      hue: 'emerald',
     },
     {
       key: 'term',
@@ -63,7 +61,7 @@ export function Hero({
       meta: tHero('terms.termMeta'),
       value: tHero('terms.termValue'),
       sublabel: tHero('terms.termSub'),
-      hue: 'amber',
+      hue: 'teal',
     },
   ];
 
@@ -104,7 +102,7 @@ export function Hero({
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-sm font-semibold shadow-md shadow-emerald-600/25 active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap shrink-0"
+                className="group px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap shrink-0"
               >
                 {user ? (
                   <>
@@ -172,7 +170,7 @@ export function Hero({
               ) : (
                 <>
                   <img
-                    src={HERO_IMAGE_URL}
+                    src={heroTreasuryImg.src}
                     alt={tHero('fallbackTitle')}
                     referrerPolicy="no-referrer"
                     onError={() => setHeroImgFailed(true)}
@@ -254,7 +252,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
             ) : (
               <>
                 <img
-                  src={INVESTMENT_IMAGE_URL}
+                  src={halalCampusImg.src}
                   alt={tLife('caption')}
                   referrerPolicy="no-referrer"
                   onError={() => setLifecycleImgFailed(true)}
@@ -280,7 +278,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-teal-200/75 dark:border-teal-800/50">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-200/80 dark:border-slate-800/75">
             <div className="space-y-2">
               <div className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                 {tLife('stage1Index')}
@@ -293,8 +291,8 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
               </p>
             </div>
 
-            <div className="space-y-2 sm:border-l sm:border-teal-200/75 sm:dark:border-teal-800/50 sm:pl-6">
-              <div className="font-mono text-xs font-semibold text-violet-700 dark:text-violet-400">
+            <div className="space-y-2 sm:border-l sm:border-slate-200/80 sm:dark:border-slate-800/75 sm:pl-6">
+              <div className="font-mono text-xs font-semibold text-teal-700 dark:text-teal-400">
                 {tLife('stage2Index')}
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">

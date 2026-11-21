@@ -213,7 +213,7 @@ export function MonthlyFinancialSnapshot({
         </div>
 
         <div className="col-span-2 md:col-span-1 pt-2.5 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 dark:border-slate-800 md:pl-5 space-y-1 sm:space-y-1.5">
-          <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
+          <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
             {t('netMonthlyPosition')}
           </div>
           <div

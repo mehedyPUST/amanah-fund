@@ -312,7 +312,7 @@ export function MobilePinLoginPanel({
         <button
           type="submit"
           disabled={submitting || pin.length !== 4}
-          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
+          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
         >
           <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{submitting ? tAuth('pin.verifyingPin') : tAuth('pin.signInWithPin')}</span>

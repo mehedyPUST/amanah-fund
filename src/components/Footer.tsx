@@ -16,7 +16,7 @@ export function Footer() {
   const tFooter = useTranslations('Public.footer');
 
   return (
-    <footer className="w-full bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_24px_-14px_rgba(15,23,42,0.1)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
+    <footer className="w-full bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/85 rounded-2xl shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
       <div className="px-6 sm:px-8 py-7 sm:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
@@ -98,7 +98,7 @@ export function Footer() {
                 onClick={() => {
                   if (user) setMobileBrowseMode(false);
                 }}
-                className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/25 active:scale-[0.98] transition-all whitespace-nowrap"
+                className="inline-flex items-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 {user ? tNav('dashboard') : tNav('signIn')}
               </Link>

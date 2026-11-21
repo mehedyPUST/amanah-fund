@@ -335,7 +335,7 @@ export function TreasuryGrowthChart({
                     <motion.span
                       layoutId="treasury-range-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <span className="relative z-10">{r.label}</span>
@@ -391,7 +391,7 @@ export function TreasuryGrowthChart({
 
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">{t('cumulativePoolGrowth')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(metrics.totalPool, currency)}
             </div>
             <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
@@ -429,7 +429,7 @@ export function TreasuryGrowthChart({
             <button
               type="button"
               onClick={onSubmitContribution}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98]"
+              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98]"
             >
               <span>{t('submitFirstContribution')}</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -449,7 +449,7 @@ export function TreasuryGrowthChart({
                   <stop offset="95%" stopColor="#059669" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="contribPoolAreaGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                  <stop offset="5%" stopColor="#0f766e" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01} />
                 </linearGradient>
               </defs>

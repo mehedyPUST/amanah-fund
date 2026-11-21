@@ -123,8 +123,8 @@ export function PWAUpdateButton({
               : 'h-9 px-3 rounded-xl text-xs'
         } ${
           updateAvailable
-            ? 'border-emerald-500/80 dark:border-emerald-400/70 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-            : 'border-violet-300/80 dark:border-violet-500/35 bg-violet-50/75 dark:bg-violet-950/35 hover:bg-violet-100/85 dark:hover:bg-violet-950/60 text-violet-700 dark:text-violet-300'
+            ? 'border-emerald-600 dark:border-emerald-500 bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white shadow-xs'
+            : 'border-teal-200 dark:border-teal-800/70 bg-teal-50/80 dark:bg-teal-950/40 hover:bg-teal-100/85 dark:hover:bg-teal-900/50 text-teal-700 dark:text-teal-300'
         }`}
       >
         {applyingUpdate || checkingUpdate ? (
@@ -162,7 +162,7 @@ export function PWAUpdateButton({
             transition={{ duration: 0.15 }}
             role="dialog"
             aria-label={tPwa('versionStatusTitle')}
-            className={`absolute ${popoverPositionClass} z-[70] amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3.5 shadow-[0_18px_44px_-14px_rgba(15,23,42,0.22)] space-y-2.5 text-left`}
+            className={`absolute ${popoverPositionClass} z-[70] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3.5 shadow-[0_18px_44px_-14px_rgba(15,23,42,0.22)] space-y-2.5 text-left`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -173,7 +173,7 @@ export function PWAUpdateButton({
                   />
                 ) : (
                   <CheckCircle2
-                    className="w-4 h-4 text-violet-600 dark:text-violet-400 shrink-0"
+                    className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0"
                     aria-hidden="true"
                   />
                 )}
@@ -223,7 +223,7 @@ export function PWAUpdateButton({
                   type="button"
                   onClick={() => void applyUpdate()}
                   disabled={applyingUpdate}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
                 >
                   <ArrowUpCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{applyingUpdate ? tPwa('updating') : tPwa('applyUpdate')}</span>

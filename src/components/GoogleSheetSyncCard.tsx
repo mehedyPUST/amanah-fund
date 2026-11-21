@@ -459,7 +459,7 @@ export function GoogleSheetSyncCard({
                     key={tab.sheetName}
                     className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
                   >
-                    <td className="py-2.5 px-4 font-mono font-semibold text-indigo-700 dark:text-indigo-400 whitespace-nowrap">
+                    <td className="py-2.5 px-4 font-mono font-semibold text-slate-900 dark:text-white whitespace-nowrap">
                       {tab.sheetName}
                     </td>
                     <td className="py-2.5 px-4 text-slate-600 dark:text-slate-400">
@@ -567,7 +567,7 @@ export function GoogleSheetSyncCard({
             <a
               href={api.getBackupJsonUrl()}
               download
-              className="px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+              className="px-3.5 py-2 rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/70 dark:bg-teal-950/30 hover:bg-teal-100/80 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-700 dark:text-teal-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('downloadBackupBtn')}</span>
@@ -577,7 +577,7 @@ export function GoogleSheetSyncCard({
               type="button"
               disabled={!workspace.connected || syncing}
               onClick={() => requestSync(!config?.googleSheetId)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
               <span>{config?.googleSheetId ? t('syncBlueprintBtn') : t('createSyncBtn')}</span>
@@ -605,7 +605,7 @@ export function GoogleSheetSyncCard({
         )}
 
         {showLivePreview && workspace.connected && config?.googleSheetId && (
-          <div className="rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/80 dark:bg-slate-950/75 overflow-hidden">
+          <div className="rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/95 dark:bg-slate-950/85 overflow-hidden">
             <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
                 <Table2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />

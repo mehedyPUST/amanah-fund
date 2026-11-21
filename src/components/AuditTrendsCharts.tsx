@@ -212,12 +212,12 @@ export function AuditTrendsCharts({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
+      className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
               <BarChart3 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
             <span>{t('auditTelemetryBadge')}</span>
@@ -251,7 +251,7 @@ export function AuditTrendsCharts({
                   <motion.span
                     layoutId="audit-trends-tab-pill"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                   />
                 )}
                 <span className="relative z-10">{tab.label}</span>
@@ -295,7 +295,7 @@ export function AuditTrendsCharts({
             </div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
               {formatMoney(totals.totalRepaid, currency)}{' '}
-              <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+              <span className="text-xs font-medium text-teal-600 dark:text-teal-400">
                 ({totals.recoveryPct}%)
               </span>
             </div>
@@ -450,9 +450,9 @@ export function AuditTrendsCharts({
                       type="monotone"
                       dataKey="cumulativeLoanVolume"
                       name={t('seriesCumulativeLoanVolume')}
-                      stroke="#6366f1"
+                      stroke="#0f766e"
                       strokeWidth={2}
-                      dot={{ r: 3, fill: '#6366f1' }}
+                      dot={{ r: 3, fill: '#0f766e' }}
                       activeDot={{ r: 5 }}
                     />
                   </ComposedChart>

@@ -263,7 +263,7 @@ export function ManagerRotationTimeline({
   return (
     <section
       aria-label={t('regionAria')}
-      className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4 sm:space-y-5 transition-all duration-200"
+      className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4 sm:space-y-5 transition-all duration-200"
     >
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -303,7 +303,7 @@ export function ManagerRotationTimeline({
                     <motion.span
                       layoutId="rotation-filter-pill"
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>

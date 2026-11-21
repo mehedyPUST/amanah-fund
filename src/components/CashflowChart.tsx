@@ -54,7 +54,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
             animate={{ opacity: 1, y: 0 }}
             className="text-xs font-mono tabular-nums text-slate-700 dark:text-slate-200"
           >
-            <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+            <span className="font-semibold text-slate-900 dark:text-white">
               {formatBillingMonth(recent[hoveredIdx].month)}
             </span>
             <span aria-hidden="true"> · </span>

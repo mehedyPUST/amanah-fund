@@ -788,7 +788,7 @@ export function BalanceSheetMemberModal({
                 <button
                   type="button"
                   onClick={() => onCloseRef.current()}
-                  className="h-9 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
+                  className="h-9 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
                   Close
                 </button>

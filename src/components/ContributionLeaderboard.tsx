@@ -197,7 +197,7 @@ export function ContributionLeaderboard({
             <button
               type="button"
               onClick={() => onNavigate('monthly-contribution')}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
+              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all"
             >
               {t('submitMonthlyBtn')}
             </button>

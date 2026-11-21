@@ -242,8 +242,8 @@ export function ManagerCycleView({
                   {t('nMonths', { count: schedule.cycleMonths })}
                 </div>
               </div>
-              <div className="px-3.5 py-2.5 rounded-xl bg-indigo-50/75 dark:bg-indigo-950/35 border border-indigo-200/80 dark:border-indigo-900/50">
-                <div className="text-[11px] text-indigo-700 dark:text-indigo-400">{t('cycleAnchor')}</div>
+              <div className="px-3.5 py-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/75">
+                <div className="text-[11px] text-slate-600 dark:text-slate-400">{t('cycleAnchor')}</div>
                 <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
                   {formatShortDate(schedule.cycleStartDate)}
                 </div>
@@ -261,7 +261,7 @@ export function ManagerCycleView({
 
       {/* Admin Controls */}
       {isAdmin && (
-        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
+        <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -325,7 +325,7 @@ export function ManagerCycleView({
             <button
               type="submit"
               disabled={modalBusy}
-              className="min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
             >
               {t('updateIntervalBtn')}
             </button>
@@ -444,7 +444,7 @@ export function ManagerCycleView({
 
           {/* Active Assigned Managers Note */}
           {schedule.activeDesignatedManagers.length > 0 && (
-            <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl px-4 py-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-wrap items-center justify-between gap-3 text-xs">
+            <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl px-4 py-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="inline-flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                 <span>{t('activeHoldersLabel')}</span>

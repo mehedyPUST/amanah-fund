@@ -203,15 +203,15 @@ export function ActionModal({
       btn: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20',
     },
     indigo: {
-      ring: 'ring-indigo-100 dark:ring-indigo-950/40',
-      glow: 'from-indigo-400/20 via-indigo-500/8 to-transparent',
-      bar: 'from-indigo-500 via-indigo-600 to-violet-500',
-      iconBg: 'bg-indigo-50 dark:bg-indigo-950/40',
-      iconRing: 'ring-indigo-100 dark:ring-indigo-900/40',
-      softBg: 'bg-indigo-50 dark:bg-indigo-950/30',
-      softBorder: 'border-indigo-200/80 dark:border-indigo-900/50',
-      softText: 'text-indigo-600 dark:text-indigo-400',
-      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20',
+      ring: 'ring-teal-100 dark:ring-teal-950/40',
+      glow: 'from-teal-400/20 via-teal-500/8 to-transparent',
+      bar: 'from-teal-500 via-emerald-600 to-emerald-500',
+      iconBg: 'bg-teal-50 dark:bg-teal-950/40',
+      iconRing: 'ring-teal-100 dark:ring-teal-900/40',
+      softBg: 'bg-teal-50 dark:bg-teal-950/30',
+      softBorder: 'border-teal-200/80 dark:border-teal-900/50',
+      softText: 'text-teal-700 dark:text-teal-300',
+      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/15',
     },
     slate: {
       ring: 'ring-slate-100 dark:ring-slate-800',
@@ -222,7 +222,7 @@ export function ActionModal({
       softBg: 'bg-slate-50 dark:bg-slate-900/60',
       softBorder: 'border-slate-200 dark:border-slate-700',
       softText: 'text-slate-700 dark:text-slate-300',
-      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/20',
+      btn: 'bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-700/15',
     },
   }[tone];
 

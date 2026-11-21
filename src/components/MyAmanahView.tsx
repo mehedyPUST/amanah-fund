@@ -139,7 +139,7 @@ export function MyAmanahView({
             <button
               type="button"
               onClick={onOpenLoanModal}
-              className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 transition-all active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{t('applyQardHasan')}</span>
@@ -168,8 +168,8 @@ export function MyAmanahView({
           </div>
         </div>
 
-        <div className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
-          <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
+        <div className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+          <div className="text-[11px] sm:text-xs font-medium text-teal-700 dark:text-teal-400">
             {t('lastContribution')}
           </div>
           <div className="mt-1.5 sm:mt-2 text-lg sm:text-2xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -302,7 +302,7 @@ export function MyAmanahView({
             </div>
 
             <div className="bg-white/95 dark:bg-slate-900/90 p-3 sm:p-4">
-              <div className="text-[11px] sm:text-xs text-violet-700 dark:text-violet-400 font-medium">
+              <div className="text-[11px] sm:text-xs text-teal-700 dark:text-teal-400 font-medium">
                 {t('lastHasanInstallment')}
               </div>
               <div className="mt-1.5 text-sm sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
@@ -421,7 +421,7 @@ export function MyAmanahView({
                 <dd
                   className={`font-mono font-semibold ${
                     eligibility.quotaAvailable
-                      ? 'text-indigo-700 dark:text-indigo-300'
+                      ? 'text-teal-700 dark:text-teal-300'
                       : 'text-rose-700 dark:text-rose-400'
                   }`}
                 >
@@ -450,7 +450,7 @@ export function MyAmanahView({
 
           <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
             <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
               <span>{t('zeroRibaFooter')}</span>
             </span>
             <button

@@ -233,7 +233,7 @@ export function AdminFaqManager() {
           <button
             type="button"
             onClick={openCreateComposer}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md cursor-pointer transition-all duration-150 active:scale-[0.98]"
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-700/20 hover:shadow-md cursor-pointer transition-all duration-150 active:scale-[0.98]"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t('addFaq')}</span>
@@ -367,7 +367,7 @@ export function AdminFaqManager() {
                     setRewritingFaq(false);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/50 dark:bg-teal-950/25 hover:bg-teal-100/60 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-700 dark:text-teal-300 cursor-pointer disabled:opacity-50 transition-colors"
               >
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{rewritingFaq ? t('polishing') : t('aiPolish')}</span>
@@ -383,7 +383,7 @@ export function AdminFaqManager() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 cursor-pointer disabled:opacity-50 transition-all duration-150"
+                className="px-4 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 cursor-pointer disabled:opacity-50 transition-all duration-150"
               >
                 {submitting ? t('saving') : editingFaq ? t('saveUpdate') : t('publishFaq')}
               </button>
@@ -452,7 +452,7 @@ export function AdminFaqManager() {
           <button
             type="button"
             onClick={openCreateComposer}
-            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-700/20 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t('addFaq')}</span>

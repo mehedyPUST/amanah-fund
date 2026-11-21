@@ -230,7 +230,7 @@ export function MobileOverviewIconEditor({
               {label}
             </span>
             {meta.adminOnly && (
-              <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-700 dark:text-indigo-300 shrink-0">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-teal-700 dark:text-teal-300 shrink-0">
                 · {t('adminOnlyTag')}
               </span>
             )}

@@ -403,8 +403,8 @@ export function AdminReportsView({
       className="space-y-6"
     >
       {/* Admin Panel Section Switcher (with dedicated Manage Users option) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl px-4 py-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
-        <div className="text-xs font-medium text-indigo-700 dark:text-indigo-400">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl px-4 py-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+        <div className="text-xs font-medium text-teal-700 dark:text-teal-400">
           {t('workspaceTitle')}
         </div>
         <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl">
@@ -424,7 +424,7 @@ export function AdminReportsView({
                 onClick={() => setAdminSection(sec.id)}
                 className={`relative px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   active
-                    ? 'text-indigo-700 dark:text-indigo-300'
+                    ? 'text-emerald-700 dark:text-emerald-300'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -432,7 +432,7 @@ export function AdminReportsView({
                   <motion.span
                     layoutId="admin-reports-section-pill"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-indigo-500/20"
+                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-emerald-500/20"
                   />
                 )}
                 <span className="relative z-10">{sec.label}</span>
@@ -495,7 +495,7 @@ export function AdminReportsView({
                           <span
                             className={`text-xs font-medium ${
                               isAwaitingActivation
-                                ? 'text-indigo-700 dark:text-indigo-400'
+                                ? 'text-teal-700 dark:text-teal-400'
                                 : 'text-amber-700 dark:text-amber-400'
                             }`}
                           >
@@ -507,7 +507,7 @@ export function AdminReportsView({
                           {t('appliedShort', { date: formatDateTime(pm.joinedAt) })}
                         </div>
                         {isAwaitingActivation && act && (
-                          <div className="text-xs font-mono text-indigo-700 dark:text-indigo-300 pt-0.5">
+                          <div className="text-xs font-mono text-teal-700 dark:text-teal-300 pt-0.5">
                             {t('memberIdShort')} <strong>{act.memberCode}</strong> · {t('otp6Short')}{' '}
                             <strong className="tracking-widest">
                               {act.hasActiveOtp ? '••••••' : t('unavailable')}
@@ -528,7 +528,7 @@ export function AdminReportsView({
                       <button
                         type="button"
                         onClick={() => setInspectingMember(pm)}
-                        className="px-3 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                        className="px-3 py-1.5 rounded-xl border border-teal-200 dark:border-teal-900/70 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{t('viewDetails')}</span>
@@ -545,7 +545,7 @@ export function AdminReportsView({
                         <button
                           type="button"
                           onClick={() => void handleResendActivation(pm)}
-                          className="px-3.5 py-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all duration-150"
+                          className="px-3.5 py-1.5 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 hover:bg-teal-700 hover:text-white text-xs font-medium inline-flex items-center gap-1 cursor-pointer transition-all duration-150"
                         >
                           <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('resendEmailBtn')}</span>
@@ -554,7 +554,7 @@ export function AdminReportsView({
                         <button
                           type="button"
                           onClick={() => confirmApproveMember(pm)}
-                          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1 cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1 cursor-pointer transition-all duration-150 active:scale-[0.98]"
                         >
                           <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('issueCodesBtn')}</span>
@@ -650,7 +650,7 @@ export function AdminReportsView({
                           type="button"
                           disabled={loanReviewBusyId === loan.id}
                           onClick={() => confirmAdminLoanReview(loan, 'approve')}
-                          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98]"
+                          className="px-3.5 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('approveDisburseBtn')}</span>
@@ -694,10 +694,10 @@ export function AdminReportsView({
           />
 
           {/* Monthly Fund Summary PDF & Email Distribution */}
-          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+                <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
                   <FileText className="w-4 h-4" aria-hidden="true" />
                   <span>{t('monthlyPdfEyebrow')}</span>
                 </div>
@@ -722,7 +722,7 @@ export function AdminReportsView({
                   aria-label={t('summaryMonthAria')}
                   value={pdfMonthKey}
                   onChange={(e) => setPdfMonthKey(e.target.value)}
-                  className="px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                  className="px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
                 <a
                   href={api.getMonthlyPdfDownloadUrl(pdfMonthKey)}
@@ -794,7 +794,7 @@ export function AdminReportsView({
                         },
                       });
                     }}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md cursor-pointer whitespace-nowrap shrink-0 transition-all duration-150 active:scale-[0.98]"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md cursor-pointer whitespace-nowrap shrink-0 transition-all duration-150 active:scale-[0.98]"
                   >
                     <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{emailingPdf ? t('sendingPdf') : t('emailPdfBtn')}</span>
@@ -939,7 +939,7 @@ export function AdminReportsView({
               <button
                 type="submit"
                 disabled={savingPolicy}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50"
               >
                 {savingPolicy ? t('savingPolicy') : t('saveCoopPolicyBtn')}
               </button>
@@ -1175,7 +1175,7 @@ export function AdminReportsView({
                   <button
                     type="button"
                     onClick={() => confirmApproveMember(inspectingMember)}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150 active:scale-[0.98]"
                   >
                     <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{t('approveIssueBtn')}</span>
@@ -1186,7 +1186,7 @@ export function AdminReportsView({
                 <button
                   type="button"
                   onClick={() => void handleResendActivation(inspectingMember)}
-                  className="px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                  className="px-3.5 py-2 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50/80 dark:bg-teal-950/40 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-700 hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('resendEmailBtn')}</span>

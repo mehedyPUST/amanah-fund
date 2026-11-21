@@ -319,7 +319,7 @@ export function ManagerCollectionGoalChart({
                       <motion.span
                         layoutId="mgr-collection-range-pill"
                         transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                        className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                        className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                       />
                     )}
                     <span className="relative z-10">{r.label}</span>
@@ -377,7 +377,7 @@ export function ManagerCollectionGoalChart({
               <div className="text-[11px] text-slate-500 dark:text-slate-400">
                 {t('periodGoalAttainment')}
               </div>
-              <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+              <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {summary.windowAttainmentPct}%
               </div>
               <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -473,14 +473,14 @@ export function ManagerCollectionGoalChart({
                     type="monotone"
                     dataKey="targetGoal"
                     name={t('seriesCooperativeTargetGoal')}
-                    stroke="#6366f1"
+                    stroke="#0f766e"
                     strokeWidth={2}
                     strokeDasharray="5 4"
                     dot={false}
                   />
                   <ReferenceLine
                     y={monthlyTarget}
-                    stroke="#6366f1"
+                    stroke="#0f766e"
                     strokeOpacity={0.35}
                     strokeDasharray="3 3"
                   />
@@ -499,10 +499,10 @@ export function ManagerCollectionGoalChart({
                     type="monotone"
                     dataKey="cumulativeTarget"
                     name={t('seriesCumulativeTargetGoal')}
-                    stroke="#6366f1"
+                    stroke="#0f766e"
                     strokeWidth={2}
                     strokeDasharray="5 4"
-                    dot={{ r: 3, fill: '#6366f1' }}
+                    dot={{ r: 3, fill: '#0f766e' }}
                   />
                 </>
               )}

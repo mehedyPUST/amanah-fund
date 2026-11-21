@@ -318,9 +318,9 @@ export function HalalProjectsView({
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="amanah-card-violet backdrop-blur-xl p-3 sm:p-4 rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)]">
+            <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)]">
               <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">{t('pipelineTarget')}</div>
-              <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
+              <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
                 {formatMoney(totalTarget, ccy)}
               </div>
             </div>
@@ -340,7 +340,7 @@ export function HalalProjectsView({
                 {t('proposedSectionTitle')}
               </h3>
             </div>
-            <span className="text-xs font-mono text-indigo-700 dark:text-indigo-400">
+            <span className="text-xs font-mono text-teal-700 dark:text-teal-400">
               {t('liveTallies')}
             </span>
           </div>
@@ -449,10 +449,10 @@ export function HalalProjectsView({
                             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                             className={`h-full rounded-full ${
                               proj.votingStatus === 'approved'
-                                ? 'bg-gradient-to-r from-emerald-600 to-teal-500'
+                                ? 'bg-emerald-600'
                                 : proj.votingStatus === 'rejected'
                                   ? 'bg-rose-600'
-                                  : 'bg-gradient-to-r from-amber-500 to-amber-400'
+                                  : 'bg-amber-500'
                             }`}
                             style={{ width: `${progressPct}%`, originX: 0 }}
                           />
@@ -519,7 +519,7 @@ export function HalalProjectsView({
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'yes')}
-                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('voteYes')}</span>
@@ -587,7 +587,7 @@ export function HalalProjectsView({
                                           “{v.comment}”
                                         </p>
                                       )}
-                                      <div className="font-mono text-[10px] text-indigo-600 dark:text-indigo-400 mt-0.5">
+                                      <div className="font-mono text-[10px] text-teal-600 dark:text-teal-400 mt-0.5">
                                         {t('sigShort', { sig: shortHash(v.signatureHash) })}
                                       </div>
                                     </div>
@@ -692,7 +692,7 @@ export function HalalProjectsView({
                               <button
                                 type="submit"
                                 disabled={distBusy}
-                                className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
+                                className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
                               >
                                 {distBusy ? t('distributing') : t('distributeProRataBtn')}
                               </button>
@@ -794,7 +794,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-[0_12px_32px_-16px_rgba(15,23,42,0.14)] transition-all duration-200">
+          <section className="xl:col-span-4 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-[0_12px_32px_-16px_rgba(15,23,42,0.14)] transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('proposeCardTitle')}
@@ -812,7 +812,7 @@ export function HalalProjectsView({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t('projectTitlePlaceholder')}
-                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                 />
               </div>
 
@@ -908,7 +908,7 @@ export function HalalProjectsView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? t('submittingProposal') : t('openForVoteBtn')}</span>
@@ -916,7 +916,7 @@ export function HalalProjectsView({
             </form>
 
             <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" aria-hidden="true" />
+              <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
               <span>{t('requiresTwoThirds')}</span>
             </div>
           </section>

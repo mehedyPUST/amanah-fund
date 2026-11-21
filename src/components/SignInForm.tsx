@@ -303,7 +303,7 @@ export function SignInForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-9 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
+        className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/85 rounded-2xl p-6 sm:p-9 shadow-[0_10px_36px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
       >
         {/* Left Institutional Context Column */}
         <div className="lg:col-span-6 space-y-6">
@@ -465,7 +465,7 @@ export function SignInForm() {
                 <button
                   type="submit"
                   disabled={activating}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   <span>
@@ -512,7 +512,7 @@ export function SignInForm() {
                   </div>
                   <Link
                     href="/signup"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
                   >
                     <span>{tAuth('signInPage.createFirstAdmin')}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -619,7 +619,7 @@ export function SignInForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <Lock className="w-4 h-4" aria-hidden="true" />
                   <span>{loading ? tAuth('signingIn') : tAuth('signIn')}</span>
@@ -758,7 +758,7 @@ export function SignInForm() {
                   <button
                     type="submit"
                     disabled={forgotSubmitting}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all cursor-pointer"
                   >
                     {forgotSubmitting ? tAuth('forgot.submitting') : tAuth('forgot.submit')}
                   </button>

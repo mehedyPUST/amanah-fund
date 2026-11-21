@@ -348,7 +348,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <MailWarning className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{t('eyebrow')}</span>
             </div>
@@ -383,7 +383,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               type="button"
               disabled={batchBusy || attentionCount === 0}
               onClick={confirmRetryAll}
-              className="col-span-2 sm:col-span-1 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98] whitespace-nowrap shrink-0"
+              className="col-span-2 sm:col-span-1 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-700/20 hover:shadow-md cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98] whitespace-nowrap shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('retryAllBtn', { count: attentionCount })}</span>
@@ -393,7 +393,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
         {/* Summary KPI Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
-          <div className="rounded-2xl border backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] amanah-card-violet p-3.5 sm:p-4">
+          <div className="rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] p-3.5 sm:p-4">
             <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
               <span>{t('kpiSmtp')}</span>
               <Server className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
@@ -450,7 +450,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       </section>
 
       {/* Queue Filter & List */}
-      <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
+      <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex flex-nowrap md:flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 overflow-x-auto no-scrollbar">
             {(
@@ -469,7 +469,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 onClick={() => setStatusFilter(tab.id)}
                 className={`px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   statusFilter === tab.id
-                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-xs ring-1 ring-indigo-500/20'
+                    ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs ring-1 ring-emerald-500/20'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
@@ -489,7 +489,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchPlaceholder')}
-                className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
               />
             </div>
             {stats.sent > 0 && (
@@ -607,7 +607,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                         type="button"
                         disabled={isBusy || batchBusy}
                         onClick={() => void handleSingleRetry(item)}
-                        className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shadow-sm shadow-emerald-600/20 transition-all duration-150"
+                        className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shadow-sm shadow-emerald-700/20 transition-all duration-150"
                       >
                         <RotateCcw
                           className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`}

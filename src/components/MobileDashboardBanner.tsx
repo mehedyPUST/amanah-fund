@@ -21,10 +21,9 @@ import type {
 } from '../types/coop.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 
-const INVESTMENT_IMAGE_URL =
-  'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
+import halalCampusImg from '../assets/images/halal_investment_campus_1795273325541.jpg';
 
-type BannerHue = 'emerald' | 'teal' | 'amber' | 'violet' | 'sky';
+type BannerHue = 'emerald' | 'teal' | 'amber' | 'sky';
 
 interface BannerSlide {
   id: string;
@@ -66,7 +65,6 @@ const CARD_SURFACE_CLASS: Record<BannerHue, string> = {
   emerald: 'amanah-card-emerald',
   teal: 'amanah-card-teal',
   amber: 'amanah-card-amber',
-  violet: 'amanah-card-violet',
   sky: 'amanah-card-sky',
 };
 
@@ -74,7 +72,6 @@ const ACTIVE_BAR_CLASS: Record<BannerHue, string> = {
   emerald: 'bg-emerald-600 dark:bg-emerald-400',
   teal: 'bg-teal-600 dark:bg-teal-400',
   amber: 'bg-amber-600 dark:bg-amber-400',
-  violet: 'bg-violet-600 dark:bg-violet-400',
   sky: 'bg-sky-600 dark:bg-sky-400',
 };
 
@@ -82,16 +79,14 @@ const CHEVRON_CLASS: Record<BannerHue, string> = {
   emerald: 'text-emerald-700 dark:text-emerald-400',
   teal: 'text-teal-700 dark:text-teal-400',
   amber: 'text-amber-700 dark:text-amber-400',
-  violet: 'text-violet-700 dark:text-violet-400',
   sky: 'text-sky-700 dark:text-sky-400',
 };
 
 const CORNER_GLOW_CLASS: Record<BannerHue, string> = {
-  emerald: 'from-emerald-400/18 via-teal-400/8 to-transparent dark:from-emerald-500/18 dark:via-teal-500/8',
-  teal: 'from-teal-400/18 via-cyan-400/8 to-transparent dark:from-teal-500/18 dark:via-cyan-500/8',
-  amber: 'from-amber-400/18 via-orange-400/8 to-transparent dark:from-amber-500/18 dark:via-orange-500/8',
-  violet: 'from-violet-400/18 via-indigo-400/8 to-transparent dark:from-violet-500/18 dark:via-indigo-500/8',
-  sky: 'from-sky-400/18 via-cyan-400/8 to-transparent dark:from-sky-500/18 dark:via-cyan-500/8',
+  emerald: 'from-emerald-400/14 via-teal-400/6 to-transparent dark:from-emerald-500/14 dark:via-teal-500/6',
+  teal: 'from-teal-400/14 via-emerald-400/6 to-transparent dark:from-teal-500/14 dark:via-emerald-500/6',
+  amber: 'from-amber-400/14 via-orange-400/6 to-transparent dark:from-amber-500/14 dark:via-orange-500/6',
+  sky: 'from-sky-400/14 via-teal-400/6 to-transparent dark:from-sky-500/14 dark:via-teal-500/6',
 };
 
 function SlideProgressRing({
@@ -262,12 +257,12 @@ export function MobileDashboardBanner({
     if (isAdmin) {
       list.push({
         id: 'admin-queues',
-        hue: totalQueueCount > 0 ? 'amber' : 'violet',
+        hue: totalQueueCount > 0 ? 'amber' : 'emerald',
         kicker: tDash('mobile.banner.governanceStatus'),
         kickerClass:
           totalQueueCount > 0
             ? 'text-amber-700 dark:text-amber-400'
-            : 'text-violet-700 dark:text-violet-400',
+            : 'text-emerald-700 dark:text-emerald-400',
         title:
           totalQueueCount > 0
             ? tDash('mobile.banner.pendingApprovalsCount', { count: totalQueueCount })
@@ -283,11 +278,11 @@ export function MobileDashboardBanner({
           boxClass:
             totalQueueCount > 0
               ? 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38'
-              : 'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-[#0B2A47] dark:via-[#042230] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+              : 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
           iconClass:
             totalQueueCount > 0
               ? 'text-amber-700 mdb-icon-gold'
-              : 'text-indigo-700 mdb-icon-sapphire',
+              : 'text-emerald-700 mdb-icon-emerald',
         },
         onClick: () =>
           totalQueueCount > 0 ? onOpenSheet('queues') : onNavigate('manager-desk'),
@@ -337,9 +332,9 @@ export function MobileDashboardBanner({
     } else {
       list.push({
         id: 'member-standing',
-        hue: 'violet',
+        hue: 'teal',
         kicker: `${tDash('mobile.banner.yourStanding')} · ${user.memberCode}`,
-        kickerClass: 'text-violet-700 dark:text-violet-400',
+        kickerClass: 'text-teal-700 dark:text-teal-400',
         title: formatMoney(personal.totalContributed, ccy),
         isNumericTitle: true,
         subtitle: tDash('mobile.banner.depositsVerifiedZeroDue', {
@@ -349,8 +344,8 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: AboutSecurityIcon,
           boxClass:
-            'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-[#0B2A47] dark:via-[#042230] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
-          iconClass: 'text-indigo-700 mdb-icon-sapphire',
+            'bg-gradient-to-br from-teal-50 via-emerald-50/80 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+          iconClass: 'text-teal-700 mdb-icon-teal',
         },
         onClick: () => onNavigate('my-amanah'),
       });
@@ -360,9 +355,9 @@ export function MobileDashboardBanner({
     if (totalOpenBallots > 0) {
       list.push({
         id: 'open-ballots',
-        hue: 'violet',
+        hue: 'amber',
         kicker: tDash('mobile.banner.shuraBallotsOpen'),
-        kickerClass: 'text-violet-700 dark:text-violet-400',
+        kickerClass: 'text-amber-700 dark:text-amber-400',
         title: tDash('mobile.banner.activeBallotsCount', { count: totalOpenBallots }),
         subtitle: tDash('mobile.banner.ballotsBreakdown', {
           loans: treasury.pendingVotesCount,
@@ -506,7 +501,7 @@ export function MobileDashboardBanner({
         scheduleInteractionResume(1600);
       }}
       onTouchCancel={() => scheduleInteractionResume(1200)}
-      className={`relative w-full h-[112px] sm:h-[122px] overflow-hidden rounded-xl border ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_22px_-12px_rgba(15,23,42,0.14)] dark:shadow-[0_10px_26px_-12px_rgba(0,0,0,0.52)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
+      className={`relative w-full h-[112px] sm:h-[122px] overflow-hidden rounded-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.04] shadow-[0_6px_22px_-12px_rgba(15,23,42,0.1)] dark:shadow-[0_10px_26px_-12px_rgba(0,0,0,0.48)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
     >
       {/* Subtle geometric accent shimmer */}
       <div
@@ -614,9 +609,8 @@ export function MobileDashboardBanner({
                       (!investmentImgFailed ? (
                         <div className="w-[96px] sm:w-[122px] h-[66px] sm:h-[74px] rounded-xl overflow-hidden border border-teal-300/70 dark:border-teal-700/60 bg-slate-100 dark:bg-slate-900 shadow-xs pointer-events-none select-none shrink-0">
                           <img
-                            src={INVESTMENT_IMAGE_URL}
+                            src={halalCampusImg.src}
                             alt={tLife('caption')}
-                            referrerPolicy="no-referrer"
                             onError={() => setInvestmentImgFailed(true)}
                             className="w-full h-full object-cover"
                           />

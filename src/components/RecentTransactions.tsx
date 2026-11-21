@@ -276,7 +276,7 @@ export function RecentTransactions({
             <button
               type="button"
               onClick={() => onNavigate('transaction-history')}
-              className="group px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all active:scale-[0.98]"
+              className="group px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all active:scale-[0.98]"
             >
               <span>{t('openTransactions')}</span>
               <ArrowRight
@@ -332,7 +332,7 @@ export function RecentTransactions({
               <button
                 type="button"
                 onClick={() => onNavigate('monthly-contribution')}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all"
               >
                 <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('submitCapitalDeposit')}</span>

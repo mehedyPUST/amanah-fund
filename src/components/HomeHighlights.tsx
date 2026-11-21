@@ -34,12 +34,12 @@ export function HomeHighlights() {
       description: t('card1Desc'),
       cta: t('card1Cta'),
       Icon: HelpCircle,
-      hue: 'violet',
+      hue: 'emerald',
       iconBoxClass:
-        'bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/70 dark:border-violet-500/25 text-violet-700 dark:text-violet-300',
+        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
       badgeClass:
-        'bg-violet-100/80 dark:bg-violet-500/15 text-violet-800 dark:text-violet-300',
-      ctaClass: 'text-violet-700 dark:text-violet-400',
+        'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50',
+      ctaClass: 'text-emerald-700 dark:text-emerald-400',
     },
     {
       href: '/#architecture',
@@ -51,9 +51,9 @@ export function HomeHighlights() {
       Icon: ShieldCheck,
       hue: 'teal',
       iconBoxClass:
-        'bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/70 dark:border-teal-500/25 text-teal-700 dark:text-teal-300',
+        'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300',
       badgeClass:
-        'bg-teal-100/80 dark:bg-teal-500/15 text-teal-800 dark:text-teal-300',
+        'bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/50',
       ctaClass: 'text-teal-700 dark:text-teal-400',
     },
     {
@@ -66,9 +66,9 @@ export function HomeHighlights() {
       Icon: ScrollText,
       hue: 'emerald',
       iconBoxClass:
-        'bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300',
+        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
       badgeClass:
-        'bg-emerald-100/80 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
+        'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50',
       ctaClass: 'text-emerald-700 dark:text-emerald-400',
     },
   ];
@@ -124,7 +124,7 @@ export function HomeHighlights() {
                       {item.index}
                     </span>
                   </div>
-                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl text-justify">
+                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
                     {item.description}
                   </p>
                 </div>

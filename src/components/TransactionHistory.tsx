@@ -446,7 +446,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
+              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
             >
               <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
               <span>{tCommon('exportCsv')}</span>
@@ -457,7 +457,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleDownloadPdf}
-              className={`px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${!compact && filteredRows.length === 0 ? 'col-span-2 sm:col-span-1' : ''}`}
+              className={`px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${!compact && filteredRows.length === 0 ? 'col-span-2 sm:col-span-1' : ''}`}
             >
               <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{tCommon('downloadPdf')}</span>
@@ -468,7 +468,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={() => onNavigate('transaction-history')}
-              className="col-span-2 sm:col-span-1 group px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
+              className="col-span-2 sm:col-span-1 group px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
             >
               <span>{t('openTransactions')}</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -513,7 +513,7 @@ export function TransactionHistory({
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
             {t('activeLoanRemaining')}
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {formatMoney(counts.activeLoanRemaining, ccy)}
           </div>
           <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -738,7 +738,7 @@ export function TransactionHistory({
                   <button
                     type="button"
                     onClick={() => onNavigate('monthly-contribution')}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all"
                   >
                     <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{t('submitMonthlyContribution')}</span>
@@ -880,7 +880,7 @@ export function TransactionHistory({
                         <button
                           type="button"
                           onClick={() => onNavigate('quard-hasan')}
-                          className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
+                          className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all"
                         >
                           <span>{t('submitRepayment')}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1113,7 +1113,7 @@ function FragmentRow({
                 <button
                   type="button"
                   onClick={() => onNavigate('quard-hasan')}
-                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-center shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
+                  className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-center shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all"
                 >
                   <span>{t('submitRepayment')}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

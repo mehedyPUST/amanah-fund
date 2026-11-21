@@ -367,7 +367,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               <button
                 type="button"
                 onClick={() => (composerOpen ? closeComposer() : openCreateComposer())}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer"
               >
                 {composerOpen ? (
                   <>
@@ -552,7 +552,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                         setRewritingNotice(false);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/70 dark:bg-teal-950/35 hover:bg-teal-100/70 dark:hover:bg-teal-900/50 text-xs font-medium text-teal-800 dark:text-teal-300 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{rewritingNotice ? t('rewriting') : t('aiRewrite')}</span>
@@ -568,7 +568,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                   >
                     {submitting
                       ? tCommon('saving')

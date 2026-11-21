@@ -305,7 +305,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={openCreateComposer}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{tFaq('addFaq')}</span>
@@ -541,7 +541,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="amanah-card-violet border rounded-xl p-8 text-center space-y-3">
+        <div className="amanah-card-emerald border rounded-xl p-8 text-center space-y-3">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
             {faqs.length === 0 ? tFaq('emptyNone') : tFaq('emptyFiltered')}
           </p>
@@ -553,7 +553,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                   setActiveCategory('all');
                   setSearchQuery('');
                 }}
-                className="px-3.5 py-1.5 rounded-lg border border-violet-300 dark:border-violet-700 bg-white dark:bg-slate-900 text-xs font-medium text-violet-700 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-950/50 transition-colors cursor-pointer whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 transition-colors cursor-pointer whitespace-nowrap"
               >
                 {tCommon('resetFilters')}
               </button>
@@ -691,7 +691,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           </Link>
           <Link
             href={user ? '/dashboard' : '/signup'}
-            className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap shrink-0"
+            className="group px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap shrink-0"
           >
             <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
             <ArrowRight

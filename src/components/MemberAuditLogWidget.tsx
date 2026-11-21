@@ -159,8 +159,8 @@ function classifyAction(
     return {
       category: 'members',
       label: action.includes('PROFILE') ? t('profileChangeActivity') : t('membershipActivity'),
-      toneClass: 'text-indigo-700 dark:text-indigo-400',
-      iconBgClass: 'bg-indigo-50 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-900/60',
+      toneClass: 'text-teal-700 dark:text-teal-400',
+      iconBgClass: 'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900/60',
       Icon: UserCheck,
     };
   }
@@ -301,7 +301,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
       aria-label={t('ariaLabel')}
-      className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-col justify-between gap-4"
+      className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-col justify-between gap-4"
     >
       <div className="space-y-3.5">
         {/* Header */}
@@ -314,7 +314,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
               <span
                 className={`font-mono text-[11px] ${
                   chainValid
-                    ? 'text-indigo-700 dark:text-indigo-400'
+                    ? 'text-teal-700 dark:text-teal-400'
                     : 'text-rose-700 dark:text-rose-400'
                 }`}
               >

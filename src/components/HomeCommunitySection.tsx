@@ -55,7 +55,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
     <div
       className={
         embedded
-          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] text-slate-900 dark:text-slate-100'
+          ? 'bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] text-slate-900 dark:text-slate-100'
           : 'text-slate-900 dark:text-slate-100'
       }
     >
@@ -139,7 +139,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <Link
                   href="/login"
-                  className="group px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all inline-flex items-center gap-2 whitespace-nowrap"
+                  className="group px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-700/20 active:scale-[0.98] transition-all inline-flex items-center gap-2 whitespace-nowrap"
                 >
                   <span>{tNav('signIn')}</span>
                   <ArrowRight
@@ -159,15 +159,13 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {communityFeatures.map((item, idx) => {
                 const Icon = item.Icon;
-                const cardHue: CardHue = (['emerald', 'violet', 'teal', 'amber'] as const)[idx % 4];
+                const cardHue: CardHue = (['emerald', 'teal', 'emerald', 'amber'] as const)[idx % 4];
                 const iconBoxClass =
-                  cardHue === 'violet'
-                    ? 'border-violet-200/80 dark:border-violet-500/25 bg-violet-100/85 dark:bg-violet-500/15 text-violet-700 dark:text-violet-300'
-                    : cardHue === 'teal'
-                      ? 'border-teal-200/80 dark:border-teal-500/25 bg-teal-100/85 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300'
-                      : cardHue === 'amber'
-                        ? 'border-amber-200/80 dark:border-amber-500/25 bg-amber-100/85 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300'
-                        : 'border-emerald-200/80 dark:border-emerald-500/25 bg-emerald-100/85 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
+                  cardHue === 'teal'
+                    ? 'border-teal-200/80 dark:border-teal-500/25 bg-teal-100/85 dark:bg-teal-500/15 text-teal-700 dark:text-teal-300'
+                    : cardHue === 'amber'
+                      ? 'border-amber-200/80 dark:border-amber-500/25 bg-amber-100/85 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300'
+                      : 'border-emerald-200/80 dark:border-emerald-500/25 bg-emerald-100/85 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300';
                 return (
                   <MotionCard
                     key={item.index}

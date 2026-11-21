@@ -689,7 +689,7 @@ export function AdminSiteSettingsView({
       <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="space-y-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <Settings className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{t('headerEyebrow')}</span>
               {config?.updatedAt && (
@@ -718,7 +718,7 @@ export function AdminSiteSettingsView({
                 onClick={() => onNavigateSection('site-activity')}
                 className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
-                <Activity className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                <Activity className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>{t('navSiteActivity')}</span>
               </button>
             </div>
@@ -768,7 +768,7 @@ export function AdminSiteSettingsView({
 
       {/* TAB 1: POLICY & LIMITS */}
       {isAdmin && activeTab === 'policy' && (
-        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+        <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           {loading && !config ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 9 }).map((_, idx) => (
@@ -801,7 +801,7 @@ export function AdminSiteSettingsView({
                       required
                       value={fundName}
                       onChange={(e) => setFundName(e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                     />
                   </div>
 
@@ -908,7 +908,7 @@ export function AdminSiteSettingsView({
                           setRewritingThesis(false);
                         }
                       }}
-                      className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
+                      className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-700 dark:text-teal-300 hover:underline cursor-pointer disabled:opacity-45"
                     >
                       <Sparkles className="w-3 h-3" aria-hidden="true" />
                       <span>{rewritingThesis ? t('polishing') : t('aiPolish')}</span>
@@ -1183,8 +1183,8 @@ export function AdminSiteSettingsView({
                             onClick={() => setManagerCycleMonths(String(preset))}
                             className={`px-1.5 py-0.5 rounded text-[10px] font-mono border cursor-pointer transition-colors ${
                               Number(managerCycleMonths) === preset
-                                ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
-                                : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-indigo-300 dark:hover:border-indigo-700'
+                                ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
+                                : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-emerald-300 dark:hover:border-emerald-700'
                             }`}
                           >
                             {t('presetMonthsShort', { count: preset })}
@@ -1275,7 +1275,7 @@ export function AdminSiteSettingsView({
                   <button
                     type="submit"
                     disabled={modalBusy}
-                    className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                    className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
                     {t('savePolicyBtn')}
                   </button>
@@ -1292,7 +1292,7 @@ export function AdminSiteSettingsView({
           {/* Constitution PDF Section */}
           <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t('charterEyebrow')}</span>
               </div>
@@ -1334,7 +1334,7 @@ export function AdminSiteSettingsView({
                   type="button"
                   disabled={constitutionBusy || modalBusy}
                   onClick={() => constitutionFileInputRef.current?.click()}
-                  className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                  className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                 >
                   <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
@@ -1496,7 +1496,7 @@ export function AdminSiteSettingsView({
           </section>
 
           {/* Regulatory CSV Exports & Full JSON Vault Backup */}
-          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1532,7 +1532,7 @@ export function AdminSiteSettingsView({
               <a
                 href={api.getBackupJsonUrl()}
                 download
-                className="col-span-2 lg:col-span-1 min-h-[44px] px-3.5 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
+                className="col-span-2 lg:col-span-1 min-h-[44px] px-3.5 py-2.5 rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/70 dark:bg-teal-950/30 hover:bg-teal-100/80 dark:hover:bg-teal-900/40 transition-colors flex items-center justify-between text-xs font-medium text-teal-700 dark:text-teal-300"
               >
                 <span>{t('fullJsonBackup')}</span>
                 <FileArchive className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -1642,7 +1642,7 @@ export function AdminSiteSettingsView({
                 <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                      <Lock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                       <span>{t('cardEncryptionTitle')}</span>
                     </span>
                     <span
@@ -1705,10 +1705,10 @@ export function AdminSiteSettingsView({
                 <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
-                      <HardDrive className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                      <HardDrive className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                       <span>{t('cardMediaTitle')}</span>
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-indigo-500/10 text-indigo-700 dark:text-indigo-300">
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-teal-500/10 text-teal-700 dark:text-teal-300">
                       {systemStatus.mediaStorage.provider.toUpperCase()}
                     </span>
                   </div>
@@ -1758,7 +1758,7 @@ export function AdminSiteSettingsView({
                   <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                     <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                       <span className="inline-flex items-center gap-1.5">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
+                        <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                         <span>{t('cardGroqTitle')}</span>
                       </span>
                       <span

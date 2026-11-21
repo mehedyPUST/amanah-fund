@@ -44,7 +44,7 @@ const STATUS_META: Record<
     Icon: Clock,
   },
   pending_activation: {
-    colorClass: 'text-indigo-700 dark:text-indigo-400',
+    colorClass: 'text-teal-700 dark:text-teal-400',
     Icon: KeyRound,
   },
   pending: {

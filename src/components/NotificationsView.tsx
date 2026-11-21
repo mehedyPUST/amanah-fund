@@ -567,7 +567,7 @@ export function NotificationsView({
               return (
                 <div
                   key={m.id}
-                  className={`p-3.5 rounded-xl bg-white/80 dark:bg-slate-900/78 backdrop-blur-md border ring-1 ring-inset ring-white/60 dark:ring-white/5 space-y-1 text-xs ${
+                  className={`p-3.5 rounded-xl bg-white/95 dark:bg-slate-900/92 backdrop-blur-md border ring-1 ring-inset ring-white/60 dark:ring-white/5 space-y-1 text-xs ${
                     hasUnreadMeetingAlert
                       ? 'border-red-300/90 dark:border-red-800/80'
                       : 'border-emerald-200/80 dark:border-emerald-900/50'
@@ -641,12 +641,12 @@ export function NotificationsView({
               aria-controls="notification-settings-panel"
               className={`min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 showSettings
-                  ? 'border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-800 dark:text-indigo-200 shadow-xs'
-                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/25'
+                  ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-200 shadow-xs'
+                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 hover:border-teal-300 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/25'
               }`}
             >
               <SlidersHorizontal
-                className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0"
+                className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0"
                 aria-hidden="true"
               />
               <span>{t('notificationSettings')}</span>
@@ -702,7 +702,7 @@ export function NotificationsView({
                     <motion.span
                       layoutId="notif-status-pill"
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-0 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 shadow-xs"
+                      className="absolute inset-0 rounded-lg bg-emerald-700 dark:bg-emerald-600 shadow-xs"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>
@@ -729,7 +729,7 @@ export function NotificationsView({
                 type="button"
                 disabled={!workspace.connected || queuedItems.length === 0 || sendingGmail}
                 onClick={() => requestGmailSend(undefined)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>{t('sendQueuedGmail', { count: Math.min(queuedItems.length, 15) })}</span>
@@ -787,15 +787,15 @@ export function NotificationsView({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-3"
+            className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-3"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
-                <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                <Volume2 className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>{t('prefsHeading')}</span>
               </div>
               {savingPrefs && (
-                <span className="text-[11px] font-mono text-indigo-500 dark:text-indigo-400">
+                <span className="text-[11px] font-mono text-teal-600 dark:text-teal-400">
                   {t('saving')}
                 </span>
               )}
@@ -813,7 +813,7 @@ export function NotificationsView({
               ).map((item) => (
                 <label
                   key={item.key}
-                  className="min-h-[44px] sm:min-h-0 flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+                  className="min-h-[44px] sm:min-h-0 flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 text-xs text-slate-700 dark:text-slate-300 cursor-pointer hover:border-teal-300 dark:hover:border-teal-700 transition-colors"
                 >
                   <span className="font-medium truncate">{item.label}</span>
                   <input
@@ -824,7 +824,7 @@ export function NotificationsView({
                         : Boolean(prefs[item.key])
                     }
                     onChange={() => void handleTogglePreference(item.key)}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600 focus:ring-indigo-600 shrink-0"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600 shrink-0"
                   />
                 </label>
               ))}
@@ -833,7 +833,7 @@ export function NotificationsView({
             {/* Firebase Cloud Messaging Device & Push Controls */}
             <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-start gap-2.5 text-xs min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
                   <Smartphone className="w-4 h-4" aria-hidden="true" />
                 </div>
                 <div className="space-y-0.5 min-w-0">
@@ -864,7 +864,7 @@ export function NotificationsView({
                   type="button"
                   disabled={pushBusy || !pushCaps.supported}
                   onClick={() => void handleEnablePushAlerts(false)}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
+                  className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
                 >
                   <BellRing className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{pushBusy ? t('push.working') : t('push.syncDeviceBtn')}</span>
@@ -900,7 +900,7 @@ export function NotificationsView({
       {/* Notification List */}
       <section className="space-y-2.5">
         {loading ? (
-          <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-slate-800 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] overflow-hidden">
+          <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-slate-800 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] overflow-hidden">
             {[1, 2, 3].map((i) => (
               <div key={i} className="p-3.5 sm:p-5 space-y-2">
                 <Skeleton width={220} height={12} />
@@ -910,7 +910,7 @@ export function NotificationsView({
             ))}
           </div>
         ) : visibleGroups.length === 0 ? (
-          <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center text-xs text-slate-500 dark:text-slate-400 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center text-xs text-slate-500 dark:text-slate-400 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             {t('emptyFiltered')}
           </div>
         ) : (
@@ -1198,7 +1198,7 @@ export function NotificationsView({
                             <button
                               type="button"
                               onClick={() => requestGmailSend(group.queuedIds.slice(0, 15))}
-                              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1 cursor-pointer"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1 cursor-pointer"
                             >
                               <Send className="w-3 h-3" aria-hidden="true" />
                               <span>

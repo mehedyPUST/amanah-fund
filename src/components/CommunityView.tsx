@@ -115,7 +115,7 @@ const REACTION_OPTIONS: Array<{
     type: 'helpful',
     Icon: Lightbulb,
     activeClass:
-      'bg-indigo-50 dark:bg-indigo-950/50 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300',
+      'bg-teal-50 dark:bg-teal-950/50 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300',
   },
 ];
 
@@ -126,7 +126,7 @@ function getTopicToneClass(category: CommunityCategory): string {
     case 'Halal Ventures':
       return 'text-amber-700 dark:text-amber-400';
     case 'Help & Support':
-      return 'text-indigo-700 dark:text-indigo-400';
+      return 'text-teal-700 dark:text-teal-400';
     case 'Announcements':
     case 'General':
     default:
@@ -1401,7 +1401,7 @@ export function CommunityView({
               onClick={() => {
                 setComposerOpen((prev) => !prev);
               }}
-              className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+              className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
             >
               {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
               <span>{composerOpen ? t('closeComposer') : t('newPost')}</span>
@@ -1435,7 +1435,7 @@ export function CommunityView({
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.16 }}
                 onSubmit={handleCreatePost}
-                className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
+                className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -1515,7 +1515,7 @@ export function CommunityView({
                     <div
                       role="listbox"
                       aria-label={t('mentionSuggestionsAria')}
-                      className="mt-1 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
+                      className="mt-1 rounded-lg border border-slate-200/85 dark:border-slate-700/85 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
                     >
                       {filterMentionMatches(postMentionQuery).map((m) => (
                         <button
@@ -1541,9 +1541,9 @@ export function CommunityView({
 
                 {/* Optional Poll Builder */}
                 {pollEnabled && (
-                  <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-3">
+                  <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/40 dark:bg-teal-950/20 space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
                         <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{t('communityPollTitle')}</span>
                       </span>
@@ -1596,7 +1596,7 @@ export function CommunityView({
                         <button
                           type="button"
                           onClick={() => setPollOptions((prev) => [...prev, ''])}
-                          className="text-xs font-medium text-indigo-700 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>{t('addOption')}</span>
@@ -1609,7 +1609,7 @@ export function CommunityView({
                           type="checkbox"
                           checked={pollAllowMultiple}
                           onChange={(e) => setPollAllowMultiple(e.target.checked)}
-                          className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-indigo-600"
+                          className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
                         />
                         <span>{t('allowMultipleChoices')}</span>
                       </label>
@@ -1749,8 +1749,8 @@ export function CommunityView({
                 {(newRewriteFeedback || checkingNewSpam || newSpamCheckResult) && (
                   <div className="space-y-2">
                     {newRewriteFeedback && (
-                      <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-900/60 bg-indigo-50/70 dark:bg-indigo-950/30 text-xs text-indigo-800 dark:text-indigo-200">
-                        <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                      <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-teal-50/70 dark:bg-teal-950/30 text-xs text-teal-800 dark:text-teal-200">
+                        <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                         <span>{t('aiRewriteApplied', { feedback: newRewriteFeedback })}</span>
                       </div>
                     )}
@@ -1805,7 +1805,7 @@ export function CommunityView({
                             <button
                               type="button"
                               onClick={() => removeFlaggedLinksFromDraft('new')}
-                              className="px-2.5 py-1.5 rounded-md border border-rose-300 dark:border-rose-800 bg-white/80 dark:bg-slate-900/80 hover:bg-rose-100/70 dark:hover:bg-rose-900/50 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
+                              className="px-2.5 py-1.5 rounded-md border border-rose-300 dark:border-rose-800 bg-white/95 dark:bg-slate-900/90 hover:bg-rose-100/70 dark:hover:bg-rose-900/50 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
                             >
                               {t('removeFlaggedBtn')}
                             </button>
@@ -1845,19 +1845,19 @@ export function CommunityView({
                       <button
                         type="button"
                         onClick={() => setPollEnabled(true)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-teal-50/40 dark:hover:bg-teal-950/30 cursor-pointer transition-colors"
                       >
-                        <BarChart2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                        <BarChart2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                         <span>{t('attachPollBtn')}</span>
                       </button>
                     )}
 
-                    <div className="inline-flex items-center rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 overflow-hidden">
+                    <div className="inline-flex items-center rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/50 dark:bg-teal-950/25 overflow-hidden">
                       <select
                         value={aiTone}
                         onChange={(e) => setAiTone(e.target.value as AiRewriteTone)}
                         aria-label={t('aiToneAria')}
-                        className="px-2.5 py-2 bg-transparent text-[11px] font-medium text-indigo-800 dark:text-indigo-200 border-r border-indigo-200 dark:border-indigo-800/70 focus:outline-none cursor-pointer"
+                        className="px-2.5 py-2 bg-transparent text-[11px] font-medium text-teal-800 dark:text-teal-200 border-r border-teal-200 dark:border-teal-800/70 focus:outline-none cursor-pointer"
                       >
                         <option value="clear">{t('toneClear')}</option>
                         <option value="concise">{t('toneConcise')}</option>
@@ -1867,7 +1867,7 @@ export function CommunityView({
                         type="button"
                         disabled={rewritingNewPost}
                         onClick={() => void handleRewriteNewPost()}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100/60 dark:hover:bg-teal-900/40 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                       >
                         <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{rewritingNewPost ? t('rewriting') : t('aiRewrite')}</span>
@@ -1903,7 +1903,7 @@ export function CommunityView({
                             ? t('checkingLinksTooltip')
                             : undefined
                       }
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] cursor-pointer transition-all"
+                      className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-sm shadow-emerald-700/20 active:scale-[0.98] cursor-pointer transition-all"
                     >
                       {creatingPost
                         ? t('publishing')
@@ -1939,8 +1939,8 @@ export function CommunityView({
                   }}
                   className={`min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     feedCategory === item.id
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-600/20'
-                      : 'bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                      ? 'bg-emerald-700 dark:bg-emerald-600 text-white shadow-sm shadow-emerald-700/20'
+                      : 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   {item.label}
@@ -1989,7 +1989,7 @@ export function CommunityView({
               ))}
             </div>
           ) : filteredPosts.length === 0 ? (
-            <div className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-10 text-center space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
+            <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-10 text-center space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
               <MessageSquare className="w-8 h-8 text-slate-400 mx-auto" />
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -2005,7 +2005,7 @@ export function CommunityView({
                 <button
                   type="button"
                   onClick={() => setComposerOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 cursor-pointer transition-colors"
                 >
                   {t('createFirstPost')}
                 </button>
@@ -2028,7 +2028,7 @@ export function CommunityView({
                         : post.isPinned
                           ? 'amanah-card-emerald'
                           : idx % 2 === 0
-                            ? 'amanah-card-violet'
+                            ? 'bg-white/95 dark:bg-slate-900/92 border-slate-200/85 dark:border-slate-800/85'
                             : 'amanah-card-emerald'
                     }`}
                   >
@@ -2469,7 +2469,7 @@ export function CommunityView({
                                 <button
                                   type="button"
                                   onClick={() => removeFlaggedLinksFromDraft('edit')}
-                                  className="px-2 py-1 rounded-md border border-rose-300 dark:border-rose-800 bg-white/80 dark:bg-slate-900/80 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
+                                  className="px-2 py-1 rounded-md border border-rose-300 dark:border-rose-800 bg-white/95 dark:bg-slate-900/90 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
                                 >
                                   {t('removeFlaggedBtn')}
                                 </button>
@@ -2499,7 +2499,7 @@ export function CommunityView({
                               type="button"
                               disabled={rewritingEditPost}
                               onClick={() => void handleRewriteEditPost()}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 cursor-pointer disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-800/70 bg-teal-50/50 dark:bg-teal-950/25 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100/60 dark:hover:bg-teal-900/40 cursor-pointer disabled:opacity-50"
                             >
                               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{rewritingEditPost ? t('rewriting') : t('aiRewrite')}</span>
@@ -2553,7 +2553,7 @@ export function CommunityView({
                           legacyImageUrl={post.imageUrl}
                         />
                         {post.poll && (
-                          <div className="p-4 rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-950/20 space-y-3">
+                          <div className="p-4 rounded-xl border border-teal-200/80 dark:border-teal-900/50 bg-teal-50/30 dark:bg-teal-950/20 space-y-3">
                             {(() => {
                               const poll = post.poll!;
                               const totalVotes = poll.options.reduce(
@@ -2571,7 +2571,7 @@ export function CommunityView({
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                                       <BarChart2
-                                        className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400"
+                                        className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400"
                                         aria-hidden="true"
                                       />
                                       <span>{poll.question}</span>
@@ -2652,7 +2652,7 @@ export function CommunityView({
                                           votingPollId === post.id || draftMultiIds.length === 0
                                         }
                                         onClick={() => void handleVotePoll(post.id, draftMultiIds)}
-                                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors"
+                                        className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium cursor-pointer transition-colors"
                                       >
                                         {votingPollId === post.id
                                           ? t('savingVote')
@@ -2909,7 +2909,7 @@ export function CommunityView({
                               <div
                                 role="listbox"
                                 aria-label={t('mentionCommentAria')}
-                                className="rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto"
+                                className="rounded-lg border border-slate-200/85 dark:border-slate-700/85 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-40 overflow-y-auto"
                               >
                                 {filterMentionMatches(commentMentionTarget.query).map((m) => (
                                   <button

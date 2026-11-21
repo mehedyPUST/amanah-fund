@@ -12,7 +12,7 @@ export default function DashboardLoading() {
     >
       <MobileDashboardShellSkeleton />
 
-      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs">
         <AmanahLogo size="sm" decorative />
         <div className="min-w-0 flex-1 space-y-1">
           <Skeleton width={96} height={14} />
@@ -20,7 +20,7 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
+      <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
         <Skeleton width={190} height={20} />
         <div className="flex items-center gap-2">
           <Skeleton width={76} height={32} borderRadius={8} />
@@ -30,7 +30,7 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-3.5">
+      <aside className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col justify-between min-h-0 overflow-hidden bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs p-3.5">
         <div className="space-y-2">
           {Array.from({ length: 10 }).map((_, idx) => (
             <Skeleton key={idx} height={34} borderRadius={8} />
@@ -43,7 +43,7 @@ export default function DashboardLoading() {
         </div>
       </aside>
 
-      <main className="hidden lg:block lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/75 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs p-4 space-y-3">
+      <main className="hidden lg:block lg:col-start-2 lg:row-start-2 flex-1 min-h-0 overflow-hidden bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-2xs p-4 space-y-3">
         <Skeleton height={82} borderRadius={12} />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
           {[1, 2, 3, 4].map((i) => (

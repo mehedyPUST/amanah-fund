@@ -17,11 +17,11 @@ export const FAQ_CATEGORY_META: Record<
 > = {
   membership: { label: 'Membership', hue: 'emerald' },
   fund: { label: 'Fund & Savings', hue: 'teal' },
-  loans: { label: 'Qard Hasan', hue: 'violet' },
-  governance: { label: 'Governance & Halal', hue: 'amber' },
+  loans: { label: 'Qard Hasan', hue: 'emerald' },
+  governance: { label: 'Governance & Halal', hue: 'teal' },
 };
 
-export const FAQ_CARD_HUE_CYCLE: FaqCardHue[] = ['emerald', 'violet', 'teal', 'amber'];
+export const FAQ_CARD_HUE_CYCLE: FaqCardHue[] = ['emerald', 'teal'];
 
 const DEFAULT_FAQ_SEED: Array<{
   id: string;

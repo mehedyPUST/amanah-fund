@@ -389,7 +389,7 @@ export function RequestQardHasanLoanForm({
   const wrapperClass =
     variant === 'modal'
       ? 'space-y-4'
-      : 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200';
+      : 'bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200';
 
   return (
     <section aria-label={t('ariaLabel')} className={wrapperClass}>
@@ -585,7 +585,7 @@ export function RequestQardHasanLoanForm({
                   setRewritingField(null);
                 }
               }}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-700 dark:text-teal-300 hover:underline cursor-pointer disabled:opacity-45"
             >
               <Sparkles className="w-3 h-3" aria-hidden="true" />
               <span>{rewritingField === 'purpose' ? t('polishing') : t('aiPolish')}</span>
@@ -713,7 +713,7 @@ export function RequestQardHasanLoanForm({
                       <span className="text-slate-500 dark:text-slate-400">
                         #{item.installmentNumber} · {formatShortDate(item.dueDate)}
                       </span>
-                      <span className="font-medium text-indigo-700 dark:text-indigo-300">
+                      <span className="font-medium text-emerald-700 dark:text-emerald-300">
                         {formatMoney(item.amount, ccy)}
                       </span>
                     </div>
@@ -816,7 +816,7 @@ export function RequestQardHasanLoanForm({
                   setRewritingField(null);
                 }
               }}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-indigo-700 dark:text-indigo-300 hover:underline cursor-pointer disabled:opacity-45"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-teal-700 dark:text-teal-300 hover:underline cursor-pointer disabled:opacity-45"
             >
               <Sparkles className="w-3 h-3" aria-hidden="true" />
               <span>{rewritingField === 'context' ? t('polishing') : t('aiPolish')}</span>
@@ -948,7 +948,7 @@ export function RequestQardHasanLoanForm({
           <button
             type="submit"
             disabled={!canAttemptSubmit}
-            className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 text-white text-sm font-semibold shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>

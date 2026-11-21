@@ -819,7 +819,7 @@ export function MobileMfsHome({
                       loanProgress.loan.status === 'pending_vote' ? 'ballot' : 'quard-hasan'
                     )
                   }
-                  className="min-h-[36px] px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
                 >
                   <span>
                     {loanProgress.loan.status === 'pending_vote'
@@ -860,7 +860,7 @@ export function MobileMfsHome({
               <button
                 type="button"
                 onClick={() => setActiveSheet('queues')}
-                className="text-[11px] font-medium text-violet-700 dark:text-violet-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
+                className="text-[11px] font-medium text-amber-700 dark:text-amber-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
               >
                 <span>{tDash('approvalQueues')} ({totalQueueCount})</span>
               </button>
@@ -916,8 +916,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-10 h-10 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-[#0B2A47] dark:via-[#042230] dark:to-[#001822] border border-[#00684A]/22 dark:border-[#00ED64]/38 flex items-center justify-center shrink-0">
-                <AboutSecurityIcon className="w-[19px] h-[19px] text-indigo-700 mdb-icon-sapphire" strokeWidth={1.7} />
+              <span className="w-10 h-10 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] bg-gradient-to-br from-teal-50 via-emerald-50/75 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border border-[#00684A]/22 dark:border-[#00ED64]/38 flex items-center justify-center shrink-0">
+                <AboutSecurityIcon className="w-[19px] h-[19px] text-teal-700 mdb-icon-teal" strokeWidth={1.7} />
               </span>
             </div>
             <div>
@@ -1151,7 +1151,13 @@ export function MobileMfsHome({
             <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">
               {tDash('sheets.thisMonthDue')}
             </div>
-            <div className="text-sm font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
+            <div
+              className={`text-sm font-bold font-mono tabular-nums ${
+                treasury.thisMonthDueRemaining > 0
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-emerald-700 dark:text-emerald-400'
+              }`}
+            >
               {formatMoney(treasury.thisMonthDueRemaining, ccy)}{' '}
               <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
                 / {formatMoney(treasury.thisMonthDueTarget, ccy)}
@@ -1314,11 +1320,11 @@ export function MobileMfsHome({
               setActiveSheet(null);
               onNavigate('ballot');
             }}
-            className="w-full min-h-[68px] p-3.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
+            className="w-full min-h-[68px] p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-[#0B2A47] dark:via-[#042230] dark:to-[#001822] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                <VotingIcon className="w-[19px] h-[19px] text-indigo-700 mdb-icon-sapphire" strokeWidth={1.7} />
+              <span className="w-10 h-10 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <VotingIcon className="w-[19px] h-[19px] text-amber-700 mdb-icon-gold" strokeWidth={1.7} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1555,7 +1561,7 @@ export function MobileMfsHome({
               type="button"
               disabled={iconsSaving}
               onClick={() => void handleSaveMemberIcons()}
-              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
+              className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer transition-colors"
             >
               {iconsSaving ? tDash('sheets.savingIcons') : tDash('sheets.saveIconsBtn')}
             </button>

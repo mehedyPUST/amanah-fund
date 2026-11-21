@@ -1396,9 +1396,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
               shortLabel: t('status.pending_activation.short'),
               description: t('status.pending_activation.desc'),
               Icon: Clock,
-              toneClass: 'text-indigo-700 dark:text-indigo-400',
+              toneClass: 'text-teal-700 dark:text-teal-400',
               boxClass:
-                'bg-indigo-50/80 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-900/60',
+                'bg-teal-50/80 dark:bg-teal-950/30 border-teal-200 dark:border-teal-900/60',
             }
           : {
               label: t('status.suspended.label'),
@@ -1424,7 +1424,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </div>
           <Skeleton height={56} />
         </section>
-        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+        <section className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           <Skeleton height={240} />
         </section>
       </div>
@@ -1458,13 +1458,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 />
               </a>
             ) : (
-              <div className="w-16 h-16 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 flex items-center justify-center text-base font-bold text-indigo-700 dark:text-indigo-400 shrink-0">
+              <div className="w-16 h-16 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-center text-base font-bold text-emerald-700 dark:text-emerald-400 shrink-0">
                 {profile.name.slice(0, 2).toUpperCase()}
               </div>
             )}
 
             <div className="space-y-1 min-w-0">
-              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
                 <UserIcon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>{t('eyebrow')}</span>
               </div>
@@ -1511,7 +1511,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       {/* Main Split: Registration KYC Details (Read-Only) + Editable Contact Info */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Read-Only Registration Details */}
-        <section className="xl:col-span-5 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-5 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleTopic('credentials')}
@@ -1519,7 +1519,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
                 <FileText className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>{profile.memberCode}</span>
               </div>
@@ -1536,7 +1536,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 aria-hidden="true"
                 className={`w-4 h-4 transition-transform duration-200 ${
                   expandedTopics.credentials
-                    ? 'rotate-180 text-indigo-600 dark:text-indigo-400'
+                    ? 'rotate-180 text-teal-600 dark:text-teal-400'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               />
@@ -1763,7 +1763,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                             href={reg.socialMedia.facebook}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 hover:underline"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11px] font-medium text-teal-700 dark:text-teal-400 hover:underline"
                           >
                             <span>{t('facebook')}</span>
                             <ExternalLink className="w-3 h-3" aria-hidden="true" />
@@ -3160,7 +3160,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           signatureUploading ||
                           anyNomineePhotoUploading
                         }
-                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
+                        className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md inline-flex items-center gap-1.5 transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                       >
                         <Save className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{saving ? t('savingProfile') : t('saveContactInfo')}</span>
@@ -3183,7 +3183,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
         >
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+            <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
               <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{t('passwordEyebrow')}</span>
             </div>
@@ -3270,7 +3270,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 <button
                   type="submit"
                   disabled={passwordBusy}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer whitespace-nowrap"
+                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer whitespace-nowrap"
                 >
                   {passwordBusy ? t('updatingPassword') : t('updatePasswordNow')}
                 </button>
@@ -3406,7 +3406,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                       <button
                         type="submit"
                         disabled={devicePinBusy}
-                        className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer whitespace-nowrap"
+                        className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer whitespace-nowrap"
                       >
                         {devicePinBusy
                           ? t('savingPin')
@@ -3462,7 +3462,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
       {/* Step-Up Two-Factor Authentication & Alert Preferences */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <section className="xl:col-span-6 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-6 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleTopic('totp')}
@@ -3470,7 +3470,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
             className="w-full flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
                 <KeyRound className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t('totpEyebrow')}</span>
               </div>
@@ -3492,7 +3492,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                 aria-hidden="true"
                 className={`w-4 h-4 transition-transform duration-200 ${
                   expandedTopics.totp
-                    ? 'rotate-180 text-indigo-600 dark:text-indigo-400'
+                    ? 'rotate-180 text-teal-600 dark:text-teal-400'
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               />
@@ -3601,7 +3601,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           <button
                             type="submit"
                             disabled={totpBusy}
-                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
+                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                           >
                             {totpBusy ? t('verifying2fa') : t('verifyActivate2fa')}
                           </button>

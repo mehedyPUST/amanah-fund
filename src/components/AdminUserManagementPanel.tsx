@@ -667,7 +667,7 @@ export function AdminUserManagementPanel({
       {/* Header & Add User CTA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Users className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>{t('eyebrow')}</span>
           </div>
@@ -680,7 +680,7 @@ export function AdminUserManagementPanel({
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-150 active:scale-[0.98]"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-150 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t('addNewUser')}</span>
@@ -787,7 +787,7 @@ export function AdminUserManagementPanel({
         </div>
         <div className="col-span-2 sm:col-span-1">
           <div className="text-slate-500 dark:text-slate-400">{t('statStaff')}</div>
-          <div className="mt-1 text-base font-bold font-mono tabular-nums text-indigo-700 dark:text-indigo-400">
+          <div className="mt-1 text-base font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {loading ? <Skeleton width={36} /> : stats.staff}
           </div>
         </div>
@@ -814,7 +814,7 @@ export function AdminUserManagementPanel({
                   onClick={() => setStatusFilter(s.id)}
                   className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
-                      ? 'text-indigo-700 dark:text-indigo-300'
+                      ? 'text-emerald-700 dark:text-emerald-300'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
@@ -822,7 +822,7 @@ export function AdminUserManagementPanel({
                     <motion.span
                       layoutId="admin-user-status-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-indigo-500/20"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <span className="relative z-10">{s.label}</span>
@@ -835,7 +835,7 @@ export function AdminUserManagementPanel({
             aria-label={t('filterRoleAria')}
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as 'all' | UserRole)}
-            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition-colors"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
           >
             <option value="all">{t('filterAllRoles')}</option>
             <option value="admin">{tRoles('admin')}</option>
@@ -855,7 +855,7 @@ export function AdminUserManagementPanel({
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
             aria-label={t('searchAria')}
-            className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition-colors"
+            className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
           />
         </div>
       </div>
@@ -972,7 +972,7 @@ export function AdminUserManagementPanel({
                         <button
                           type="button"
                           onClick={() => onInspectMember(m)}
-                          className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer"
+                          className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-teal-200 dark:border-teal-900/70 bg-teal-50/60 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('kyc')}</span>
@@ -1010,7 +1010,7 @@ export function AdminUserManagementPanel({
                               type="button"
                               disabled={isBusy}
                               onClick={() => showActivationCodesModal(m)}
-                              className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="min-h-[40px] flex-1 px-2.5 py-1.5 rounded-lg border border-teal-200 dark:border-teal-900/70 bg-teal-50/70 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('viewCodes')}</span>
@@ -1152,7 +1152,7 @@ export function AdminUserManagementPanel({
                               type="button"
                               onClick={() => onInspectMember(m)}
                               title={t('inspectKycTitle')}
-                              className="px-2.5 py-1 rounded border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                              className="px-2.5 py-1 rounded border border-teal-200 dark:border-teal-900/70 bg-teal-50/60 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40 inline-flex items-center gap-1 cursor-pointer transition-colors"
                             >
                               <Eye className="w-3 h-3" aria-hidden="true" />
                               <span>{t('kyc')}</span>
@@ -1198,7 +1198,7 @@ export function AdminUserManagementPanel({
                                   disabled={isBusy}
                                   onClick={() => showActivationCodesModal(m)}
                                   title={t('viewCodesTitleTooltip')}
-                                  className="px-2.5 py-1 rounded border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200"
+                                  className="px-2.5 py-1 rounded border border-teal-200 dark:border-teal-900/70 bg-teal-50/70 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 hover:bg-teal-700 hover:text-white font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 transition-all duration-200"
                                 >
                                   <KeyRound className="w-3 h-3" aria-hidden="true" />
                                   <span>{t('codes')}</span>
@@ -1439,7 +1439,7 @@ export function AdminUserManagementPanel({
                 <button
                   type="submit"
                   disabled={createSaving}
-                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{createSaving ? t('creatingUser') : t('createUserBtn')}</span>
@@ -1643,7 +1643,7 @@ export function AdminUserManagementPanel({
                 <button
                   type="submit"
                   disabled={editSaving}
-                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{editSaving ? t('savingChanges') : t('saveUserChangesBtn')}</span>

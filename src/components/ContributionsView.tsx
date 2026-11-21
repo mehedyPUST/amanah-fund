@@ -513,11 +513,11 @@ export function ContributionsView({
         )}
 
         <MotionCard
-          hue="violet"
+          hue="teal"
           delay={0.06}
           className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
-          <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
+          <div className="text-[11px] sm:text-xs font-medium text-teal-700 dark:text-teal-400">
             {isAdmin ? t('allMembersApprovedPool') : t('otherMembersSummary')}
           </div>
           {loading ? (
@@ -588,7 +588,7 @@ export function ContributionsView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: 0.04 }}
-        className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
+        className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 mb-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -599,7 +599,7 @@ export function ContributionsView({
               <button
                 type="button"
                 onClick={() => openDepositModal()}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('submitCapitalDeposit')}</span>
@@ -821,11 +821,11 @@ export function ContributionsView({
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="overflow-hidden p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-indigo-200/70 dark:border-indigo-900/40 text-xs space-y-2"
+                            className="overflow-hidden p-3 rounded-lg bg-teal-50/40 dark:bg-slate-900 border border-teal-200/80 dark:border-teal-900/50 text-xs space-y-2"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-1 text-slate-600 dark:text-slate-400">
-                              <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
-                                <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                              <span className="inline-flex items-center gap-1.5 font-medium text-teal-800 dark:text-teal-200">
+                                <Shield className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                                 <span>{t('aesEnvelope')}</span>
                               </span>
                               <span className="font-mono text-[11px]">{formatDateTime(item.submittedAt)}</span>
@@ -1001,11 +1001,11 @@ export function ContributionsView({
                                   animate={{ opacity: 1, height: 'auto' }}
                                   exit={{ opacity: 0, height: 0 }}
                                   transition={{ duration: 0.2 }}
-                                  className="overflow-hidden mb-3 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-indigo-200/70 dark:border-indigo-900/40 text-xs space-y-2"
+                                  className="overflow-hidden mb-3 p-3.5 rounded-lg bg-teal-50/40 dark:bg-slate-950 border border-teal-200/80 dark:border-teal-900/50 text-xs space-y-2"
                                 >
                                   <div className="flex flex-wrap items-center justify-between gap-2 text-slate-600 dark:text-slate-400">
-                                    <span className="inline-flex items-center gap-1.5 font-medium text-indigo-800 dark:text-indigo-200">
-                                      <Shield className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+                                    <span className="inline-flex items-center gap-1.5 font-medium text-teal-800 dark:text-teal-200">
+                                      <Shield className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                                       <span>{t('authorizedPayload')}</span>
                                     </span>
                                     <span className="font-mono">
@@ -1299,7 +1299,7 @@ export function ContributionsView({
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="overflow-hidden p-2.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2"
+                            className="overflow-hidden p-2.5 rounded-xl border border-teal-200/80 dark:border-teal-900/50 bg-teal-50/45 dark:bg-teal-950/25 space-y-2"
                           >
                             <div className="grid grid-cols-3 gap-1.5">
                               {upcomingMonthOptions.map((m) => {
@@ -1322,7 +1322,7 @@ export function ContributionsView({
                                 );
                               })}
                             </div>
-                            <div className="text-[11px] font-mono tabular-nums text-indigo-700 dark:text-indigo-300">
+                            <div className="text-[11px] font-mono tabular-nums text-teal-800 dark:text-teal-300">
                               {t('monthsSelectedSplit', {
                                 count: effectiveBillingMonths.length,
                                 perMonth: formatMoney(
@@ -1455,7 +1455,7 @@ export function ContributionsView({
                       <button
                         type="submit"
                         disabled={modalBusy}
-                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                        className="py-2.5 px-5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Lock className="w-4 h-4" aria-hidden="true" />
                         <span>{t('reviewSubmitBtn')}</span>

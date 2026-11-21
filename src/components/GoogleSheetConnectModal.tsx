@@ -482,7 +482,7 @@ export function GoogleSheetConnectModal({
               className="w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)] overflow-hidden my-auto"
             >
               {/* Header */}
-              <div className="shrink-0 flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-white dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-950">
+              <div className="shrink-0 flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-950/80">
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="w-10 h-10 rounded-xl bg-emerald-600 text-white inline-flex items-center justify-center shadow-xs shrink-0">
                     <Sheet className="w-5 h-5" aria-hidden="true" />
@@ -670,7 +670,7 @@ export function GoogleSheetConnectModal({
                         type="button"
                         disabled={!workspace.connected || syncing}
                         onClick={() => handleRequestSync(false)}
-                        className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
+                        className="inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                       >
                         <RefreshCw
                           className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`}
@@ -923,7 +923,7 @@ export function GoogleSheetConnectModal({
                     </div>
 
                     {/* Create Brand New */}
-                    <div className="md:col-span-5 rounded-2xl border border-emerald-200/85 dark:border-emerald-900/60 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/40 dark:from-emerald-950/30 dark:via-slate-950 dark:to-teal-950/20 p-4 flex flex-col justify-between gap-3">
+                    <div className="md:col-span-5 rounded-2xl border border-emerald-200/85 dark:border-emerald-900/60 bg-emerald-50/45 dark:bg-emerald-950/20 p-4 flex flex-col justify-between gap-3">
                       <div className="space-y-1.5">
                         <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
                           Option B · Instant Setup
@@ -943,7 +943,7 @@ export function GoogleSheetConnectModal({
                         type="button"
                         disabled={!workspace.connected || syncing}
                         onClick={() => handleRequestSync(true)}
-                        className="w-full inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
+                        className="w-full inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                       >
                         <FilePlus2 className="w-4 h-4" aria-hidden="true" />
                         <span>Create &amp; Sync Google Sheet</span>

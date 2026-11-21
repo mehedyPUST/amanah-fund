@@ -26,7 +26,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p1Desc'),
       hue: 'emerald',
       iconBoxClass:
-        'bg-emerald-500/18 dark:bg-emerald-400/20 border border-emerald-400/60 dark:border-emerald-400/40 text-emerald-700 dark:text-emerald-300',
+        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
     },
     {
       key: 'p2',
@@ -34,9 +34,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: Users,
       title: t('p2Title'),
       description: t('p2Desc'),
-      hue: 'violet',
+      hue: 'teal',
       iconBoxClass:
-        'bg-violet-500/18 dark:bg-violet-400/20 border border-violet-400/60 dark:border-violet-400/40 text-violet-700 dark:text-violet-300',
+        'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300',
     },
     {
       key: 'p3',
@@ -44,9 +44,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: Lock,
       title: t('p3Title'),
       description: t('p3Desc'),
-      hue: 'teal',
+      hue: 'emerald',
       iconBoxClass:
-        'bg-teal-500/18 dark:bg-teal-400/20 border border-teal-400/60 dark:border-teal-400/40 text-teal-700 dark:text-teal-300',
+        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
     },
     {
       key: 'p4',
@@ -54,9 +54,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: Vote,
       title: t('p4Title'),
       description: t('p4Desc'),
-      hue: 'amber',
+      hue: 'teal',
       iconBoxClass:
-        'bg-amber-500/18 dark:bg-amber-400/20 border border-amber-400/60 dark:border-amber-400/40 text-amber-700 dark:text-amber-300',
+        'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300',
     },
     {
       key: 'p5',
@@ -64,9 +64,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: KeyRound,
       title: t('p5Title'),
       description: t('p5Desc'),
-      hue: 'sky',
+      hue: 'emerald',
       iconBoxClass:
-        'bg-sky-500/18 dark:bg-sky-400/20 border border-sky-400/60 dark:border-sky-400/40 text-sky-700 dark:text-sky-300',
+        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
     },
   ];
 
@@ -74,7 +74,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
+          ? 'bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
           : ''
       }`}
     >

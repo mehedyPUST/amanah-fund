@@ -765,10 +765,10 @@ export function ManagerDeskView({
       label: t('tabs.installments'),
       count: pendingInstallments.length,
       Icon: ShieldCheck,
-      activeClass: 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/35 shadow-xs',
-      activeTextClass: 'text-indigo-800 dark:text-indigo-300',
-      activeIconClass: 'text-indigo-600 dark:text-indigo-400',
-      hoverClass: 'hover:border-indigo-300 dark:hover:border-indigo-800',
+      activeClass: 'border-emerald-600 bg-emerald-50/80 dark:bg-emerald-950/35 shadow-xs',
+      activeTextClass: 'text-emerald-800 dark:text-emerald-300',
+      activeIconClass: 'text-emerald-600 dark:text-emerald-400',
+      hoverClass: 'hover:border-emerald-300 dark:hover:border-emerald-800',
     },
     {
       id: 'ballots',
@@ -785,20 +785,20 @@ export function ManagerDeskView({
       label: t('tabs.meetingsProfiles'),
       count: meetingsProfilesCount,
       Icon: CalendarPlus,
-      activeClass: 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/35 shadow-xs',
-      activeTextClass: 'text-indigo-800 dark:text-indigo-300',
-      activeIconClass: 'text-indigo-600 dark:text-indigo-400',
-      hoverClass: 'hover:border-indigo-300 dark:hover:border-indigo-800',
+      activeClass: 'border-teal-600 bg-teal-50/80 dark:bg-teal-950/35 shadow-xs',
+      activeTextClass: 'text-teal-800 dark:text-teal-300',
+      activeIconClass: 'text-teal-600 dark:text-teal-400',
+      hoverClass: 'hover:border-teal-300 dark:hover:border-teal-800',
     },
     {
       id: 'community-drafts',
       label: t('tabs.communityDrafts'),
       count: communityDrafts.length,
       Icon: ClipboardCheck,
-      activeClass: 'border-violet-600 bg-violet-50/80 dark:bg-violet-950/35 shadow-xs',
-      activeTextClass: 'text-violet-800 dark:text-violet-300',
-      activeIconClass: 'text-violet-600 dark:text-violet-400',
-      hoverClass: 'hover:border-violet-300 dark:hover:border-violet-800',
+      activeClass: 'border-slate-500 bg-slate-100/85 dark:bg-slate-800/75 shadow-xs',
+      activeTextClass: 'text-slate-900 dark:text-white',
+      activeIconClass: 'text-teal-600 dark:text-teal-400',
+      hoverClass: 'hover:border-slate-300 dark:hover:border-slate-700',
     },
   ];
 
@@ -844,7 +844,7 @@ export function ManagerDeskView({
             const active = activeTab === tab.id;
             const Icon = tab.Icon;
             const idleGradient = (
-              ['amanah-card-emerald', 'amanah-card-violet', 'amanah-card-teal', 'amanah-card-amber', 'amanah-card-violet'] as const
+              ['amanah-card-emerald', 'bg-white/95 dark:bg-slate-900/92 border-slate-200/85 dark:border-slate-800/85', 'amanah-card-teal', 'amanah-card-amber', 'bg-white/95 dark:bg-slate-900/92 border-slate-200/85 dark:border-slate-800/85'] as const
             )[idx % 5];
             return (
               <button
@@ -968,7 +968,7 @@ export function ManagerDeskView({
                           {formatMoney(c.amount, ccy)}
                         </span>
                         <span>·</span>
-                        <span className="font-mono text-indigo-700 dark:text-indigo-400">
+                        <span className="font-mono text-teal-700 dark:text-teal-400">
                           {formatBillingMonth(c.billingMonth)}
                         </span>
                       </div>
@@ -1001,7 +1001,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'approved')}
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('approve')}</span>
@@ -1041,7 +1041,7 @@ export function ManagerDeskView({
           className="space-y-6"
         >
           {/* Stage 1: Awaiting Vote Initiation */}
-          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('stage1Heading', { count: pendingReviewLoans.length })}
@@ -1313,7 +1313,7 @@ export function ManagerDeskView({
                           type="button"
                           disabled={modalBusy}
                           onClick={() => confirmDisbursement(loan)}
-                          className="min-h-[44px] sm:min-h-0 w-full lg:w-auto justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+                          className="min-h-[44px] sm:min-h-0 w-full lg:w-auto justify-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('confirmDisburseBtn')}</span>
@@ -1406,7 +1406,7 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
                             }
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('accept')}</span>
@@ -1447,8 +1447,8 @@ export function ManagerDeskView({
           transition={{ duration: 0.16 }}
           className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
         >
-          <section className="xl:col-span-5 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
-            <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+          <section className="xl:col-span-5 bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{t('initiatePollEyebrow')}</span>
             </div>
@@ -1468,7 +1468,7 @@ export function ManagerDeskView({
                   value={pollTitle}
                   onChange={(e) => setPollTitle(e.target.value)}
                   placeholder={t('pollQuestionPlaceholder')}
-                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1479,7 +1479,7 @@ export function ManagerDeskView({
                   <select
                     value={pollCategory}
                     onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   >
                     <option value="general">{t('pollCategoryGeneral')}</option>
                     <option value="policy">{t('pollCategoryPolicy')}</option>
@@ -1495,7 +1495,7 @@ export function ManagerDeskView({
                     type="date"
                     value={pollClosesAt}
                     onChange={(e) => setPollClosesAt(e.target.value)}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
               </div>
@@ -1508,7 +1508,7 @@ export function ManagerDeskView({
                   value={pollDesc}
                   onChange={(e) => setPollDesc(e.target.value)}
                   placeholder={t('contextDescPlaceholder')}
-                  className="w-full px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
+                  className="w-full px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                 />
               </div>
 
@@ -1538,7 +1538,7 @@ export function ManagerDeskView({
                         )
                       }
                       placeholder={t('optionPlaceholder', { num: idx + 1 })}
-                      className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
+                      className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                     />
                     {pollOptions.length > 2 && (
                       <button
@@ -1559,7 +1559,7 @@ export function ManagerDeskView({
               <button
                 type="submit"
                 disabled={modalBusy}
-                className="w-full min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+                className="w-full min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
               >
                 {t('reviewLaunchPollBtn')}
               </button>
@@ -1744,7 +1744,7 @@ export function ManagerDeskView({
                 <button
                   type="submit"
                   disabled={modalBusy || rewritingMeeting}
-                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                 >
                   {t('scheduleNotifyAllBtn')}
                 </button>
@@ -1752,7 +1752,7 @@ export function ManagerDeskView({
                   type="button"
                   disabled={modalBusy || rewritingMeeting}
                   onClick={() => void handleRewriteMeeting()}
-                  className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50 transition-colors"
+                  className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/50 dark:bg-teal-950/25 hover:bg-teal-100/60 dark:hover:bg-teal-900/40 text-xs font-medium text-teal-700 dark:text-teal-300 cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{rewritingMeeting ? t('rewriting') : t('aiRewriteBtn')}</span>
@@ -1808,8 +1808,8 @@ export function ManagerDeskView({
           </section>
 
           {user.role === 'admin' && (
-            <section className="xl:col-span-6 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
-              <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
+            <section className="xl:col-span-6 bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+              <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
                 <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t('profileRequestsEyebrow')}</span>
               </div>
@@ -1860,7 +1860,7 @@ export function ManagerDeskView({
                           type="button"
                           disabled={modalBusy}
                           onClick={() => confirmProfileReqReview(req, 'approved')}
-                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('approve')}</span>
@@ -1893,7 +1893,7 @@ export function ManagerDeskView({
           transition={{ duration: 0.18 }}
           className="space-y-4"
         >
-          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('communityDraftsHeading', { count: communityDrafts.length })}
@@ -1924,7 +1924,7 @@ export function ManagerDeskView({
                         <span className="text-sm font-semibold text-slate-900 dark:text-white">
                           {draft.title}
                         </span>
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border border-violet-200 dark:border-violet-900/60 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300">
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300">
                           {t('draftBadge')}
                         </span>
                         {draft.relatedLoanId && (
@@ -2202,7 +2202,7 @@ function LoanApprovedPostModal({
             type="button"
             disabled={busy || title.trim().length < 3 || content.trim().length < 3}
             onClick={() => void onPostNow(title.trim(), content.trim())}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
+            className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
           >
             <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{busy ? t('posting') : t('postNow')}</span>
