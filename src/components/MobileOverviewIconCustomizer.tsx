@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import {
+  Activity,
   ArrowDownUp,
   BarChart3,
   Bell,
@@ -29,6 +30,7 @@ import {
   RotateCcw,
   ScrollText,
   Search,
+  Settings,
   User,
   UserCheck,
   Users,
@@ -73,6 +75,8 @@ export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, typeof CreditC
   'manager-contributions': FileCheck,
   'manager-loans': ClipboardList,
   'manager-installments': CalendarCheck,
+  'site-settings': Settings,
+  'site-activity': Activity,
 };
 
 const PREVIEW_CARD_STYLE_BY_ACCENT: Record<string, string> = {
@@ -112,6 +116,7 @@ interface MobileOverviewIconEditorProps {
   value: MobileMemberOverviewIconsConfig;
   onChange: (next: MobileMemberOverviewIconsConfig) => void;
   allowManagerTiles?: boolean;
+  allowAdminTiles?: boolean;
   onReset?: () => void;
   disableReset?: boolean;
   resetLabel?: string;
@@ -121,6 +126,7 @@ export function MobileOverviewIconEditor({
   value,
   onChange,
   allowManagerTiles = false,
+  allowAdminTiles = false,
   onReset,
   disableReset = false,
   resetLabel,
@@ -132,10 +138,14 @@ export function MobileOverviewIconEditor({
 
   const availableCatalog = useMemo(
     () =>
-      MOBILE_MEMBER_TILE_CATALOG.filter((item) =>
-        allowManagerTiles ? true : !item.managerOnly
-      ),
-    [allowManagerTiles]
+      MOBILE_MEMBER_TILE_CATALOG.filter((item) => {
+        if (allowAdminTiles) {
+          return !item.memberOnly && (allowManagerTiles || !item.managerOnly);
+        }
+        if (item.adminOnly) return false;
+        return allowManagerTiles ? true : !item.managerOnly;
+      }),
+    [allowManagerTiles, allowAdminTiles]
   );
 
   const catalogById = useMemo(
@@ -144,6 +154,10 @@ export function MobileOverviewIconEditor({
   );
 
   const getTileLabel = (meta: MobileMemberTileMeta): string => {
+    if (allowAdminTiles) {
+      if (meta.id === 'member-registry') return tNav('usersAndRoles');
+      if (meta.id === 'manager-desk') return tNav('governanceDesk');
+    }
     if (meta.navKey) return tNav(meta.navKey);
     if (meta.editorKey) return t(meta.editorKey);
     return meta.id;
@@ -239,6 +253,11 @@ export function MobileOverviewIconEditor({
             <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
               {label}
             </span>
+            {meta.adminOnly && (
+              <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-700 dark:text-indigo-300 shrink-0">
+                · {t('adminOnlyTag')}
+              </span>
+            )}
             {meta.managerOnly && (
               <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 dark:text-amber-300 shrink-0">
                 · {t('managerOnlyTag')}
@@ -309,6 +328,11 @@ export function MobileOverviewIconEditor({
           <div className="min-w-0">
             <div className="text-xs font-semibold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
               <span className="truncate">{label}</span>
+              {meta.adminOnly && (
+                <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-700 dark:text-indigo-300 shrink-0">
+                  · {t('adminOnlyTag')}
+                </span>
+              )}
               {meta.managerOnly && (
                 <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 dark:text-amber-300 shrink-0">
                   · {t('managerOnlyTag')}
@@ -397,6 +421,11 @@ export function MobileOverviewIconEditor({
           <div className="min-w-0">
             <div className="text-xs font-semibold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
               <span className="truncate">{label}</span>
+              {meta.adminOnly && (
+                <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-700 dark:text-indigo-300 shrink-0">
+                  · {t('adminOnlyTag')}
+                </span>
+              )}
               {meta.managerOnly && (
                 <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 dark:text-amber-300 shrink-0">
                   · {t('managerOnlyTag')}

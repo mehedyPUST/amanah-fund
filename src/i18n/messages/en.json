@@ -5063,6 +5063,7 @@
     "moveDown": "Move {label} down",
     "resetBtn": "Reset to Default",
     "managerOnlyTag": "Manager",
+    "adminOnlyTag": "Admin",
     "tiles": {
       "monthlyPulse": "Monthly Pulse",
       "activeBorrowers": "Active Borrowers",

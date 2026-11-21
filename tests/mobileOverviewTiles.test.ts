@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   areMobileOverviewConfigsEqual,
+  DEFAULT_MOBILE_ADMIN_OVERVIEW_ICONS,
   DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS,
   MOBILE_MEMBER_TILE_CATALOG,
   resolveMemberMobileOverviewIcons,
@@ -150,5 +151,60 @@ describe('mobileOverviewTiles sanitization & resolution', () => {
         more: ['charter'],
       })
     ).toBe(false);
+  });
+
+  it('supports admin tile sanitization while filtering member-only and admin-only permissions accurately', () => {
+    const cleanedForAdmin = sanitizeMobileMemberOverviewIcons(
+      {
+        services: ['site-settings', 'pay-monthly-contribution', 'manager-desk', 'quard-hasan'],
+        more: ['site-activity', 'request-loan', 'my-amanah', 'manager-contributions'],
+      },
+      { allowManagerTiles: true, allowAdminTiles: true }
+    );
+
+    expect(cleanedForAdmin).toEqual({
+      services: ['site-settings', 'manager-desk'],
+      more: ['site-activity', 'manager-contributions'],
+    });
+
+    const cleanedForManager = sanitizeMobileMemberOverviewIcons(
+      {
+        services: ['site-settings', 'manager-desk', 'pay-monthly-contribution'],
+        more: ['site-activity', 'manager-loans'],
+      },
+      { allowManagerTiles: true, allowAdminTiles: false }
+    );
+
+    expect(cleanedForManager).toEqual({
+      services: ['manager-desk', 'pay-monthly-contribution'],
+      more: ['manager-loans'],
+    });
+  });
+
+  it('resolves admin defaults independently of member coop overrides and honors personal admin customizations', () => {
+    const adminDefault = resolveMemberMobileOverviewIcons({
+      userIcons: null,
+      coopIcons: {
+        services: ['pay-monthly-contribution', 'quard-hasan'],
+        more: ['my-amanah'],
+      },
+      isManager: false,
+      isAdmin: true,
+    });
+    expect(adminDefault).toEqual(DEFAULT_MOBILE_ADMIN_OVERVIEW_ICONS);
+
+    const adminPersonal = resolveMemberMobileOverviewIcons({
+      userIcons: {
+        services: ['site-settings', 'member-registry', 'manager-desk'],
+        more: ['site-activity', 'voting'],
+      },
+      coopIcons: null,
+      isManager: false,
+      isAdmin: true,
+    });
+    expect(adminPersonal).toEqual({
+      services: ['site-settings', 'member-registry', 'manager-desk'],
+      more: ['site-activity', 'voting'],
+    });
   });
 });

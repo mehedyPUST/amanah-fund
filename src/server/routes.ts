@@ -1662,7 +1662,8 @@ apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRe
         parsedMobileIcons = null;
       } else {
         const cleanIcons = sanitizeMobileMemberOverviewIcons(body.mobileOverviewIcons, {
-          allowManagerTiles: viewer.role === 'manager',
+          allowManagerTiles: viewer.role === 'manager' || viewer.role === 'admin',
+          allowAdminTiles: viewer.role === 'admin',
         });
         if (!cleanIcons) {
           res.status(400).json({ error: 'Invalid mobile dashboard icon selection.' });

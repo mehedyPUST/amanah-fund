@@ -63,7 +63,9 @@ export type MobileMemberTileId =
   | 'member-registry'
   | 'manager-contributions'
   | 'manager-loans'
-  | 'manager-installments';
+  | 'manager-installments'
+  | 'site-settings'
+  | 'site-activity';
 
 export interface MobileMemberOverviewIconsConfig {
   services: MobileMemberTileId[];

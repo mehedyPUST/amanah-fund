@@ -5063,6 +5063,7 @@
     "moveDown": "{label} নিচে নিন",
     "resetBtn": "ডিফল্টে ফিরুন",
     "managerOnlyTag": "ম্যানেজার",
+    "adminOnlyTag": "অ্যাডমিন",
     "tiles": {
       "monthlyPulse": "মাসিক অগ্রগতি",
       "activeBorrowers": "সক্রিয় ঋণগ্রহীতা",

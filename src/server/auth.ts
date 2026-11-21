@@ -62,7 +62,8 @@ export function sanitizeUser(user: StoredUser): PublicUser {
     ...(user.mobileOverviewIcons
       ? {
           mobileOverviewIcons: sanitizeMobileMemberOverviewIcons(user.mobileOverviewIcons, {
-            allowManagerTiles: user.role === 'manager',
+            allowManagerTiles: user.role === 'manager' || user.role === 'admin',
+            allowAdminTiles: user.role === 'admin',
           }),
         }
       : {}),

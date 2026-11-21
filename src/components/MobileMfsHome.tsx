@@ -330,6 +330,7 @@ export function MobileMfsHome({
       userIcons: user.mobileOverviewIcons,
       coopIcons: overview?.config.mobileMemberOverviewIcons,
       isManager: user.role === 'manager',
+      isAdmin: user.role === 'admin',
     })
   );
   const [iconsSaving, setIconsSaving] = useState(false);
@@ -537,12 +538,14 @@ export function MobileMfsHome({
     userIcons: user.mobileOverviewIcons,
     coopIcons: config.mobileMemberOverviewIcons,
     isManager,
+    isAdmin,
   });
 
   const coopOrBuiltinDefaultIcons = resolveMemberMobileOverviewIcons({
     userIcons: null,
     coopIcons: config.mobileMemberOverviewIcons,
     isManager,
+    isAdmin,
   });
 
   const openCustomizeSheet = () => {
@@ -794,7 +797,7 @@ export function MobileMfsHome({
     },
     'manager-desk': {
       id: 'manager-desk',
-      label: tNav('managerDesk'),
+      label: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
       Icon: ClipboardCheck,
       iconBgClass:
         'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
@@ -804,7 +807,7 @@ export function MobileMfsHome({
     },
     'member-registry': {
       id: 'member-registry',
-      label: tNav('memberRegistry'),
+      label: isAdmin ? tNav('usersAndRoles') : tNav('memberRegistry'),
       Icon: UserCheck,
       iconBgClass:
         'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
@@ -851,157 +854,36 @@ export function MobileMfsHome({
           ? onOpenManagerDeskTab('installments')
           : onNavigate('manager-desk'),
     },
+    'site-settings': {
+      id: 'site-settings',
+      label: tNav('siteSettings'),
+      Icon: Settings,
+      iconBgClass:
+        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+      iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+      badge: pendingBadgeCount('site-settings'),
+      onClick: () => onNavigate('site-settings'),
+    },
+    'site-activity': {
+      id: 'site-activity',
+      label: tNav('siteActivity'),
+      Icon: Activity,
+      iconBgClass:
+        'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+      iconColorClass: 'text-violet-600 dark:text-violet-300',
+      onClick: () => onNavigate('site-activity'),
+    },
   };
 
   // 1. Primary Services (4-col bKash-style primary icons)
-  const coreActionTiles: MfsIconTile[] = isAdmin
-    ? [
-        {
-          id: 'member-registry',
-          label: tNav('usersAndRoles'),
-          Icon: UserCheck,
-          iconBgClass:
-            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
-          badge: pendingBadgeCount('member-registry'),
-          onClick: () => onNavigate('member-registry'),
-        },
-        {
-          id: 'manager-desk',
-          label: tNav('governanceDesk'),
-          Icon: ClipboardCheck,
-          iconBgClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-          iconColorClass: 'text-amber-600 dark:text-amber-300',
-          badge: pendingBadgeCount('manager-desk'),
-          onClick: () => onNavigate('manager-desk'),
-        },
-        {
-          id: 'site-settings',
-          label: tNav('siteSettings'),
-          Icon: Settings,
-          iconBgClass:
-            'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-          iconColorClass: 'text-indigo-600 dark:text-indigo-300',
-          badge: pendingBadgeCount('site-settings'),
-          onClick: () => onNavigate('site-settings'),
-        },
-        {
-          id: 'community',
-          label: tNav('community'),
-          Icon: MessageSquare,
-          iconBgClass:
-            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-          iconColorClass: 'text-teal-600 dark:text-teal-300',
-          badge: pendingBadgeCount('community'),
-          onClick: () => onNavigate('community'),
-        },
-        {
-          id: 'members',
-          label: tNav('members'),
-          Icon: Users,
-          iconBgClass:
-            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-          iconColorClass: 'text-sky-600 dark:text-sky-300',
-          onClick: () => onNavigate('members'),
-        },
-        {
-          id: 'voting',
-          label: tNav('voting'),
-          Icon: Vote,
-          iconBgClass:
-            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-          iconColorClass: 'text-violet-600 dark:text-violet-300',
-          badge: pendingBadgeCount('ballot'),
-          onClick: () => onNavigate('ballot'),
-        },
-      ]
-    : resolvedMemberIcons.services.map((id) => memberTileById[id]).filter(Boolean);
+  const coreActionTiles: MfsIconTile[] = resolvedMemberIcons.services
+    .map((id) => memberTileById[id])
+    .filter(Boolean);
 
   // 2. More Section (4-col iconic grid)
-  const functionalPageTiles: MfsIconTile[] = isAdmin
-    ? [
-        {
-          id: 'transaction-history',
-          label: tNav('transactions'),
-          Icon: History,
-          iconBgClass:
-            'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-          iconColorClass: 'text-cyan-700 dark:text-cyan-300',
-          onClick: () => onNavigate('transaction-history'),
-        },
-        {
-          id: 'statistics',
-          label: tNav('statistics'),
-          Icon: BarChart3,
-          iconBgClass:
-            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
-          onClick: () => onNavigate('statistics'),
-        },
-        {
-          id: 'balance-sheet',
-          label: tNav('balanceSheet'),
-          Icon: FileSpreadsheet,
-          iconBgClass:
-            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-          iconColorClass: 'text-teal-600 dark:text-teal-300',
-          onClick: () => onNavigate('balance-sheet'),
-        },
-        {
-          id: 'manager-cycle',
-          label: tNav('managerCycle'),
-          Icon: CalendarClock,
-          iconBgClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-          iconColorClass: 'text-amber-600 dark:text-amber-300',
-          onClick: () => onNavigate('manager-cycle'),
-        },
-        {
-          id: 'charter',
-          label: tNav('charter'),
-          Icon: ScrollText,
-          iconBgClass:
-            'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-          iconColorClass: 'text-rose-600 dark:text-rose-300',
-          onClick: openCharterPage,
-        },
-        {
-          id: 'notification',
-          label: tNav('notifications'),
-          Icon: Bell,
-          iconBgClass:
-            'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-          iconColorClass: 'text-orange-600 dark:text-orange-300',
-          badge: notifBadgeCount,
-          badgeBlink:
-            notifBadgeCount > 0
-              ? hasUnreadPriorityNotification
-                ? 'red'
-                : 'amber'
-              : undefined,
-          onClick: () => onNavigate('notification'),
-        },
-        {
-          id: 'site-activity',
-          label: tNav('siteActivity'),
-          Icon: Activity,
-          iconBgClass:
-            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-          iconColorClass: 'text-violet-600 dark:text-violet-300',
-          onClick: () => onNavigate('site-activity'),
-        },
-        {
-          id: 'my-profile',
-          label: tNav('profile'),
-          Icon: User,
-          iconBgClass:
-            'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-          iconColorClass: 'text-indigo-600 dark:text-indigo-300',
-          onClick: () => onNavigate('my-profile'),
-        },
-      ]
-    : resolvedMemberIcons.more.map((id) => memberTileById[id]).filter(Boolean);
+  const functionalPageTiles: MfsIconTile[] = resolvedMemberIcons.more
+    .map((id) => memberTileById[id])
+    .filter(Boolean);
 
   return (
     <div className="space-y-4">
@@ -1242,17 +1124,15 @@ export function MobileMfsHome({
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
             {tDash('mobile.services')}
           </h2>
-          {!isAdmin && (
-            <button
-              type="button"
-              onClick={openCustomizeSheet}
-              aria-label={tDash('mobile.customizeIconsAria')}
-              title={tDash('mobile.customizeIconsAria')}
-              className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-emerald-700 dark:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-2xs shrink-0"
-            >
-              <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={openCustomizeSheet}
+            aria-label={tDash('mobile.customizeIconsAria')}
+            title={tDash('mobile.customizeIconsAria')}
+            className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-emerald-700 dark:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-2xs shrink-0"
+          >
+            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+          </button>
         </div>
 
         {coreActionTiles.length === 0 ? (
@@ -1273,7 +1153,7 @@ export function MobileMfsHome({
       </section>
 
       {/* 5. More Section (4-col iconic grid, primarily collapsed) */}
-      {(isAdmin || functionalPageTiles.length > 0) && (() => {
+      {functionalPageTiles.length > 0 && (() => {
         const morePendingCount = functionalPageTiles.reduce(
           (sum, tile) => sum + (typeof tile.badge === 'number' && tile.badge > 0 ? tile.badge : 0),
           0
@@ -1823,9 +1703,9 @@ export function MobileMfsHome({
         </button>
       </MobileBottomSheet>
 
-      {/* Sheet 4: Customize Member Mobile Overview Icons */}
+      {/* Sheet 4: Customize Mobile Overview Icons */}
       <MobileBottomSheet
-        open={!isAdmin && activeSheet === 'customize-icons'}
+        open={activeSheet === 'customize-icons'}
         onClose={() => {
           if (!iconsSaving) setActiveSheet(null);
         }}
@@ -1869,7 +1749,8 @@ export function MobileMfsHome({
         <MobileOverviewIconEditor
           value={iconDraft}
           onChange={setIconDraft}
-          allowManagerTiles={isManager}
+          allowManagerTiles={isManager || isAdmin}
+          allowAdminTiles={isAdmin}
           onReset={() => void handleResetMemberIcons()}
           disableReset={
             iconsSaving ||

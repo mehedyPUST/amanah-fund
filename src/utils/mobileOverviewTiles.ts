@@ -23,7 +23,9 @@ export type MobileMemberTileNavKey =
   | 'notifications'
   | 'profile'
   | 'managerDesk'
-  | 'memberRegistry';
+  | 'memberRegistry'
+  | 'siteSettings'
+  | 'siteActivity';
 
 export type MobileMemberTileEditorKey =
   | 'tiles.monthlyPulse'
@@ -38,6 +40,8 @@ export interface MobileMemberTileMeta {
   navKey?: MobileMemberTileNavKey;
   editorKey?: MobileMemberTileEditorKey;
   managerOnly?: boolean;
+  adminOnly?: boolean;
+  memberOnly?: boolean;
   iconBgClass: string;
   iconColorClass: string;
 }
@@ -46,6 +50,7 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'pay-monthly-contribution',
     navKey: 'contributions',
+    memberOnly: true,
     iconBgClass:
       'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
     iconColorClass: 'text-emerald-600 dark:text-emerald-300',
@@ -53,6 +58,7 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'quard-hasan',
     navKey: 'qardHasan',
+    memberOnly: true,
     iconBgClass:
       'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
     iconColorClass: 'text-amber-600 dark:text-amber-300',
@@ -60,6 +66,7 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'request-loan',
     navKey: 'requestLoan',
+    memberOnly: true,
     iconBgClass:
       'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
     iconColorClass: 'text-emerald-700 dark:text-emerald-300',
@@ -67,6 +74,7 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'my-amanah',
     navKey: 'myAmanah',
+    memberOnly: true,
     iconBgClass:
       'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
     iconColorClass: 'text-teal-700 dark:text-teal-300',
@@ -230,6 +238,22 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
       'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
     iconColorClass: 'text-rose-700 dark:text-rose-300',
   },
+  {
+    id: 'site-settings',
+    navKey: 'siteSettings',
+    adminOnly: true,
+    iconBgClass:
+      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+    iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+  },
+  {
+    id: 'site-activity',
+    navKey: 'siteActivity',
+    adminOnly: true,
+    iconBgClass:
+      'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+    iconColorClass: 'text-violet-600 dark:text-violet-300',
+  },
 ] as const;
 
 export const MOBILE_MEMBER_TILE_MAP: Record<MobileMemberTileId, MobileMemberTileMeta> =
@@ -242,7 +266,17 @@ const ALL_VALID_IDS = new Set<MobileMemberTileId>(
 );
 
 const NON_MANAGER_VALID_IDS = new Set<MobileMemberTileId>(
-  MOBILE_MEMBER_TILE_CATALOG.filter((item) => !item.managerOnly).map((item) => item.id)
+  MOBILE_MEMBER_TILE_CATALOG.filter((item) => !item.managerOnly && !item.adminOnly).map(
+    (item) => item.id
+  )
+);
+
+const MANAGER_VALID_IDS = new Set<MobileMemberTileId>(
+  MOBILE_MEMBER_TILE_CATALOG.filter((item) => !item.adminOnly).map((item) => item.id)
+);
+
+const ADMIN_VALID_IDS = new Set<MobileMemberTileId>(
+  MOBILE_MEMBER_TILE_CATALOG.filter((item) => !item.memberOnly).map((item) => item.id)
 );
 
 export const DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS: MobileMemberOverviewIconsConfig = {
@@ -257,6 +291,27 @@ export const DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS: MobileMemberOverviewIconsConf
   more: ['statistics', 'manager-cycle', 'voting', 'charter'],
 };
 
+export const DEFAULT_MOBILE_ADMIN_OVERVIEW_ICONS: MobileMemberOverviewIconsConfig = {
+  services: [
+    'member-registry',
+    'manager-desk',
+    'site-settings',
+    'community',
+    'members',
+    'voting',
+  ],
+  more: [
+    'transaction-history',
+    'statistics',
+    'balance-sheet',
+    'manager-cycle',
+    'charter',
+    'notification',
+    'site-activity',
+    'my-profile',
+  ],
+};
+
 const MANAGER_EXTRA_TILES: readonly MobileMemberTileId[] = [
   'manager-desk',
   'member-registry',
@@ -264,7 +319,7 @@ const MANAGER_EXTRA_TILES: readonly MobileMemberTileId[] = [
 
 export function sanitizeMobileMemberOverviewIcons(
   raw: unknown,
-  options?: { allowManagerTiles?: boolean }
+  options?: { allowManagerTiles?: boolean; allowAdminTiles?: boolean }
 ): MobileMemberOverviewIconsConfig | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return null;
@@ -274,7 +329,12 @@ export function sanitizeMobileMemberOverviewIcons(
     return null;
   }
 
-  const allowed = options?.allowManagerTiles ? ALL_VALID_IDS : NON_MANAGER_VALID_IDS;
+  const allowed = options?.allowAdminTiles
+    ? ADMIN_VALID_IDS
+    : options?.allowManagerTiles
+      ? MANAGER_VALID_IDS
+      : NON_MANAGER_VALID_IDS;
+
   const seen = new Set<MobileMemberTileId>();
 
   const pickValid = (arr: unknown[]): MobileMemberTileId[] => {
@@ -299,8 +359,24 @@ export function resolveMemberMobileOverviewIcons(params: {
   userIcons?: MobileMemberOverviewIconsConfig | null;
   coopIcons?: MobileMemberOverviewIconsConfig | null;
   isManager: boolean;
+  isAdmin?: boolean;
 }): MobileMemberOverviewIconsConfig {
-  const { userIcons, coopIcons, isManager } = params;
+  const { userIcons, coopIcons, isManager, isAdmin = false } = params;
+
+  if (isAdmin) {
+    const sanitizedAdmin = userIcons
+      ? sanitizeMobileMemberOverviewIcons(userIcons, {
+          allowManagerTiles: true,
+          allowAdminTiles: true,
+        })
+      : null;
+    const base = sanitizedAdmin ?? DEFAULT_MOBILE_ADMIN_OVERVIEW_ICONS;
+    return {
+      services: [...base.services],
+      more: [...base.more],
+    };
+  }
+
   const sanitizedUser = userIcons
     ? sanitizeMobileMemberOverviewIcons(userIcons, { allowManagerTiles: isManager })
     : null;
@@ -326,16 +402,40 @@ export function resolveMemberMobileOverviewIcons(params: {
   return { services, more };
 }
 
+function sanitizeAnyValidMobileIcons(
+  raw: unknown
+): MobileMemberOverviewIconsConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return null;
+  }
+  const obj = raw as { services?: unknown; more?: unknown };
+  if (!Array.isArray(obj.services) || !Array.isArray(obj.more)) {
+    return null;
+  }
+  const seen = new Set<MobileMemberTileId>();
+  const pickValid = (arr: unknown[]): MobileMemberTileId[] => {
+    const out: MobileMemberTileId[] = [];
+    for (const item of arr) {
+      if (typeof item !== 'string') continue;
+      const id = item.trim() as MobileMemberTileId;
+      if (!ALL_VALID_IDS.has(id) || seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+    }
+    return out;
+  };
+  return {
+    services: pickValid(obj.services),
+    more: pickValid(obj.more),
+  };
+}
+
 export function areMobileOverviewConfigsEqual(
   a?: MobileMemberOverviewIconsConfig | null,
   b?: MobileMemberOverviewIconsConfig | null
 ): boolean {
-  const normA =
-    sanitizeMobileMemberOverviewIcons(a, { allowManagerTiles: true }) ??
-    DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
-  const normB =
-    sanitizeMobileMemberOverviewIcons(b, { allowManagerTiles: true }) ??
-    DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
+  const normA = sanitizeAnyValidMobileIcons(a) ?? DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
+  const normB = sanitizeAnyValidMobileIcons(b) ?? DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
 
   if (normA.services.length !== normB.services.length) return false;
   if (normA.more.length !== normB.more.length) return false;
