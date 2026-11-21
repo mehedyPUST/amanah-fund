@@ -95,6 +95,7 @@ import type {
 } from '../types/coop.ts';
 import { formatDateTime, formatMoney } from '../utils/format.ts';
 import { getWorkspaceToken } from '../utils/googleWorkspace.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 import { isMobileViewport, setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { getDashboardSectionLabel } from '../utils/navigation.ts';
 import { subscribeRealtimeEvents } from '../utils/realtimeClient.ts';
@@ -300,6 +301,7 @@ export function DashboardShell() {
   }, []);
 
   const openMobileDrawer = useCallback(() => {
+    triggerHaptic('drawer');
     setMobileNavOpen(true);
     if (typeof window !== 'undefined' && !drawerHistoryPushedRef.current) {
       window.history.pushState(
@@ -312,6 +314,7 @@ export function DashboardShell() {
   }, []);
 
   const closeMobileDrawer = useCallback(() => {
+    triggerHaptic('drawer');
     setMobileNavOpen(false);
     if (typeof window !== 'undefined' && drawerHistoryPushedRef.current) {
       drawerHistoryPushedRef.current = false;
@@ -779,6 +782,7 @@ export function DashboardShell() {
         ? sectionId
         : 'fund-overview';
 
+      triggerHaptic('nav');
       setActiveSection(targetId);
       if (!preserveBillingMonth && targetId !== 'monthly-contribution') {
         setPreselectedBillingMonth(null);
@@ -1010,6 +1014,7 @@ export function DashboardShell() {
 
   async function handleSignOut() {
     if (signingOutRef.current) return;
+    triggerHaptic('warning');
     signingOutRef.current = true;
     drawerHistoryPushedRef.current = false;
     setMobileNavOpen(false);
@@ -1792,7 +1797,10 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => void handleRefreshWithAutoSync()}
+            onClick={() => {
+              triggerHaptic('selection');
+              void handleRefreshWithAutoSync();
+            }}
             disabled={dataLoading}
             title={tCommon('refreshDashboardTitle')}
             aria-label={tCommon('refreshDashboard')}
@@ -2044,6 +2052,7 @@ export function DashboardShell() {
                 <Link
                   href="/?browse=1"
                   onClick={() => {
+                    triggerHaptic('nav');
                     drawerHistoryPushedRef.current = false;
                     setMobileBrowseMode(true);
                     setMobileNavOpen(false);

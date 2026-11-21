@@ -16,6 +16,7 @@ import type {
   MobileMemberOverviewIconsConfig,
   MobileMemberTileId,
 } from '../types/coop.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 import {
   MOBILE_MEMBER_TILE_CATALOG,
   type MobileMemberTileMeta,
@@ -173,6 +174,7 @@ export function MobileOverviewIconEditor({
   }, [isFiltering, servicesIds, moreIds, hiddenIds, normalizedQuery]);
 
   const setPlacement = (id: MobileMemberTileId, target: TilePlacement) => {
+    triggerHaptic('selection');
     const nextServices = servicesIds.filter((item) => item !== id);
     const nextMore = moreIds.filter((item) => item !== id);
     if (target === 'services') {
@@ -196,6 +198,7 @@ export function MobileOverviewIconEditor({
     if (index < 0) return;
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= list.length) return;
+    triggerHaptic('selection');
     const [moved] = list.splice(index, 1);
     list.splice(nextIndex, 0, moved);
     onChange({
@@ -562,7 +565,10 @@ export function MobileOverviewIconEditor({
                   type="button"
                   role="tab"
                   aria-selected={selected}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    setActiveTab(tab.key);
+                  }}
                   className={`min-h-[36px] px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                     selected
                       ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs'

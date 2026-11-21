@@ -26,6 +26,7 @@ import type {
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import {
   MOBILE_MEMBER_TILE_MAP,
@@ -133,7 +134,10 @@ function MobileBottomSheet({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16 }}
-            onClick={onClose}
+            onClick={() => {
+              triggerHaptic('sheet');
+              onClose();
+            }}
             className="fixed inset-0 bg-slate-950/55 backdrop-blur-xs"
             aria-hidden="true"
           />
@@ -150,6 +154,7 @@ function MobileBottomSheet({
             dragElastic={{ top: 0.04, bottom: 0.5 }}
             onDragEnd={(_, info) => {
               if (info.offset.y > 85 || info.velocity.y > 420) {
+                triggerHaptic('sheet');
                 onClose();
               }
             }}
@@ -179,7 +184,10 @@ function MobileBottomSheet({
                 </div>
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={() => {
+                    triggerHaptic('sheet');
+                    onClose();
+                  }}
                   onPointerDown={(e) => e.stopPropagation()}
                   aria-label={tCommon('closeItem', { title })}
                   className="min-w-[44px] min-h-[44px] -mr-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
@@ -231,7 +239,10 @@ function MfsGridTileButton({
   return (
     <motion.button
       type="button"
-      onClick={tile.onClick}
+      onClick={() => {
+        triggerHaptic('tap');
+        tile.onClick();
+      }}
       whileTap={{ scale: 0.94, y: 1.5 }}
       transition={MFS_TAP_SPRING}
       className={`group relative ${
@@ -514,10 +525,15 @@ export function MobileMfsHome({
     isAdmin,
   });
 
+  const openSheetWithHaptic = (sheet: Exclude<MobileSheetId, null>) => {
+    triggerHaptic('sheet');
+    setActiveSheet(sheet);
+  };
+
   const openCustomizeSheet = () => {
     setIconDraft(resolvedMemberIcons);
     setIconsError(null);
-    setActiveSheet('customize-icons');
+    openSheetWithHaptic('customize-icons');
   };
 
   const handleSaveMemberIcons = async () => {
@@ -526,8 +542,10 @@ export function MobileMfsHome({
     try {
       const res = await api.updatePreferences({ mobileOverviewIcons: iconDraft });
       setUser(res.user);
+      triggerHaptic('success');
       setActiveSheet(null);
     } catch (err) {
+      triggerHaptic('error');
       setIconsError(
         err instanceof Error ? err.message : tDash('sheets.saveIconsError')
       );
@@ -538,6 +556,7 @@ export function MobileMfsHome({
 
   const handleResetMemberIcons = async () => {
     if (!user.mobileOverviewIcons) {
+      triggerHaptic('selection');
       setIconDraft(coopOrBuiltinDefaultIcons);
       return;
     }
@@ -547,8 +566,10 @@ export function MobileMfsHome({
       const res = await api.updatePreferences({ mobileOverviewIcons: null });
       setUser(res.user);
       setIconDraft(coopOrBuiltinDefaultIcons);
+      triggerHaptic('success');
       setActiveSheet(null);
     } catch (err) {
+      triggerHaptic('error');
       setIconsError(
         err instanceof Error ? err.message : tDash('sheets.saveIconsError')
       );
@@ -613,18 +634,18 @@ export function MobileMfsHome({
       badge: pendingBadgeCount('ballot'),
     }),
     'monthly-pulse': makeTile('monthly-pulse', tIconEditor('tiles.monthlyPulse'), () =>
-      setActiveSheet('pulse')
+      openSheetWithHaptic('pulse')
     ),
     'active-borrowers': makeTile(
       'active-borrowers',
       tIconEditor('tiles.activeBorrowers'),
-      () => setActiveSheet('borrowers'),
+      () => openSheetWithHaptic('borrowers'),
       { badge: treasury.activeBorrowers.length }
     ),
     'approval-queues': makeTile(
       'approval-queues',
       tIconEditor('tiles.approvalQueues'),
-      () => setActiveSheet('queues'),
+      () => openSheetWithHaptic('queues'),
       { badge: totalQueueCount }
     ),
     charter: makeTile('charter', tNav('charter'), openCharterPage),
@@ -724,7 +745,7 @@ export function MobileMfsHome({
         totalQueueCount={totalQueueCount}
         thisMonthContribPct={thisMonthContribPct}
         loanProgress={loanProgress}
-        onOpenSheet={(sheet) => setActiveSheet(sheet)}
+        onOpenSheet={(sheet) => openSheetWithHaptic(sheet)}
         onNavigate={onNavigate}
       />
 
@@ -975,7 +996,7 @@ export function MobileMfsHome({
             {totalQueueCount > 0 && (
               <button
                 type="button"
-                onClick={() => setActiveSheet('queues')}
+                onClick={() => openSheetWithHaptic('queues')}
                 className="text-[11px] font-medium text-amber-700 dark:text-amber-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
               >
                 <span>{tDash('approvalQueues')} ({totalQueueCount})</span>
@@ -983,7 +1004,7 @@ export function MobileMfsHome({
             )}
             <button
               type="button"
-              onClick={() => setActiveSheet('pulse')}
+              onClick={() => openSheetWithHaptic('pulse')}
               className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[32px] px-1"
             >
               <span>{tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}</span>
@@ -995,7 +1016,7 @@ export function MobileMfsHome({
         <div className="grid grid-cols-2 gap-2.5">
           <motion.button
             type="button"
-            onClick={() => setActiveSheet('pulse')}
+            onClick={() => openSheetWithHaptic('pulse')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
             className="min-h-[100px] p-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
@@ -1103,7 +1124,10 @@ export function MobileMfsHome({
           <section aria-label={tDash('mobile.more')} className="space-y-2">
             <button
               type="button"
-              onClick={() => setMoreExpanded((prev) => !prev)}
+              onClick={() => {
+                triggerHaptic('selection');
+                setMoreExpanded((prev) => !prev);
+              }}
               aria-expanded={moreExpanded}
               aria-controls="mfs-more-grid"
               className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.4)] hover:bg-slate-50 dark:hover:bg-slate-800/75 active:scale-[0.99] flex items-center justify-between gap-2 transition-all cursor-pointer"

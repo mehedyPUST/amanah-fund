@@ -20,6 +20,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 
 import halalCampusImg from '../assets/images/halal_investment_campus_1795279894577.jpg';
 
@@ -452,12 +453,14 @@ export function MobileDashboardBanner({
     if (slides.length <= 1) return;
     const normalized = ((nextIdx % slides.length) + slides.length) % slides.length;
     if (normalized === safeIndex) return;
+    triggerHaptic('selection');
     setActiveIndex(normalized);
     scheduleInteractionResume(3000);
   };
 
   const stepSlide = (delta: -1 | 1) => {
     if (slides.length <= 1) return;
+    triggerHaptic('selection');
     setActiveIndex((prev) => (prev + delta + slides.length) % slides.length);
     scheduleInteractionResume(3000);
   };
@@ -524,7 +527,10 @@ export function MobileDashboardBanner({
             <button
               key={slide.id}
               type="button"
-              onClick={slide.onClick}
+              onClick={() => {
+                triggerHaptic('nav');
+                slide.onClick();
+              }}
               tabIndex={isActive ? 0 : -1}
               aria-hidden={!isActive}
               aria-label={`${slide.kicker} · ${slide.title}`}

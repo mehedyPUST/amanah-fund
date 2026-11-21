@@ -16,6 +16,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import type { PublicUser } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 import {
   getMobileAutoLogoutNotice,
   getRegisteredMobileAccounts,
@@ -87,8 +88,10 @@ export function MobilePinLoginPanel({
       setAutoLogoutNotice(null);
       syncLocalAccountsWithServerUser(res.user);
       setSelectedPinAccountId(res.user.id);
+      triggerHaptic('success');
       onSuccess(res.user);
     } catch (err) {
+      triggerHaptic('error');
       const errWithCode = err as Error & { code?: string };
       if (
         errWithCode.code === 'DEVICE_NOT_REGISTERED' ||
@@ -120,6 +123,9 @@ export function MobilePinLoginPanel({
 
   function handlePinChange(rawValue: string) {
     const digits = rawValue.replace(/\D/g, '').slice(0, 4);
+    if (digits !== pin) {
+      triggerHaptic('selection');
+    }
     setPin(digits);
     if (error) setError(null);
     if (digits.length === 4 && !submitting) {
@@ -128,6 +134,7 @@ export function MobilePinLoginPanel({
   }
 
   function handleRemoveLocalAccount(target: LocalRegisteredAccount) {
+    triggerHaptic('warning');
     removeRegisteredMobileAccount(target.userId, target.deviceId);
     const remaining = getRegisteredMobileAccounts();
     setAccounts(remaining);
@@ -181,7 +188,10 @@ export function MobilePinLoginPanel({
           {accounts.length > 1 && (
             <button
               type="button"
-              onClick={() => setAccountPickerOpen((v) => !v)}
+              onClick={() => {
+                triggerHaptic('selection');
+                setAccountPickerOpen((v) => !v);
+              }}
               className="min-h-[44px] px-2 -mr-2 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >
               <span>{tAuth('pin.switchAccount')}</span>
@@ -245,6 +255,7 @@ export function MobilePinLoginPanel({
                     key={acc.userId}
                     type="button"
                     onClick={() => {
+                      triggerHaptic('selection');
                       setSelectedUserId(acc.userId);
                       setSelectedPinAccountId(acc.userId);
                       setAccountPickerOpen(false);
@@ -297,7 +308,10 @@ export function MobilePinLoginPanel({
             </label>
             <button
               type="button"
-              onClick={() => setShowPin((v) => !v)}
+              onClick={() => {
+                triggerHaptic('selection');
+                setShowPin((v) => !v);
+              }}
               aria-label={showPin ? tAuth('pin.hidePin') : tAuth('pin.showPin')}
               className="min-w-[44px] min-h-[36px] px-2 -mr-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 inline-flex items-center justify-center gap-1 text-[11px] font-medium cursor-pointer transition-colors"
             >
@@ -399,7 +413,10 @@ export function MobilePinLoginPanel({
 
       <button
         type="button"
-        onClick={onUsePassword}
+        onClick={() => {
+          triggerHaptic('selection');
+          onUsePassword();
+        }}
         className="w-full min-h-[44px] px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99] transition-all whitespace-nowrap"
       >
         <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />

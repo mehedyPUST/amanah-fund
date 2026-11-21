@@ -83,6 +83,7 @@ export function LanguageSwitcher({
             key={opt.id}
             type="button"
             aria-pressed={active}
+            data-no-haptic={active ? 'true' : undefined}
             onClick={() => {
               if (!active) setLocale(opt.id);
             }}

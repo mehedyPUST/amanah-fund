@@ -57,6 +57,7 @@ import {
   syncFcmPushSubscription,
   type IncomingForegroundPush,
 } from '../utils/fcmClient.ts';
+import { installGlobalMobileHaptics, triggerHaptic } from '../utils/haptics.ts';
 import { OfflineIndicator } from './OfflineIndicator.tsx';
 
 
@@ -137,6 +138,7 @@ export function AppProviders({
 
   useEffect(() => {
     setMotionMounted(true);
+    return installGlobalMobileHaptics();
   }, []);
 
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -358,6 +360,7 @@ export function AppProviders({
   const setLocale = useCallback((next: AppLocale) => {
     const normalized = normalizeLocale(next);
     if (normalized === localeRef.current) return;
+    triggerHaptic('selection');
     setLocaleState(normalized);
     localeRef.current = normalized;
     if (typeof window !== 'undefined') {
@@ -389,6 +392,7 @@ export function AppProviders({
   }, []);
 
   const toggleDarkMode = useCallback(() => {
+    triggerHaptic('selection');
     setDarkMode((prev) => {
       const next = !prev;
       const nextTheme: ThemePreference = next ? 'dark' : 'light';

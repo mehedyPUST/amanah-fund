@@ -21,6 +21,7 @@ import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { translateRoleLabel } from '../i18n/messages.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { queryKeys } from '../lib/queryKeys.ts';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
@@ -119,12 +120,14 @@ export function Navbar() {
         if (dx >= minDistance && Math.abs(dx) > Math.abs(dy) * horizontalRatio) {
           triggered = true;
           tracking = null;
+          triggerHaptic('drawer');
           setMobileOpen(true);
         }
       } else if (tracking === 'close') {
         if (dx <= -40 && Math.abs(dx) > Math.abs(dy) * 1.25) {
           triggered = true;
           tracking = null;
+          triggerHaptic('drawer');
           setMobileOpen(false);
         }
       }
@@ -161,6 +164,7 @@ export function Navbar() {
 
   async function handleRefreshPage() {
     if (refreshing) return;
+    triggerHaptic('selection');
     setRefreshing(true);
     try {
       await Promise.all([
@@ -179,6 +183,7 @@ export function Navbar() {
 
   async function handleSignOut() {
     if (signingOut) return;
+    triggerHaptic('warning');
     setSigningOut(true);
     try {
       setMobileBrowseMode(false);
@@ -200,7 +205,10 @@ export function Navbar() {
         {/* Mobile Left Hamburger Toggle */}
         <button
           type="button"
-          onClick={() => setMobileOpen((o) => !o)}
+          onClick={() => {
+            triggerHaptic('drawer');
+            setMobileOpen((o) => !o);
+          }}
           aria-label={tCommon('toggleNavigationMenu')}
           aria-expanded={mobileOpen}
           className="md:hidden order-1 w-10 h-10 rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0 shadow-2xs"
@@ -393,7 +401,10 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => {
+                      triggerHaptic('nav');
+                      setMobileOpen(false);
+                    }}
                     className={`flex items-center w-full min-h-[44px] text-left px-3 py-2 rounded-xl text-[14px] font-medium transition-colors truncate ${
                       active
                         ? 'bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
@@ -432,6 +443,7 @@ export function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => {
+                      triggerHaptic('nav');
                       setMobileBrowseMode(false);
                       setMobileOpen(false);
                     }}
@@ -454,14 +466,20 @@ export function Navbar() {
                 <>
                   <Link
                     href="/login"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => {
+                      triggerHaptic('nav');
+                      setMobileOpen(false);
+                    }}
                     className="w-full min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[13.5px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-start"
                   >
                     {tNav('signIn')}
                   </Link>
                   <Link
                     href="/signup"
-                    onClick={() => setMobileOpen(false)}
+                    onClick={() => {
+                      triggerHaptic('nav');
+                      setMobileOpen(false);
+                    }}
                     className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[13.5px] font-semibold shadow-xs flex items-center justify-start gap-2"
                   >
                     <span className="truncate">{tNav('joinAmanah')}</span>

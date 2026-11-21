@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
+import { triggerHaptic } from '../utils/haptics.ts';
 import { useCoopSession } from './AppProviders.tsx';
 
 interface PWAUpdateButtonProps {
@@ -77,11 +78,14 @@ export function PWAUpdateButton({
 
   async function handlePrimaryClick() {
     if (updateAvailable) {
+      triggerHaptic('selection');
       await applyUpdate();
       return;
     }
+    triggerHaptic('tap');
     setPanelOpen(true);
     await checkForUpdates(true);
+    triggerHaptic('success');
   }
 
   const hasCustomDisplay = /\b(hidden|flex|inline-flex|block|inline-block|grid)\b/.test(className);
@@ -209,7 +213,11 @@ export function PWAUpdateButton({
             <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <button
                 type="button"
-                onClick={() => void checkForUpdates(true)}
+                onClick={async () => {
+                  triggerHaptic('tap');
+                  await checkForUpdates(true);
+                  triggerHaptic('success');
+                }}
                 disabled={checkingUpdate || applyingUpdate}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
               >
@@ -222,7 +230,10 @@ export function PWAUpdateButton({
               {updateAvailable && (
                 <button
                   type="button"
-                  onClick={() => void applyUpdate()}
+                  onClick={() => {
+                    triggerHaptic('selection');
+                    void applyUpdate();
+                  }}
                   disabled={applyingUpdate}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-700/20 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
                 >

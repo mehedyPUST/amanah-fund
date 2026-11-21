@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { triggerHaptic } from '../utils/haptics.ts';
 
 const PULL_THRESHOLD = 62;
 const MAX_PULL = 96;
@@ -73,12 +74,14 @@ export function usePullToRefresh({
 
     let active = false;
     let lockedPull = false;
+    let reachedThreshold = false;
     let startX = 0;
     let startY = 0;
 
     const resetGesture = () => {
       active = false;
       lockedPull = false;
+      reachedThreshold = false;
       setIsPulling(false);
       if (!isRefreshingRef.current) {
         pullDistanceRef.current = 0;
@@ -98,6 +101,7 @@ export function usePullToRefresh({
       startY = touch.clientY;
       active = true;
       lockedPull = false;
+      reachedThreshold = false;
     };
 
     const onTouchMove = (e: TouchEvent) => {
@@ -134,6 +138,12 @@ export function usePullToRefresh({
       }
 
       const damped = MAX_PULL * (1 - Math.exp(-Math.max(0, dy - 8) / 145));
+      const nowReady = damped >= PULL_THRESHOLD;
+      if (nowReady && !reachedThreshold) {
+        triggerHaptic('pullReady');
+      }
+      reachedThreshold = nowReady;
+
       if (Math.abs(damped - pullDistanceRef.current) >= 0.5) {
         pullDistanceRef.current = damped;
         setPullDistance(damped);
@@ -146,24 +156,32 @@ export function usePullToRefresh({
       const distance = pullDistanceRef.current;
       active = false;
       lockedPull = false;
+      reachedThreshold = false;
       setIsPulling(false);
 
       if (!wasPulling) return;
 
       if (distance >= PULL_THRESHOLD && !isRefreshingRef.current) {
+        triggerHaptic('selection');
         isRefreshingRef.current = true;
         setIsRefreshing(true);
         pullDistanceRef.current = REFRESH_REST_HEIGHT;
         setPullDistance(REFRESH_REST_HEIGHT);
 
+        let refreshSucceeded = true;
         void Promise.all([
-          Promise.resolve(onRefreshRef.current()).catch(() => undefined),
+          Promise.resolve(onRefreshRef.current()).catch(() => {
+            refreshSucceeded = false;
+          }),
           new Promise<void>((resolve) => window.setTimeout(resolve, MIN_SPIN_MS)),
         ]).finally(() => {
           isRefreshingRef.current = false;
           setIsRefreshing(false);
           pullDistanceRef.current = 0;
           setPullDistance(0);
+          if (refreshSucceeded) {
+            triggerHaptic('success');
+          }
         });
       } else {
         pullDistanceRef.current = 0;

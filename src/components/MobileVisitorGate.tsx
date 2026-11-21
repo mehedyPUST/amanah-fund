@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { api } from '../utils/api.ts';
+import { triggerHaptic } from '../utils/haptics.ts';
 import {
   getMobileAutoLogoutNotice,
   getRegisteredMobileAccounts,
@@ -133,6 +134,7 @@ export function MobileVisitorGate() {
     try {
       const res = await api.login(email.trim(), password);
       if (!('user' in res)) {
+        triggerHaptic('warning');
         setActivationChallenge({
           activationToken: res.activationToken,
           applicant: res.applicant,
@@ -144,6 +146,7 @@ export function MobileVisitorGate() {
         setActivationError(null);
         return;
       }
+      triggerHaptic('success');
       setMobileAutoLogoutNotice(null);
       setAutoLogoutNotice(null);
       setSelectedPinAccountId(res.user.id);
@@ -151,6 +154,7 @@ export function MobileVisitorGate() {
       setBrowseMode(false);
       setUser(res.user);
     } catch (err) {
+      triggerHaptic('error');
       setError(
         err instanceof Error ? err.message : tAuth('mobileGate.signInFailed')
       );
@@ -166,10 +170,12 @@ export function MobileVisitorGate() {
     const trimmedCode = activationMemberId.trim().toUpperCase();
     const cleanedOtp = activationOtp.replace(/\D/g, '').trim();
     if (!trimmedCode || !/^\d{6}$/.test(cleanedOtp)) {
+      triggerHaptic('error');
       setActivationError(tAuth('activation.errorBothRequired'));
       return;
     }
     if (!activationAgreed) {
+      triggerHaptic('error');
       setActivationError(tAuth('activation.errorAgreementRequired'));
       return;
     }
@@ -181,6 +187,7 @@ export function MobileVisitorGate() {
         otp: cleanedOtp,
         agreedToTerms: true,
       });
+      triggerHaptic('success');
       setMobileAutoLogoutNotice(null);
       setAutoLogoutNotice(null);
       setSelectedPinAccountId(res.user.id);
@@ -207,6 +214,7 @@ export function MobileVisitorGate() {
       });
       setUser(res.user);
     } catch (err) {
+      triggerHaptic('error');
       setActivationError(err instanceof Error ? err.message : tAuth('signInPage.activationFailed'));
     } finally {
       setActivating(false);
@@ -509,7 +517,10 @@ export function MobileVisitorGate() {
                           />
                           <button
                             type="button"
-                            onClick={() => setShowPassword((v) => !v)}
+                            onClick={() => {
+                              triggerHaptic('selection');
+                              setShowPassword((v) => !v);
+                            }}
                             aria-label={
                               showPassword
                                 ? tAuth('mobileGate.hidePassword')
@@ -540,6 +551,7 @@ export function MobileVisitorGate() {
                       <button
                         type="button"
                         onClick={() => {
+                          triggerHaptic('selection');
                           setError(null);
                           setUsePasswordMode(false);
                         }}
@@ -563,6 +575,7 @@ export function MobileVisitorGate() {
                   <div className="space-y-2">
                     <Link
                       href="/rules"
+                      onClick={() => triggerHaptic('nav')}
                       className="w-full min-h-[46px] px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm font-medium flex items-center justify-between gap-3 active:scale-[0.99] transition-all"
                     >
                       <span className="inline-flex items-center gap-2.5">
@@ -577,6 +590,7 @@ export function MobileVisitorGate() {
 
                     <Link
                       href="/signup"
+                      onClick={() => triggerHaptic('nav')}
                       className="w-full min-h-[46px] px-4 py-2.5 rounded-2xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/70 dark:bg-emerald-950/35 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/55 text-emerald-800 dark:text-emerald-300 text-sm font-semibold flex items-center justify-between gap-3 active:scale-[0.99] transition-all"
                     >
                       <span className="inline-flex items-center gap-2.5">
