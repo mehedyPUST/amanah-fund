@@ -21,6 +21,7 @@ import type {
   NotificationPreferences,
   PasswordResetRequest,
   ProfileChangeRequest,
+  ThemePreference,
   UsedActivationOtpRecord,
   UserRole,
   UserStatus,
@@ -72,6 +73,7 @@ export interface StoredUser {
   registeredDevices?: StoredRegisteredDevice[];
   notificationPreferences?: NotificationPreferences;
   mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+  themePreference?: ThemePreference;
   encryptedRegistrationDetails?: EncryptedEnvelope;
   encryptedActivationOtp?: EncryptedEnvelope;
   activationMeta?: StoredMemberActivationMeta;

@@ -26,7 +26,7 @@ import {
   type AppLocale,
 } from '../i18n/config.ts';
 import { getMessagesForLocale } from '../i18n/messages.ts';
-import type { PublicUser } from '../types/coop.ts';
+import type { PublicUser, ThemePreference } from '../types/coop.ts';
 import {
   api,
   AUTH_BROADCAST_CHANNEL,
@@ -109,11 +109,13 @@ export function AppProviders({
   initialLocale = defaultLocale,
   initialUser = null,
   initialVisited = false,
+  initialTheme = null,
 }: {
   children: ReactNode;
   initialLocale?: AppLocale;
   initialUser?: PublicUser | null;
   initialVisited?: boolean;
+  initialTheme?: ThemePreference | null;
 }) {
   const queryClient = getQueryClient();
   const [user, setUserState] = useState<PublicUser | null>(initialUser);
@@ -121,7 +123,7 @@ export function AppProviders({
   userRef.current = user;
   const [authChecking, setAuthChecking] = useState<boolean>(() => !initialUser);
   const [hasVisitedBefore, setHasVisitedBefore] = useState<boolean>(initialVisited);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState<boolean>(() => initialTheme === 'dark');
   const [locale, setLocaleState] = useState<AppLocale>(() => normalizeLocale(initialLocale));
   const localeRef = useRef<AppLocale>(locale);
   localeRef.current = locale;
@@ -283,13 +285,59 @@ export function AppProviders({
   }, []);
 
   useEffect(() => {
-    const saved = window.localStorage.getItem('amanah_theme');
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem('amanah_theme');
+    } catch {
+      saved = null;
+    }
+    const resolvedTheme: ThemePreference | null =
+      saved === 'dark' || saved === 'light'
+        ? saved
+        : initialTheme === 'dark' || initialTheme === 'light'
+          ? initialTheme
+          : userRef.current?.themePreference === 'dark' ||
+              userRef.current?.themePreference === 'light'
+            ? userRef.current.themePreference
+            : null;
     const prefersDark =
-      saved === 'dark' ||
-      (!saved && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
+      resolvedTheme === 'dark' ||
+      (!resolvedTheme && window.matchMedia?.('(prefers-color-scheme: dark)').matches);
     setDarkMode(prefersDark);
     document.documentElement.classList.toggle('dark', prefersDark);
-  }, []);
+
+    const handleThemeStorage = (event: StorageEvent) => {
+      if (event.key !== 'amanah_theme') return;
+      if (event.newValue === 'dark' || event.newValue === 'light') {
+        const nextDark = event.newValue === 'dark';
+        setDarkMode(nextDark);
+        document.documentElement.classList.toggle('dark', nextDark);
+      }
+    };
+    window.addEventListener('storage', handleThemeStorage);
+    return () => window.removeEventListener('storage', handleThemeStorage);
+  }, [initialTheme]);
+
+  useEffect(() => {
+    const serverPref = user?.themePreference;
+    if (serverPref !== 'light' && serverPref !== 'dark') return;
+    let saved: string | null = null;
+    try {
+      saved = window.localStorage.getItem('amanah_theme');
+    } catch {
+      saved = null;
+    }
+    if (saved === 'light' || saved === 'dark') return;
+    const isDark = serverPref === 'dark';
+    setDarkMode(isDark);
+    document.documentElement.classList.toggle('dark', isDark);
+    try {
+      window.localStorage.setItem('amanah_theme', serverPref);
+    } catch {
+      // ignore storage errors
+    }
+    document.cookie = `amanah_theme=${serverPref}; path=/; max-age=31536000; SameSite=Lax`;
+  }, [user?.id, user?.themePreference]);
 
   useEffect(() => {
     const savedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -338,11 +386,41 @@ export function AppProviders({
   const toggleDarkMode = useCallback(() => {
     setDarkMode((prev) => {
       const next = !prev;
+      const nextTheme: ThemePreference = next ? 'dark' : 'light';
       document.documentElement.classList.toggle('dark', next);
-      window.localStorage.setItem('amanah_theme', next ? 'dark' : 'light');
+      try {
+        window.localStorage.setItem('amanah_theme', nextTheme);
+      } catch {
+        // ignore storage errors
+      }
+      document.cookie = `amanah_theme=${nextTheme}; path=/; max-age=31536000; SameSite=Lax`;
+
+      if (userRef.current) {
+        setUserState((current) =>
+          current ? { ...current, themePreference: nextTheme } : current
+        );
+        queryClient.setQueryData<{ user: PublicUser } | null>(queryKeys.auth.me(), (cached) =>
+          cached?.user
+            ? { user: { ...cached.user, themePreference: nextTheme } }
+            : cached
+        );
+        void api
+          .updatePreferences({ themePreference: nextTheme })
+          .then((res) => {
+            setUserState((current) =>
+              current?.id === res.user.id
+                ? { ...current, themePreference: res.user.themePreference }
+                : current
+            );
+            queryClient.setQueryData(queryKeys.auth.me(), { user: res.user });
+          })
+          .catch(() => {
+            // Local storage + cookie already preserved this selection
+          });
+      }
       return next;
     });
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     const unsub = subscribeWorkspaceAuth((info) => {
@@ -1032,8 +1110,8 @@ export function AppProviders({
         <CoopSessionContext.Provider value={sessionContextValue}>
           <MotionConfig reducedMotion="user" transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}>
             <SkeletonTheme
-              baseColor={darkMode ? '#1e293b' : '#e2e8f0'}
-              highlightColor={darkMode ? '#334155' : '#f8fafc'}
+              baseColor={darkMode ? '#0B2A37' : '#d1ddd8'}
+              highlightColor={darkMode ? '#1A3C4B' : '#edf4f1'}
               borderRadius={8}
             >
               {children}

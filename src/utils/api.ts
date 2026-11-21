@@ -611,6 +611,7 @@ export const api = {
   updatePreferences: (
     prefs: Partial<NotificationPreferences> & {
       mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+      themePreference?: 'light' | 'dark';
     }
   ) =>
     apiRequest<{ user: PublicUser }>('/api/profile/preferences', {

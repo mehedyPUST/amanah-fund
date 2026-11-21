@@ -67,6 +67,9 @@ export function sanitizeUser(user: StoredUser): PublicUser {
           }),
         }
       : {}),
+    ...(user.themePreference === 'light' || user.themePreference === 'dark'
+      ? { themePreference: user.themePreference }
+      : {}),
   };
 }
 

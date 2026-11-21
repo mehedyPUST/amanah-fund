@@ -151,6 +151,8 @@ export interface RegisteredDeviceSummary {
   lastUsedAt: string;
 }
 
+export type ThemePreference = 'light' | 'dark';
+
 export interface PublicUser {
   id: string;
   name: string;
@@ -167,6 +169,7 @@ export interface PublicUser {
   registeredDevices?: RegisteredDeviceSummary[];
   notificationPreferences?: NotificationPreferences;
   mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+  themePreference?: ThemePreference;
   registrationDetails?: UserRegistrationDetails;
 }
 

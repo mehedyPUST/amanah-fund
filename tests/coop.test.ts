@@ -2775,6 +2775,20 @@ describe('Google Sheets Blueprint & Spreadsheet ID parsing', () => {
   });
 });
 
+describe('Theme preference persistence sanitization', () => {
+  it('preserves valid light/dark themePreference and omits invalid values', () => {
+    const state = makeBaseState();
+    const baseUser = state.users[0];
+
+    expect(sanitizeUser({ ...baseUser, themePreference: 'dark' }).themePreference).toBe('dark');
+    expect(sanitizeUser({ ...baseUser, themePreference: 'light' }).themePreference).toBe('light');
+    expect(sanitizeUser({ ...baseUser }).themePreference).toBeUndefined();
+    expect(
+      sanitizeUser({ ...baseUser, themePreference: 'sepia' as unknown as 'dark' }).themePreference
+    ).toBeUndefined();
+  });
+});
+
 
 
 

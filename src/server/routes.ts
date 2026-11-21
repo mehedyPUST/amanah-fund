@@ -1650,7 +1650,18 @@ apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRe
     const viewer = req.authUser!;
     const body = (req.body || {}) as Partial<NotificationPreferences> & {
       mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+      themePreference?: 'light' | 'dark';
     };
+
+    const hasThemeField = Object.prototype.hasOwnProperty.call(body, 'themePreference');
+    let parsedThemePreference: 'light' | 'dark' | undefined;
+    if (hasThemeField) {
+      if (body.themePreference !== 'light' && body.themePreference !== 'dark') {
+        res.status(400).json({ error: 'Invalid theme preference.' });
+        return;
+      }
+      parsedThemePreference = body.themePreference;
+    }
 
     const hasMobileIconsField = Object.prototype.hasOwnProperty.call(
       body,
@@ -1698,6 +1709,9 @@ apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRe
         } else if (parsedMobileIcons) {
           target.mobileOverviewIcons = parsedMobileIcons;
         }
+      }
+      if (parsedThemePreference) {
+        target.themePreference = parsedThemePreference;
       }
       updatedUser = sanitizeUser(target);
       return draft;

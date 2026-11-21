@@ -80,18 +80,26 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   ]);
   const locale = normalizeLocale(rawLocale);
   const hasVisitedBefore = cookieStore.get('amanah_visited')?.value === '1';
+  const themeCookie = cookieStore.get('amanah_theme')?.value;
+  const initialTheme =
+    themeCookie === 'dark' || themeCookie === 'light'
+      ? themeCookie
+      : initialUser?.themePreference === 'dark' || initialUser?.themePreference === 'light'
+        ? initialUser.themePreference
+        : null;
 
   return (
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${displayHeading.variable} ${bodySans.variable} ${jetbrainsMono.variable} ${anekBangla.variable}`}
+      className={`${displayHeading.variable} ${bodySans.variable} ${jetbrainsMono.variable} ${anekBangla.variable}${initialTheme === 'dark' ? ' dark' : ''}`}
     >
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
         <AppProviders
           initialLocale={locale}
           initialUser={initialUser}
           initialVisited={hasVisitedBefore}
+          initialTheme={initialTheme}
         >
           {children}
         </AppProviders>

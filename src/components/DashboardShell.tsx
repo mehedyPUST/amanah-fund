@@ -1815,14 +1815,15 @@ export function DashboardShell() {
           <button
             type="button"
             onClick={toggleDarkMode}
+            aria-pressed={darkMode}
             title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 shadow-2xs transition-colors items-center justify-center cursor-pointer shrink-0"
+            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white/85 dark:bg-[#032330]/85 text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 shadow-2xs transition-colors items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
-              <Sun className="w-4 h-4 text-amber-500" aria-hidden="true" />
+              <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
             ) : (
-              <Moon className="w-4 h-4 text-slate-600" aria-hidden="true" />
+              <Moon className="w-4 h-4 text-emerald-700" aria-hidden="true" />
             )}
           </button>
 
@@ -1889,6 +1890,20 @@ export function DashboardShell() {
               </button>
               <button
                 type="button"
+                onClick={toggleDarkMode}
+                aria-pressed={darkMode}
+                title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                className="w-full h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#032330]/90 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 text-slate-600 dark:text-slate-200 transition-colors flex items-center justify-center cursor-pointer"
+              >
+                {darkMode ? (
+                  <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
+                ) : (
+                  <Moon className="w-4 h-4 text-emerald-700" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={() => void handleSignOut()}
                 title={tNav('signOut')}
                 aria-label={tNav('signOut')}
@@ -1928,6 +1943,42 @@ export function DashboardShell() {
                     {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span>
                   </div>
                 </div>
+              </button>
+              <button
+                type="button"
+                onClick={toggleDarkMode}
+                role="switch"
+                aria-checked={darkMode}
+                title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+                className="w-full py-2 px-3 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#032330]/90 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 flex items-center justify-between gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  {darkMode ? (
+                    <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <Moon className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
+                  )}
+                  <span className="truncate">
+                    {darkMode ? tCommon('lightMode') : tCommon('darkMode')}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
+                    darkMode
+                      ? 'bg-[#00ED64]/25 border border-[#00ED64]/50'
+                      : 'bg-slate-200 border border-slate-300/80'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-2.5 w-2.5 rounded-full transition-transform duration-150 ${
+                      darkMode
+                        ? 'translate-x-3.5 bg-[#00ED64]'
+                        : 'translate-x-0.5 bg-slate-500'
+                    }`}
+                  />
+                </span>
               </button>
               <button
                 type="button"
@@ -2055,14 +2106,15 @@ export function DashboardShell() {
                   <button
                     type="button"
                     onClick={toggleDarkMode}
+                    aria-pressed={darkMode}
                     title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                     aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/85 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/80 transition-colors text-[12.5px] font-medium cursor-pointer whitespace-nowrap"
+                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200/80 dark:border-[#163948] bg-white/85 dark:bg-[#032330]/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 transition-colors text-[12.5px] font-medium cursor-pointer whitespace-nowrap"
                   >
                     {darkMode ? (
                       <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
                     ) : (
-                      <Moon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300 shrink-0" aria-hidden="true" />
+                      <Moon className="w-3.5 h-3.5 text-emerald-700 dark:text-[#00ED64] shrink-0" aria-hidden="true" />
                     )}
                     <span className="truncate">{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
                   </button>
