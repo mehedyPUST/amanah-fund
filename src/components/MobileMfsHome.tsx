@@ -375,8 +375,8 @@ export function MobileMfsHome({
             </div>
           ))}
         </div>
-        <div className="mfs-icon-grid-4">
-          {Array.from({ length: 4 }).map((_, idx) => (
+        <div className="mfs-icon-grid-3">
+          {Array.from({ length: 3 }).map((_, idx) => (
             <div key={idx} className="mfs-tile-compact flex flex-col items-center justify-start gap-1.5">
               <Skeleton width={52} height={52} borderRadius={12} />
               <Skeleton width={44} height={10} borderRadius={4} />
@@ -1237,14 +1237,14 @@ export function MobileMfsHome({
         )}
       </section>
 
-      {/* 5. More Section (4-col iconic grid) */}
+      {/* 5. More Section (3-col iconic grid) */}
       {(isAdmin || functionalPageTiles.length > 0) && (
         <section aria-label={tDash('mobile.more')} className="space-y-2">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
             {isAdmin ? tDash('mobile.governanceLedgerPages') : tDash('mobile.more')}
           </h2>
 
-          <div className="mfs-icon-grid-4">
+          <div className="mfs-icon-grid-3">
             {functionalPageTiles.map((tile) => (
               <MfsGridTileButton key={tile.id} tile={tile} compact singleLine />
             ))}
