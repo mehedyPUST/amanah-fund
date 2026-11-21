@@ -281,10 +281,16 @@
       "expiresAt": "2026-11-28T05:26:13.000Z"
     },
     {
-      "id": "sha:a23446dde657daf04700b24f1fa00a4dcae7e6b8",
+      "id": "jti:0b6c266c-60ae-4af0-86a1-766109dd258f",
       "userId": "u-2",
-      "revokedAt": "2026-11-21T05:26:13.136Z",
-      "expiresAt": "2026-11-21T05:28:13.000Z"
+      "revokedAt": "2026-11-21T05:31:10.328Z",
+      "expiresAt": "2026-11-28T05:31:10.000Z"
+    },
+    {
+      "id": "sha:1b0d038a85eb3a9bd8ddfdb1973df0db59897526",
+      "userId": "u-2",
+      "revokedAt": "2026-11-21T05:31:10.328Z",
+      "expiresAt": "2026-11-21T05:33:10.000Z"
     }
   ],
   "fcmTokens": []

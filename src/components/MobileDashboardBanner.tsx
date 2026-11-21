@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   CreditCard,
+  HandCoins,
   ShieldCheck,
   TrendingUp,
   Vote,
@@ -20,6 +21,9 @@ import type {
 } from '../types/coop.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 
+const INVESTMENT_IMAGE_URL =
+  'https://i.ibb.co.com/21vdb554/coop-halal-investment.jpg';
+
 type BannerHue = 'emerald' | 'teal' | 'amber' | 'violet' | 'sky';
 
 interface BannerSlide {
@@ -31,8 +35,10 @@ interface BannerSlide {
   isNumericTitle?: boolean;
   titleSuffix?: string;
   subtitle: string;
+  isProseSubtitle?: boolean;
   visual:
     | { kind: 'brand' }
+    | { kind: 'investment' }
     | { kind: 'ring'; pct: number; strokeClass: string; textClass: string }
     | { kind: 'icon'; Icon: typeof Vote; boxClass: string; iconClass: string };
   onClick: () => void;
@@ -153,11 +159,14 @@ export function MobileDashboardBanner({
 }: MobileDashboardBannerProps) {
   const tCommon = useTranslations('Common');
   const tDash = useTranslations('Dashboard');
+  const tLife = useTranslations('Public.hero.lifecycle');
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
   const [mouseHovered, setMouseHovered] = useState(false);
   const [touchInteracting, setTouchInteracting] = useState(false);
+  const [bannerImgFailed, setBannerImgFailed] = useState(false);
+  const [investmentImgFailed, setInvestmentImgFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -204,6 +213,17 @@ export function MobileDashboardBanner({
         title: config.fundName,
         subtitle: `${tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })} · ${tCommon('daysRemaining', { days: daysUntilMaturity })}`,
         visual: { kind: 'brand' },
+        onClick: () => onOpenSheet('pulse'),
+      },
+      {
+        id: 'halal-investment',
+        hue: 'teal',
+        kicker: tLife('stage2Index'),
+        kickerClass: 'text-teal-700 dark:text-teal-400',
+        title: tLife('stage2Title'),
+        subtitle: config.halalInvestmentThesis || tLife('caption'),
+        isProseSubtitle: true,
+        visual: { kind: 'investment' },
         onClick: () => onOpenSheet('pulse'),
       },
       {
@@ -378,6 +398,7 @@ export function MobileDashboardBanner({
   }, [
     ccy,
     config.fundName,
+    config.halalInvestmentThesis,
     config.maturityDate,
     daysUntilMaturity,
     isAdmin,
@@ -392,6 +413,7 @@ export function MobileDashboardBanner({
     phase,
     tCommon,
     tDash,
+    tLife,
     thisMonthContribPct,
     totalQueueCount,
     treasury.activeBorrowers.length,
@@ -499,48 +521,48 @@ export function MobileDashboardBanner({
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           whileTap={{ scale: 0.992 }}
           aria-label={`${currentSlide.kicker} · ${currentSlide.title}`}
-          className={`relative z-10 w-full h-full px-3.5 sm:px-4 text-left cursor-pointer ${
-            currentSlide.visual.kind === 'brand'
-              ? 'pt-2.5 pb-6 sm:pt-3 sm:pb-6 flex flex-col justify-center'
-              : 'pt-2.5 pb-6 sm:pt-3 sm:pb-6 flex items-center justify-between gap-2.5'
-          }`}
+          className="relative z-10 w-full h-full px-3.5 pt-2 pb-5 sm:px-4 sm:pt-2.5 sm:pb-6 flex items-center justify-between gap-2 text-left cursor-pointer"
         >
           {currentSlide.visual.kind === 'brand' ? (
-            <div className="w-full min-w-0 flex flex-col gap-1.5">
-              <div className="w-full flex items-start justify-between gap-2">
-                <h2 className="flex-1 min-w-0 text-[14px] sm:text-[15.5px] font-bold tracking-tight text-slate-900 dark:text-white leading-snug line-clamp-2">
-                  {currentSlide.title}
-                </h2>
-                <ChevronRight
-                  className={`w-4 h-4 shrink-0 mt-0.5 ${CHEVRON_CLASS[currentSlide.hue]}`}
-                  aria-hidden="true"
-                />
-              </div>
-
-              <div
-                aria-hidden="true"
-                className="w-full h-px bg-emerald-500/20 dark:bg-emerald-400/20"
-              />
-
-              <div className="w-full min-w-0 space-y-0.5">
-                <div
-                  className={`text-[10.5px] sm:text-[11px] font-semibold leading-tight truncate ${currentSlide.kickerClass}`}
-                >
+            <>
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 leading-snug line-clamp-1">
                   {currentSlide.kicker}
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] sm:text-[10.5px] font-mono tabular-nums leading-tight truncate">
-                  <span className="text-slate-600 dark:text-slate-300 truncate">
+                <h2 className="text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
+                  {currentSlide.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] font-mono tabular-nums leading-snug">
+                  <span className="text-slate-600 dark:text-slate-300">
                     {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
                   </span>
-                  <span aria-hidden="true" className="text-slate-400 dark:text-slate-600 shrink-0">
+                  <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
                     ·
                   </span>
-                  <span className="font-semibold text-amber-700 dark:text-amber-400 shrink-0">
+                  <span className="text-amber-700 dark:text-amber-400 font-semibold">
                     {tCommon('daysRemaining', { days: daysUntilMaturity })}
                   </span>
                 </div>
               </div>
-            </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                {!bannerImgFailed && (
+                  <div className="w-[126px] sm:w-[164px] h-[76px] sm:h-[88px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
+                    <img
+                      src="/assets/aistudio/image_5fd8619d.png"
+                      alt=""
+                      aria-hidden="true"
+                      onError={() => setBannerImgFailed(true)}
+                      className="w-full h-full object-contain scale-[1.55] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
+                    />
+                  </div>
+                )}
+                <ChevronRight
+                  className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
+                  aria-hidden="true"
+                />
+              </div>
+            </>
           ) : (
             <>
               <div className="flex-1 min-w-0 space-y-0.5">
@@ -563,12 +585,33 @@ export function MobileDashboardBanner({
                     </span>
                   )}
                 </div>
-                <div className="text-[10.5px] font-mono tabular-nums text-slate-600 dark:text-slate-300 leading-snug truncate">
+                <div
+                  className={`text-[10.5px] text-slate-600 dark:text-slate-300 leading-snug truncate ${
+                    currentSlide.isProseSubtitle ? '' : 'font-mono tabular-nums'
+                  }`}
+                >
                   {currentSlide.subtitle}
                 </div>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
+                {currentSlide.visual.kind === 'investment' &&
+                  (!investmentImgFailed ? (
+                    <div className="w-[96px] sm:w-[122px] h-[66px] sm:h-[74px] rounded-xl overflow-hidden border border-teal-300/70 dark:border-teal-700/60 bg-slate-100 dark:bg-slate-900 shadow-xs pointer-events-none select-none shrink-0">
+                      <img
+                        src={INVESTMENT_IMAGE_URL}
+                        alt={tLife('caption')}
+                        referrerPolicy="no-referrer"
+                        onError={() => setInvestmentImgFailed(true)}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/80 dark:border-teal-400/40 flex items-center justify-center shrink-0">
+                      <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" aria-hidden="true" />
+                    </span>
+                  ))}
+
                 {currentSlide.visual.kind === 'ring' && (
                   <SlideProgressRing
                     pct={currentSlide.visual.pct}
