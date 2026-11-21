@@ -86,7 +86,7 @@ export function MonthlyFinancialSnapshot({
 
   if (loading) {
     return (
-      <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4">
+      <section className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1.5">
             <Skeleton width={210} height={14} />
@@ -114,12 +114,12 @@ export function MonthlyFinancialSnapshot({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       aria-labelledby="monthly-financial-snapshot-heading"
-      className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4 sm:space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
               <CalendarDays className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
             <span>{t('currentMonthPosition', { month: snapshot.monthLabel })}</span>
@@ -138,7 +138,7 @@ export function MonthlyFinancialSnapshot({
               <button
                 type="button"
                 onClick={() => onNavigate('monthly-contribution')}
-                className="min-h-[36px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none bg-emerald-50/70 sm:bg-transparent dark:bg-emerald-950/30 sm:dark:bg-transparent text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                className="min-h-[36px] sm:min-h-0 px-3 sm:px-0 py-1 sm:py-0 rounded-xl sm:rounded-none bg-emerald-50/80 sm:bg-transparent dark:bg-emerald-950/35 sm:dark:bg-transparent text-emerald-700 dark:text-emerald-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
                 <span>{t('deposits')}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -149,7 +149,7 @@ export function MonthlyFinancialSnapshot({
               <button
                 type="button"
                 onClick={() => onNavigate('quard-hasan')}
-                className="min-h-[36px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none bg-amber-50/70 sm:bg-transparent dark:bg-amber-950/30 sm:dark:bg-transparent text-amber-700 dark:text-amber-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                className="min-h-[36px] sm:min-h-0 px-3 sm:px-0 py-1 sm:py-0 rounded-xl sm:rounded-none bg-amber-50/80 sm:bg-transparent dark:bg-amber-950/35 sm:dark:bg-transparent text-amber-700 dark:text-amber-400 font-medium hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
               >
                 <span>{t('loanActivity')}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

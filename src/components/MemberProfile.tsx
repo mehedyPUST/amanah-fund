@@ -1414,7 +1414,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <section className="amanah-card-emerald border rounded-2xl p-6 space-y-4">
+        <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           <div className="flex items-center gap-4">
             <Skeleton width={64} height={64} borderRadius={12} />
             <div className="space-y-1.5">
@@ -1424,7 +1424,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </div>
           <Skeleton height={56} />
         </section>
-        <section className="amanah-card-violet border rounded-2xl p-6">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           <Skeleton height={240} />
         </section>
       </div>
@@ -1439,7 +1439,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       className="space-y-6"
     >
       {/* Membership Status & Identity Summary */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {portraitUrl && !photoBroken ? (
@@ -1484,7 +1484,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           <button
             type="button"
             onClick={() => void loadProfile()}
-            className="w-full md:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-stretch md:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
+            className="w-full md:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-stretch md:self-center cursor-pointer transition-all duration-150 active:scale-[0.98]"
           >
             <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t('refreshProfile')}</span>
@@ -1511,7 +1511,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       {/* Main Split: Registration KYC Details (Read-Only) + Editable Contact Info */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Read-Only Registration Details */}
-        <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-5 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleTopic('credentials')}
@@ -1863,7 +1863,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                                 setDownloadingAppPdf(false);
                               }
                             }}
-                            className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800/80 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-55 transition-colors"
+                            className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-55 transition-colors"
                           >
                             {downloadingAppPdf ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
@@ -1885,7 +1885,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         </section>
 
         {/* Editable Member Credentials Form (Matches User Registration Form without Password) */}
-        <section className="xl:col-span-7 amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-7 amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleTopic('contact')}
@@ -3147,7 +3147,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         onClick={() => {
                           populateForm(profile);
                         }}
-                        className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+                        className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {t('resetChanges')}
                       </button>
@@ -3160,7 +3160,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           signatureUploading ||
                           anyNomineePhotoUploading
                         }
-                        className="px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 transition-all duration-200 active:scale-[0.98] cursor-pointer whitespace-nowrap"
+                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 transition-all duration-150 active:scale-[0.98] cursor-pointer whitespace-nowrap"
                       >
                         <Save className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{saving ? t('savingProfile') : t('saveContactInfo')}</span>
@@ -3175,7 +3175,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       </div>
 
       {/* Instant Password Change (No Approval Needed) */}
-      <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
         <button
           type="button"
           onClick={() => toggleTopic('password')}
@@ -3228,7 +3228,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder={t('placeholderCurrentPassword')}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <div>
@@ -3246,7 +3246,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder={t('placeholderNewPassword')}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <div>
@@ -3264,13 +3264,13 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder={t('placeholderConfirmPassword')}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={passwordBusy}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer whitespace-nowrap"
                 >
                   {passwordBusy ? t('updatingPassword') : t('updatePasswordNow')}
                 </button>
@@ -3287,7 +3287,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           ? devices.find((d) => d.deviceId === localDeviceId) || null
           : null;
         return (
-          <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
             <button
               type="button"
               onClick={() => toggleTopic('mobilePin')}
@@ -3406,7 +3406,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                       <button
                         type="submit"
                         disabled={devicePinBusy}
-                        className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+                        className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer whitespace-nowrap"
                       >
                         {devicePinBusy
                           ? t('savingPin')
@@ -3442,7 +3442,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                                 type="button"
                                 disabled={devicePinBusy}
                                 onClick={() => handleRevokeMobileDevice(dev.deviceId, dev.deviceName)}
-                                className="min-h-[36px] px-3 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
+                                className="min-h-[36px] px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>{tCommon('remove')}</span>
@@ -3462,7 +3462,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
       {/* Step-Up Two-Factor Authentication & Alert Preferences */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-        <section className="xl:col-span-6 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-6 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleTopic('totp')}
@@ -3601,7 +3601,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           <button
                             type="submit"
                             disabled={totpBusy}
-                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                           >
                             {totpBusy ? t('verifying2fa') : t('verifyActivate2fa')}
                           </button>
@@ -3611,7 +3611,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                               setTotpSetupData(null);
                               setTotpCodeInput('');
                             }}
-                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                           >
                             {tCommon('cancel')}
                           </button>
@@ -3625,7 +3625,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           </AnimatePresence>
         </section>
 
-        <section className="xl:col-span-6 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <section className="xl:col-span-6 amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
           <button
             type="button"
             onClick={() => toggleTopic('alerts')}

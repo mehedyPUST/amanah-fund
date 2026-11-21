@@ -159,7 +159,7 @@ export function ActiveMembersView({
 
   if (!user) {
     return (
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 sm:p-8">
+      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="space-y-1">
@@ -196,12 +196,12 @@ export function ActiveMembersView({
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchAria')}
-              className="pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-full focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 shadow-xs"
+              className="pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 w-full focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 shadow-xs transition-colors"
             />
           </div>
 
           {/* Role Filter Tabs */}
-          <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full sm:w-fit">
+          <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl w-full sm:w-fit">
             {(
               [
                 { id: 'all', label: t('tabAllRoles') },
@@ -216,7 +216,7 @@ export function ActiveMembersView({
                   key={tab.id}
                   type="button"
                   onClick={() => setRoleFilter(tab.id)}
-                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -226,7 +226,7 @@ export function ActiveMembersView({
                     <motion.span
                       layoutId="active-members-role-pill"
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>
@@ -239,7 +239,7 @@ export function ActiveMembersView({
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
+            className="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
           >
             {error}
           </div>
@@ -248,7 +248,7 @@ export function ActiveMembersView({
 
       {/* Member Directory Table / Empty / Loading States */}
       {loading ? (
-        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="grid grid-cols-12 gap-4 items-center py-2">
               <div className="col-span-4 flex items-center gap-3">
@@ -271,7 +271,7 @@ export function ActiveMembersView({
           ))}
         </section>
       ) : filteredMembers.length === 0 ? (
-        <section className="amanah-card-violet border rounded-2xl p-8 text-center space-y-2">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-2 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('emptyTitle')}
           </h3>
@@ -285,14 +285,14 @@ export function ActiveMembersView({
                 setSearch('');
                 setRoleFilter('all');
               }}
-              className="mt-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              className="mt-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
             >
               {tCommon('resetFilters')}
             </button>
           )}
         </section>
       ) : (
-        <section className="amanah-card-violet border rounded-2xl overflow-hidden shadow-xs">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl overflow-hidden shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           {/* Mobile Directory Tap Cards (< lg) */}
           <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
             {filteredMembers.map((m) => {
@@ -394,7 +394,7 @@ export function ActiveMembersView({
                     <button
                       type="button"
                       onClick={() => onViewMemberProfile(m.id)}
-                      className="w-full min-h-[44px] px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                      className="w-full min-h-[44px] px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                     >
                       <UserIcon className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('viewMemberProfile')}</span>
@@ -408,13 +408,13 @@ export function ActiveMembersView({
           <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                  <th className="py-3 px-4 font-medium">{t('colVerifiedMember')}</th>
-                  <th className="py-3 px-4 font-medium">{t('colContactDetails')}</th>
-                  <th className="py-3 px-4 font-medium">{t('colMembershipDuration')}</th>
-                  <th className="py-3 px-4 font-medium text-right">{t('colTotalContributed')}</th>
+                <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <th className="py-3 px-4">{t('colVerifiedMember')}</th>
+                  <th className="py-3 px-4">{t('colContactDetails')}</th>
+                  <th className="py-3 px-4">{t('colMembershipDuration')}</th>
+                  <th className="py-3 px-4 text-right">{t('colTotalContributed')}</th>
                   {onViewMemberProfile && (
-                    <th className="py-3 px-4 font-medium text-right">{t('colProfile')}</th>
+                    <th className="py-3 px-4 text-right">{t('colProfile')}</th>
                   )}
                 </tr>
               </thead>
@@ -519,7 +519,7 @@ export function ActiveMembersView({
                           <button
                             type="button"
                             onClick={() => onViewMemberProfile(m.id)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
+                            className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
                           >
                             <UserIcon className="w-3 h-3" aria-hidden="true" />
                             <span>{t('viewProfile')}</span>

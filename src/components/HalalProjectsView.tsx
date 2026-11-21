@@ -294,7 +294,7 @@ export function HalalProjectsView({
       className="space-y-4 sm:space-y-6"
     >
       {/* Maturity Transition Summary */}
-      <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+      <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-[0_12px_32px_-16px_rgba(15,23,42,0.14)] transition-all duration-200">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-center">
           <div className="lg:col-span-8 space-y-2">
             <div className="inline-flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -312,13 +312,13 @@ export function HalalProjectsView({
           </div>
 
           <div className="lg:col-span-4 grid grid-cols-2 gap-2.5 sm:gap-3">
-            <div className="amanah-card-emerald p-3 sm:p-3.5 rounded-xl border">
+            <div className="amanah-card-emerald backdrop-blur-xl p-3 sm:p-4 rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)]">
               <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">{t('currentPool')}</div>
               <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(overview?.treasury.totalContributionsPool || 0, ccy)}
               </div>
             </div>
-            <div className="amanah-card-violet p-3 sm:p-3.5 rounded-xl border">
+            <div className="amanah-card-violet backdrop-blur-xl p-3 sm:p-4 rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)]">
               <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400">{t('pipelineTarget')}</div>
               <div className="mt-1 text-sm sm:text-base font-bold font-mono tabular-nums text-violet-700 dark:text-violet-400">
                 {formatMoney(totalTarget, ccy)}
@@ -332,7 +332,7 @@ export function HalalProjectsView({
         <section
           className={`${
             isStaff ? 'xl:col-span-8' : 'xl:col-span-12'
-          } amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs`}
+          } amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -366,7 +366,7 @@ export function HalalProjectsView({
               ))}
             </div>
           ) : projects.length === 0 ? (
-            <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white/40 dark:bg-slate-950/25">
               {t('emptyProjects')}
             </div>
           ) : (
@@ -391,7 +391,7 @@ export function HalalProjectsView({
                 return (
                   <article
                     key={proj.id}
-                    className="p-3.5 sm:p-5 rounded-xl bg-slate-50/70 dark:bg-slate-950/65 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-3 sm:space-y-4"
+                    className="p-4 sm:p-5 rounded-2xl bg-white/75 dark:bg-slate-950/65 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/70 dark:ring-white/5 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 space-y-3 sm:space-y-4"
                   >
                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-3 sm:gap-4">
                       <div className="space-y-1.5">
@@ -433,7 +433,7 @@ export function HalalProjectsView({
                       </div>
 
                       {/* Real-time 2/3 Majority Meter */}
-                      <div className="md:w-64 shrink-0 space-y-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="md:w-64 shrink-0 space-y-2 p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-medium text-slate-700 dark:text-slate-300">
                             {t('majorityProgress')}
@@ -512,14 +512,14 @@ export function HalalProjectsView({
                               }))
                             }
                             placeholder={t('voteNotePlaceholder')}
-                            className="flex-1 px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                            className="flex-1 px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                           />
                           <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0 w-full sm:w-auto">
                             <button
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'yes')}
-                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <Check className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('voteYes')}</span>
@@ -528,7 +528,7 @@ export function HalalProjectsView({
                               type="button"
                               disabled={votingId === proj.id || modalBusy}
                               onClick={() => handlePlacementVote(proj, 'no')}
-                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                              className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white active:scale-[0.98] transition-all duration-150 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                             >
                               <X className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('voteNo')}</span>
@@ -540,7 +540,7 @@ export function HalalProjectsView({
                       <button
                         type="button"
                         onClick={() => setExpandedVotesId(isExpanded ? null : proj.id)}
-                        className="min-h-[38px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-lg sm:rounded-none border border-slate-200 dark:border-slate-700 sm:border-0 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0 self-start sm:self-center"
+                        className="min-h-[38px] sm:min-h-0 px-2.5 sm:px-0 py-1 sm:py-0 rounded-xl sm:rounded-none border border-slate-200 dark:border-slate-700 sm:border-0 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0 self-start sm:self-center"
                       >
                         <span>{t('votesCount', { count: proj.votes.length })}</span>
                         {isExpanded ? (
@@ -627,7 +627,7 @@ export function HalalProjectsView({
                                   distFormProjectId === proj.id ? null : proj.id
                                 )
                               }
-                              className="px-3 py-1.5 sm:py-1 min-h-[38px] sm:min-h-0 rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors cursor-pointer"
+                              className="px-3 py-1.5 sm:py-1 min-h-[38px] sm:min-h-0 rounded-xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/70 dark:bg-teal-950/30 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 transition-colors cursor-pointer"
                             >
                               {distFormProjectId === proj.id
                                 ? tCommon('cancel')
@@ -644,7 +644,7 @@ export function HalalProjectsView({
                               exit={{ opacity: 0, height: 0 }}
                               transition={{ duration: 0.22 }}
                               onSubmit={(e) => handleDistributeProfit(e, proj)}
-                              className="p-3 sm:p-3.5 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end overflow-hidden"
+                              className="p-3.5 sm:p-4 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-white dark:bg-slate-900 grid grid-cols-1 sm:grid-cols-4 gap-3 items-end overflow-hidden"
                             >
                               <div>
                                 <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">
@@ -657,7 +657,7 @@ export function HalalProjectsView({
                                   value={distPeriodLabel}
                                   onChange={(e) => setDistPeriodLabel(e.target.value)}
                                   placeholder={t('periodPlaceholder')}
-                                  className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                  className="w-full px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                                 />
                               </div>
                               <div>
@@ -672,7 +672,7 @@ export function HalalProjectsView({
                                   value={distRealizedProfit}
                                   onChange={(e) => setDistRealizedProfit(e.target.value)}
                                   placeholder={t('realizedProfitPlaceholder')}
-                                  className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                  className="w-full px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                                 />
                               </div>
                               <div>
@@ -686,13 +686,13 @@ export function HalalProjectsView({
                                   required
                                   value={distCoopSharePct}
                                   onChange={(e) => setDistCoopSharePct(e.target.value)}
-                                  className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+                                  className="w-full px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                                 />
                               </div>
                               <button
                                 type="submit"
                                 disabled={distBusy}
-                                className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium disabled:opacity-50 cursor-pointer"
+                                className="px-3.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
                               >
                                 {distBusy ? t('distributing') : t('distributeProRataBtn')}
                               </button>
@@ -708,7 +708,7 @@ export function HalalProjectsView({
                               return (
                                 <div
                                   key={dist.id}
-                                  className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-xs space-y-2"
+                                  className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 p-3.5 text-xs space-y-2"
                                 >
                                   <div className="flex flex-wrap items-center justify-between gap-2">
                                     <div className="flex flex-wrap items-center gap-2">
@@ -794,7 +794,7 @@ export function HalalProjectsView({
         </section>
 
         {isStaff && (
-          <section className="xl:col-span-4 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+          <section className="xl:col-span-4 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-[0_12px_32px_-16px_rgba(15,23,42,0.14)] transition-all duration-200">
             <div className="mb-4">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('proposeCardTitle')}
@@ -812,7 +812,7 @@ export function HalalProjectsView({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder={t('projectTitlePlaceholder')}
-                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                 />
               </div>
 
@@ -826,7 +826,7 @@ export function HalalProjectsView({
                   value={sector}
                   onChange={(e) => setSector(e.target.value)}
                   placeholder={t('sectorPlaceholder')}
-                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                 />
               </div>
 
@@ -840,7 +840,7 @@ export function HalalProjectsView({
                     onChange={(e) =>
                       setShariahStructure(e.target.value as HalalProject['shariahStructure'])
                     }
-                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                   >
                     <option value="Musharakah">{t('structures.Musharakah')}</option>
                     <option value="Mudarabah">{t('structures.Mudarabah')}</option>
@@ -854,7 +854,7 @@ export function HalalProjectsView({
                   <select
                     value={riskTier}
                     onChange={(e) => setRiskTier(e.target.value as HalalProject['riskTier'])}
-                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                   >
                     <option value="Conservative">{t('riskTiers.Conservative')}</option>
                     <option value="Balanced">{t('riskTiers.Balanced')}</option>
@@ -874,7 +874,7 @@ export function HalalProjectsView({
                     required
                     value={targetAllocation}
                     onChange={(e) => setTargetAllocation(e.target.value)}
-                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                   />
                 </div>
                 <div>
@@ -886,7 +886,7 @@ export function HalalProjectsView({
                     required
                     value={projectedAnnualReturn}
                     onChange={(e) => setProjectedAnnualReturn(e.target.value)}
-                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                   />
                 </div>
               </div>
@@ -901,14 +901,14 @@ export function HalalProjectsView({
                   value={shariahScholarNote}
                   onChange={(e) => setShariahScholarNote(e.target.value)}
                   placeholder={t('shariahNotePlaceholder')}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full min-h-[44px] py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? t('submittingProposal') : t('openForVoteBtn')}</span>

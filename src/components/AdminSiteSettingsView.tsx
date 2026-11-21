@@ -654,7 +654,7 @@ export function AdminSiteSettingsView({
       className="space-y-4"
     >
       {/* Header & Quick Cross-Navigation */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs space-y-4">
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="space-y-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -676,7 +676,7 @@ export function AdminSiteSettingsView({
               <button
                 type="button"
                 onClick={() => onNavigateSection('manager-desk')}
-                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <ClipboardCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>{t('navGovernanceDesk')}</span>
@@ -684,7 +684,7 @@ export function AdminSiteSettingsView({
               <button
                 type="button"
                 onClick={() => onNavigateSection('site-activity')}
-                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
                 <Activity className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
                 <span>{t('navSiteActivity')}</span>
@@ -694,7 +694,7 @@ export function AdminSiteSettingsView({
         </div>
 
         {/* Tab Bar */}
-        <div className="flex flex-nowrap sm:flex-wrap gap-1.5 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 overflow-x-auto no-scrollbar max-w-full">
+        <div className="flex flex-nowrap sm:flex-wrap gap-1.5 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 overflow-x-auto no-scrollbar max-w-full">
           {tabs.map((tab) => {
             const active = activeTab === tab.id;
             return (
@@ -704,7 +704,7 @@ export function AdminSiteSettingsView({
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   active
-                    ? 'text-slate-900 dark:text-white'
+                    ? 'text-emerald-800 dark:text-emerald-200'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
@@ -712,7 +712,7 @@ export function AdminSiteSettingsView({
                   <motion.span
                     layoutId="site-settings-tab-pill"
                     transition={{ type: 'spring', bounce: 0.18, duration: 0.35 }}
-                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700 shadow-xs"
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 ring-1 ring-emerald-500/20 shadow-xs"
                   />
                 )}
                 <tab.Icon className="w-3.5 h-3.5 relative z-10 shrink-0" aria-hidden="true" />
@@ -736,7 +736,7 @@ export function AdminSiteSettingsView({
 
       {/* TAB 1: POLICY & LIMITS */}
       {isAdmin && activeTab === 'policy' && (
-        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           {loading && !config ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 9 }).map((_, idx) => (
@@ -769,7 +769,7 @@ export function AdminSiteSettingsView({
                       required
                       value={fundName}
                       onChange={(e) => setFundName(e.target.value)}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -780,7 +780,7 @@ export function AdminSiteSettingsView({
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value as FundConfig['currency'])}
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     >
                       <option value="BDT">{t('currencyOptions.BDT')}</option>
                       <option value="USD">{t('currencyOptions.USD')}</option>
@@ -798,7 +798,7 @@ export function AdminSiteSettingsView({
                       required
                       value={membershipIntakeDeadline}
                       onChange={(e) => setMembershipIntakeDeadline(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -811,7 +811,7 @@ export function AdminSiteSettingsView({
                       required
                       value={maturityDate}
                       onChange={(e) => setMaturityDate(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -826,7 +826,7 @@ export function AdminSiteSettingsView({
                       required
                       value={maxMembersCap}
                       onChange={(e) => setMaxMembersCap(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -840,7 +840,7 @@ export function AdminSiteSettingsView({
                       required
                       value={registrationFeeAmount}
                       onChange={(e) => setRegistrationFeeAmount(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
                 </div>
@@ -886,7 +886,7 @@ export function AdminSiteSettingsView({
                     rows={2}
                     value={halalThesis}
                     onChange={(e) => setHalalThesis(e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                   />
                 </div>
               </div>
@@ -910,7 +910,7 @@ export function AdminSiteSettingsView({
                       required
                       value={monthlyContributionAmount}
                       onChange={(e) => setMonthlyContributionAmount(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -925,7 +925,7 @@ export function AdminSiteSettingsView({
                       required
                       value={monthlyDueDay}
                       onChange={(e) => setMonthlyDueDay(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -939,12 +939,12 @@ export function AdminSiteSettingsView({
                       required
                       value={lateFeeAmount}
                       onChange={(e) => setLateFeeAmount(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="p-3 rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/55 dark:bg-slate-950/45 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                   <label className="inline-flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
                     <input
                       type="checkbox"
@@ -979,7 +979,7 @@ export function AdminSiteSettingsView({
                       required
                       value={maxLoanAmount}
                       onChange={(e) => setMaxLoanAmount(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -995,7 +995,7 @@ export function AdminSiteSettingsView({
                         required
                         value={maxLoansPerYear}
                         onChange={(e) => setMaxLoansPerYear(e.target.value)}
-                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                       />
                     </div>
                     <div>
@@ -1009,7 +1009,7 @@ export function AdminSiteSettingsView({
                         required
                         value={maxInstallmentMonths}
                         onChange={(e) => setMaxInstallmentMonths(e.target.value)}
-                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                       />
                     </div>
                   </div>
@@ -1025,7 +1025,7 @@ export function AdminSiteSettingsView({
                       required
                       value={loanSavingsCapPct}
                       onChange={(e) => setLoanSavingsCapPct(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -1039,7 +1039,7 @@ export function AdminSiteSettingsView({
                       required
                       value={guarantorThresholdAmount}
                       onChange={(e) => setGuarantorThresholdAmount(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -1054,7 +1054,7 @@ export function AdminSiteSettingsView({
                       required
                       value={requiredGuarantorsCount}
                       onChange={(e) => setRequiredGuarantorsCount(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -1100,7 +1100,7 @@ export function AdminSiteSettingsView({
                         aria-label={t('quorumNumeratorAria')}
                         value={voteThresholdNumerator}
                         onChange={(e) => setVoteThresholdNumerator(e.target.value)}
-                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                       />
                       <span className="text-slate-400 dark:text-slate-600 font-mono text-sm">/</span>
                       <input
@@ -1111,13 +1111,13 @@ export function AdminSiteSettingsView({
                         aria-label={t('quorumDenominatorAria')}
                         value={voteThresholdDenominator}
                         onChange={(e) => setVoteThresholdDenominator(e.target.value)}
-                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                        className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-2.5 rounded-lg border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+                <div className="p-2.5 rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300">
                   <Vote className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span>
                     {t('quorumSummary', {
@@ -1167,7 +1167,7 @@ export function AdminSiteSettingsView({
                       required
                       value={managerCycleMonths}
                       onChange={(e) => setManagerCycleMonths(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
 
@@ -1180,7 +1180,7 @@ export function AdminSiteSettingsView({
                       required
                       value={managerCycleStartDate}
                       onChange={(e) => setManagerCycleStartDate(e.target.value)}
-                      className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
                 </div>
@@ -1207,7 +1207,7 @@ export function AdminSiteSettingsView({
                     <button
                       type="button"
                       onClick={() => syncFormFromConfig(config)}
-                      className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer"
+                      className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                     >
                       <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('discardChanges')}</span>
@@ -1216,7 +1216,7 @@ export function AdminSiteSettingsView({
                   <button
                     type="submit"
                     disabled={modalBusy}
-                    className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                    className="min-h-[44px] sm:min-h-0 px-5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                   >
                     {t('savePolicyBtn')}
                   </button>
@@ -1231,7 +1231,7 @@ export function AdminSiteSettingsView({
       {isAdmin && activeTab === 'charter' && (
         <div className="space-y-4">
           {/* Constitution PDF Section */}
-          <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-4 shadow-xs">
+          <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <FileText className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -1259,7 +1259,7 @@ export function AdminSiteSettingsView({
                   value={constitutionTitle}
                   onChange={(e) => setConstitutionTitle(e.target.value)}
                   placeholder={t('placeholderDocTitle')}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/25"
                 />
               </div>
 
@@ -1275,7 +1275,7 @@ export function AdminSiteSettingsView({
                   type="button"
                   disabled={constitutionBusy || modalBusy}
                   onClick={() => constitutionFileInputRef.current?.click()}
-                  className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                  className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                 >
                   <Upload className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>
@@ -1287,7 +1287,7 @@ export function AdminSiteSettingsView({
                     type="button"
                     disabled={constitutionBusy || modalBusy}
                     onClick={confirmRemoveConstitutionPdf}
-                    className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                    className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{tCommon('remove')}</span>
@@ -1297,7 +1297,7 @@ export function AdminSiteSettingsView({
             </div>
 
             {config?.constitutionPdfUrl ? (
-              <div className="rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
+              <div className="rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 p-4 space-y-3">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="space-y-0.5 min-w-0">
                     <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
@@ -1320,7 +1320,7 @@ export function AdminSiteSettingsView({
                     <button
                       type="button"
                       onClick={() => setShowConstitutionPreview((v) => !v)}
-                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap transition-colors"
                     >
                       {showConstitutionPreview ? (
                         <>
@@ -1338,7 +1338,7 @@ export function AdminSiteSettingsView({
                       href={config.constitutionPdfUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap"
+                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-xs font-medium text-teal-800 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 whitespace-nowrap transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('open')}</span>
@@ -1346,7 +1346,7 @@ export function AdminSiteSettingsView({
                     <a
                       href={config.constitutionPdfUrl}
                       download={config.constitutionPdfName || 'cooperative-constitution.pdf'}
-                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap"
+                      className="min-h-[40px] sm:min-h-0 justify-center inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 whitespace-nowrap transition-colors"
                     >
                       <Download className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{tCommon('download')}</span>
@@ -1361,7 +1361,7 @@ export function AdminSiteSettingsView({
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
+                      className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
                     >
                       <iframe
                         src={config.constitutionPdfUrl}
@@ -1373,14 +1373,14 @@ export function AdminSiteSettingsView({
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="p-3.5 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/55 dark:bg-slate-950/35 text-xs text-slate-600 dark:text-slate-400">
                 {t('noConstitutionPdf')}
               </div>
             )}
           </section>
 
           {/* Monthly Statements & Billing Reminders */}
-          <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-4 shadow-xs">
+          <section className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1399,7 +1399,7 @@ export function AdminSiteSettingsView({
                   type="month"
                   value={reportMonth}
                   onChange={(e) => setReportMonth(e.target.value)}
-                  className="px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="px-3 py-1.5 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/25"
                 />
               </div>
             </div>
@@ -1408,7 +1408,7 @@ export function AdminSiteSettingsView({
               <button
                 type="button"
                 onClick={handleDownloadMonthlyPdf}
-                className="min-h-[44px] px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
+                className="min-h-[44px] px-4 py-3 rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/20 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer transition-colors"
               >
                 <span>{t('downloadMonthlyPdf', { month: reportMonth })}</span>
                 <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
@@ -1418,7 +1418,7 @@ export function AdminSiteSettingsView({
                 type="button"
                 disabled={modalBusy}
                 onClick={handleConfirmEmailMonthlyPdf}
-                className="min-h-[44px] px-4 py-3 rounded-lg border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/30 flex items-center justify-between gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-4 py-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/30 flex items-center justify-between gap-2 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer transition-colors disabled:opacity-50"
               >
                 <span>{t('emailPdfMembers')}</span>
                 <Send className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -1428,7 +1428,7 @@ export function AdminSiteSettingsView({
                 type="button"
                 disabled={modalBusy}
                 onClick={handleConfirmSendReminders}
-                className="min-h-[44px] px-4 py-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 flex items-center justify-between gap-2 text-xs font-medium text-amber-800 dark:text-amber-300 cursor-pointer transition-colors disabled:opacity-50"
+                className="min-h-[44px] px-4 py-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/70 dark:hover:bg-amber-900/30 flex items-center justify-between gap-2 text-xs font-medium text-amber-800 dark:text-amber-300 cursor-pointer transition-colors disabled:opacity-50"
               >
                 <span>{t('dispatchBillingReminders')}</span>
                 <BellRing className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
@@ -1437,7 +1437,7 @@ export function AdminSiteSettingsView({
           </section>
 
           {/* Regulatory CSV Exports & Full JSON Vault Backup */}
-          <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-4 shadow-xs">
+          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1463,7 +1463,7 @@ export function AdminSiteSettingsView({
                   key={rep.id}
                   type="button"
                   onClick={() => downloadCsvReport(rep.id)}
-                  className="min-h-[44px] px-3 sm:px-3.5 py-2.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all duration-200 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer text-left"
+                  className="min-h-[44px] px-3 sm:px-3.5 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white/60 dark:bg-slate-950/60 hover:border-teal-400 dark:hover:border-teal-700 hover:bg-teal-50/50 dark:hover:bg-teal-950/20 transition-all duration-150 flex items-center justify-between gap-2 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer text-left"
                 >
                   <span>{rep.label}</span>
                   <Download className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
@@ -1473,7 +1473,7 @@ export function AdminSiteSettingsView({
               <a
                 href={api.getBackupJsonUrl()}
                 download
-                className="col-span-2 lg:col-span-1 min-h-[44px] px-3.5 py-2.5 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
+                className="col-span-2 lg:col-span-1 min-h-[44px] px-3.5 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 transition-colors flex items-center justify-between text-xs font-medium text-indigo-700 dark:text-indigo-300"
               >
                 <span>{t('fullJsonBackup')}</span>
                 <FileArchive className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -1486,7 +1486,7 @@ export function AdminSiteSettingsView({
       {/* TAB 3: EMAIL & TEMPLATES */}
       {isAdmin && activeTab === 'email' && (
         <div className="space-y-4">
-          <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
                 <Mail className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
@@ -1525,7 +1525,7 @@ export function AdminSiteSettingsView({
       {/* TAB 4: INTEGRATIONS & SYSTEM HEALTH */}
       {isAdmin && activeTab === 'integrations' && (
         <div className="space-y-4">
-          <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-4 shadow-xs">
+          <section className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1539,7 +1539,7 @@ export function AdminSiteSettingsView({
                 type="button"
                 disabled={loadingStatus}
                 onClick={() => void fetchSystemStatus()}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 transition-colors"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loadingStatus ? 'animate-spin' : ''}`} aria-hidden="true" />
                 <span>{t('refreshStatus')}</span>
@@ -1555,7 +1555,7 @@ export function AdminSiteSettingsView({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {/* Storage Engine */}
-                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Database className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
@@ -1580,7 +1580,7 @@ export function AdminSiteSettingsView({
                 </div>
 
                 {/* Encryption */}
-                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Lock className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
@@ -1613,7 +1613,7 @@ export function AdminSiteSettingsView({
                 </div>
 
                 {/* SMTP Email */}
-                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />
@@ -1643,7 +1643,7 @@ export function AdminSiteSettingsView({
                 </div>
 
                 {/* Media Storage */}
-                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <HardDrive className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
@@ -1668,7 +1668,7 @@ export function AdminSiteSettingsView({
                 </div>
 
                 {/* Gemini Receipt AI */}
-                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
@@ -1696,7 +1696,7 @@ export function AdminSiteSettingsView({
 
                 {/* Groq AI (Rewrite & Spam Shield) */}
                 {systemStatus.groqAi && (
-                  <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                  <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                     <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                       <span className="inline-flex items-center gap-1.5">
                         <Sparkles className="w-3.5 h-3.5 text-indigo-600" aria-hidden="true" />
@@ -1724,7 +1724,7 @@ export function AdminSiteSettingsView({
                 )}
 
                 {/* Server Runtime */}
-                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-1">
+                <div className="p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 shadow-xs space-y-1">
                   <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
                     <span className="inline-flex items-center gap-1.5">
                       <ShieldCheck className="w-3.5 h-3.5 text-teal-600" aria-hidden="true" />

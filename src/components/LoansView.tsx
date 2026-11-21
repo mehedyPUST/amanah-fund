@@ -545,7 +545,7 @@ export function LoansView({
   return (
     <div className="space-y-6">
       {myGuarantorRequests.length > 0 && (
-        <section className="bg-amber-50/75 dark:bg-amber-950/35 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-5 space-y-3">
+        <section className="bg-amber-50/80 dark:bg-amber-950/35 backdrop-blur-xl border border-amber-200/80 dark:border-amber-900/60 ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-5 space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
             <span>
@@ -574,7 +574,7 @@ export function LoansView({
                     type="button"
                     disabled={modalBusy}
                     onClick={() => confirmGuarantorRespond(loan, 'accept')}
-                    className="px-3 py-2 sm:py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 sm:py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50"
                   >
                     {t('acceptCoSign')}
                   </button>
@@ -582,7 +582,7 @@ export function LoansView({
                     type="button"
                     disabled={modalBusy}
                     onClick={() => confirmGuarantorRespond(loan, 'decline')}
-                    className="px-3 py-2 sm:py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-2 sm:py-1.5 rounded-xl border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {t('decline')}
                   </button>
@@ -596,7 +596,7 @@ export function LoansView({
       {!isAdmin && (
         <section
           aria-label={t('quotaSummaryAria')}
-          className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200"
+          className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200"
         >
           {!eligibility && loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -752,7 +752,7 @@ export function LoansView({
                             },
                           });
                         }}
-                        className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs sm:text-[11px] font-medium hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer shrink-0"
+                        className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3.5 py-2 sm:py-1.5 rounded-xl border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs sm:text-[11px] font-medium hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer shrink-0"
                       >
                         {t('withdrawBtn')}
                       </button>
@@ -765,7 +765,7 @@ export function LoansView({
       )}
 
       {!isAdmin && (
-        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
             <div>
               <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -792,7 +792,7 @@ export function LoansView({
                 <button
                   type="button"
                   onClick={onOpenLoanModal}
-                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('openRequestModal')}</span>
@@ -803,7 +803,7 @@ export function LoansView({
 
           {eligibility ? (
             <div className="mt-4 grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4">
-              <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 dark:text-slate-400">{t('check1Title')}</span>
                   <span
@@ -823,7 +823,7 @@ export function LoansView({
                 </div>
               </div>
 
-              <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/60 hover:border-amber-300 dark:hover:border-amber-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between gap-1 text-xs">
                   <span className="text-slate-500 dark:text-slate-400">{t('check2Title')}</span>
                   <span
@@ -844,7 +844,7 @@ export function LoansView({
                 </div>
               </div>
 
-              <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-teal-300 dark:hover:border-teal-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/60 hover:border-teal-300 dark:hover:border-teal-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between gap-1 text-xs">
                   <span className="text-slate-500 dark:text-slate-400">{t('check3Title')}</span>
                   <span
@@ -862,7 +862,7 @@ export function LoansView({
                 </div>
               </div>
 
-              <div className="p-3 sm:p-3.5 rounded-lg border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
+              <div className="p-3.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-950/60 hover:border-emerald-300 dark:hover:border-emerald-700/70 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-200">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 dark:text-slate-400">{t('check4Title')}</span>
                   <span
@@ -890,7 +890,7 @@ export function LoansView({
         </section>
       )}
 
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs">
+      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -900,7 +900,7 @@ export function LoansView({
 
           {!isAdmin && (
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
+              <div className="flex items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75">
                 {(
                   [
                     { id: 'mine', label: t('myLoans') },
@@ -913,7 +913,7 @@ export function LoansView({
                       key={tab.id}
                       type="button"
                       onClick={() => setScope(tab.id)}
-                      className={`relative px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap ${
+                      className={`relative px-3 py-1 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
                         active
                           ? 'text-slate-900 dark:text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -923,7 +923,7 @@ export function LoansView({
                         <motion.span
                           layoutId="loans-scope-pill"
                           transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                          className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                         />
                       )}
                       <span className="relative z-10">{tab.label}</span>
@@ -936,7 +936,7 @@ export function LoansView({
                 <button
                   type="button"
                   onClick={onOpenLoanModal}
-                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('openRequestModal')}</span>
@@ -970,7 +970,7 @@ export function LoansView({
               ))}
             </div>
           ) : visibleLoans.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               {scope === 'mine' ? t('emptyMine') : t('emptyAll')}
             </div>
           ) : (
@@ -1041,10 +1041,10 @@ export function LoansView({
                 })}
               </div>
 
-              <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="hidden lg:block overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 rounded-xl bg-white/55 dark:bg-slate-950/35">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       <th className="py-2.5 px-4">{t('colLoanBorrower')}</th>
                       <th className="py-2.5 px-4 text-right">{t('principal')}</th>
                       <th className="py-2.5 px-4 text-right">{t('repaid')}</th>
@@ -1062,7 +1062,7 @@ export function LoansView({
                           className={`cursor-pointer transition-colors ${
                             isSelected
                               ? 'bg-emerald-50/60 dark:bg-emerald-950/20'
-                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                              : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/35'
                           }`}
                         >
                           <td className="py-3 px-4">
@@ -1155,7 +1155,7 @@ export function LoansView({
                       : Math.min(95, Math.round((cast / Math.max(1, activeSelectedLoan.totalEligibleVoters)) * 100));
 
                     return (
-                      <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 text-xs">
                             <span className="font-semibold text-slate-900 dark:text-white">
@@ -1203,7 +1203,7 @@ export function LoansView({
                               type="button"
                               disabled={modalBusy}
                               onClick={() => confirmQuickLoanVote(activeSelectedLoan, 'upvote')}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('upvote')}</span>
@@ -1212,7 +1212,7 @@ export function LoansView({
                               type="button"
                               disabled={modalBusy}
                               onClick={() => confirmQuickLoanVote(activeSelectedLoan, 'downvote')}
-                              className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                              className="px-3.5 py-1.5 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-150 text-xs font-medium inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                             >
                               <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>{t('downvote')}</span>
@@ -1229,7 +1229,7 @@ export function LoansView({
                   })()}
 
                   {activeSelectedLoan.guarantors && activeSelectedLoan.guarantors.length > 0 && (
-                    <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
                         <UserCheck className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                         <span>{t('coSigningGuarantors')}</span>
@@ -1256,7 +1256,7 @@ export function LoansView({
                   )}
 
                   {activeSelectedLoan.status === 'active' && (
-                    <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 space-y-2.5">
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/50 space-y-2.5">
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                         <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
                           <CalendarClock className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
@@ -1275,7 +1275,7 @@ export function LoansView({
                       </div>
 
                       {activeSelectedLoan.rescheduleRequest && (
-                        <div className="p-2.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                           <div className="space-y-0.5">
                             <div className="font-medium text-slate-900 dark:text-white">
                               {t('rescheduleToMonths', { months: activeSelectedLoan.rescheduleRequest.requestedMonths })} ·{' '}
@@ -1296,7 +1296,7 @@ export function LoansView({
                                   onClick={() =>
                                     confirmReviewReschedule(activeSelectedLoan.id, 'approve')
                                   }
-                                  className="px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                                 >
                                   {t('approve')}
                                 </button>
@@ -1306,7 +1306,7 @@ export function LoansView({
                                   onClick={() =>
                                     confirmReviewReschedule(activeSelectedLoan.id, 'reject')
                                   }
-                                  className="px-2.5 py-1 rounded border border-red-200 dark:border-red-900/70 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
+                                  className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-900/70 text-red-700 dark:text-red-400 hover:bg-red-50 text-xs font-medium cursor-pointer disabled:opacity-50"
                                 >
                                   {t('reject')}
                                 </button>
@@ -1339,7 +1339,7 @@ export function LoansView({
                                 value={rescheduleMonths}
                                 onChange={(e) => setRescheduleMonths(e.target.value)}
                                 placeholder={t('monthsPlaceholder')}
-                                className="w-full px-2.5 py-1.5 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                                className="w-full px-3 py-1.5 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                               />
                             </div>
                             <div className="sm:col-span-6">
@@ -1350,14 +1350,14 @@ export function LoansView({
                                 value={rescheduleReason}
                                 onChange={(e) => setRescheduleReason(e.target.value)}
                                 placeholder={t('rescheduleReasonPlaceholder')}
-                                className="w-full px-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                                className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                               />
                             </div>
                             <div className="sm:col-span-3">
                               <button
                                 type="submit"
                                 disabled={modalBusy}
-                                className="w-full py-1.5 px-3 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                                className="w-full py-1.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
                               >
                                 {t('submitRequest')}
                               </button>
@@ -1376,7 +1376,7 @@ export function LoansView({
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.2 }}
                         onSubmit={handleSubmitRepayment}
-                        className="p-4 rounded-lg border border-teal-200 dark:border-teal-900/50 bg-teal-50/40 dark:bg-teal-950/20 space-y-3"
+                        className="p-4 rounded-xl border border-teal-200 dark:border-teal-900/50 bg-teal-50/40 dark:bg-teal-950/20 space-y-3"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1386,7 +1386,7 @@ export function LoansView({
                             })}
                           </span>
                           <div className="flex items-center gap-3">
-                            <label className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-teal-700 dark:text-teal-400 cursor-pointer">
+                            <label className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-teal-300 dark:border-teal-800 bg-white dark:bg-slate-900 text-[11px] font-medium text-teal-700 dark:text-teal-400 cursor-pointer">
                               <Sparkles className="w-3 h-3" aria-hidden="true" />
                               <span>
                                 {scanningRepaySlip ? t('scanning') : t('scanSlipAi')}
@@ -1424,7 +1424,7 @@ export function LoansView({
                                 setRepayChannel(ch);
                                 setRepayProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
                               }}
-                              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                              className="w-full px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                             >
                               <option value="mfs">{t('mfsWalletShort')}</option>
                               <option value="bank">{t('bdBankShort')}</option>
@@ -1456,7 +1456,7 @@ export function LoansView({
                               value={repayAccount}
                               onChange={(e) => setRepayAccount(e.target.value)}
                               placeholder={t('senderPlaceholder')}
-                              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                              className="w-full px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                             />
                           </div>
                           <div>
@@ -1469,7 +1469,7 @@ export function LoansView({
                               value={repayRef}
                               onChange={(e) => setRepayRef(e.target.value)}
                               placeholder={t('txPlaceholder')}
-                              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-mono rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                              className="w-full px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                             />
                           </div>
                         </div>
@@ -1491,7 +1491,7 @@ export function LoansView({
                           <button
                             type="submit"
                             disabled={modalBusy}
-                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 sm:py-1.5 rounded-md bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 sm:py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
                           >
                             {t('reviewSubmitReceipt')}
                           </button>
@@ -1622,16 +1622,16 @@ export function LoansView({
                     })}
                   </div>
 
-                  <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+                  <div className="hidden lg:block overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 rounded-xl bg-white/55 dark:bg-slate-950/35">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                          <th className="py-2 px-3">#</th>
-                          <th className="py-2 px-3">{t('colDueDate')}</th>
-                          <th className="py-2 px-3 text-right">{t('colAmount')}</th>
-                          <th className="py-2 px-3">{t('colBankTx')}</th>
-                          <th className="py-2 px-3">{t('colStatus')}</th>
-                          <th className="py-2 px-3 text-right">{t('colAction')}</th>
+                        <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          <th className="py-2.5 px-3">#</th>
+                          <th className="py-2.5 px-3">{t('colDueDate')}</th>
+                          <th className="py-2.5 px-3 text-right">{t('colAmount')}</th>
+                          <th className="py-2.5 px-3">{t('colBankTx')}</th>
+                          <th className="py-2.5 px-3">{t('colStatus')}</th>
+                          <th className="py-2.5 px-3 text-right">{t('colAction')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

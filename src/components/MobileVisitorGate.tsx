@@ -261,7 +261,7 @@ export function MobileVisitorGate() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full max-w-sm max-h-[92dvh] overflow-y-auto rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl"
+              className="w-full max-w-sm max-h-[92dvh] overflow-y-auto rounded-3xl bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)]"
             >
               {/* Brand Header */}
               <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-700 text-white px-5 py-4">
@@ -340,7 +340,7 @@ export function MobileVisitorGate() {
                           value={activationMemberId}
                           onChange={(e) => setActivationMemberId(e.target.value.toUpperCase())}
                           placeholder="AC002"
-                          className="w-full min-h-[44px] px-3.5 py-2.5 text-sm font-mono uppercase rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                          className="w-full min-h-[44px] px-3.5 py-2.5 text-sm font-mono uppercase rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                         />
                       </div>
                       <div>
@@ -361,7 +361,7 @@ export function MobileVisitorGate() {
                             setActivationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                           }
                           placeholder={tAuth('activation.otpPlaceholder')}
-                          className="w-full min-h-[44px] px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.25em] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                          className="w-full min-h-[44px] px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.25em] rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                         />
                       </div>
                       <label className="flex items-start gap-2 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
@@ -438,7 +438,7 @@ export function MobileVisitorGate() {
                         </p>
                         <Link
                           href="/signup"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs"
                         >
                           <span>{tAuth('signInPage.createFirstAdmin')}</span>
                           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

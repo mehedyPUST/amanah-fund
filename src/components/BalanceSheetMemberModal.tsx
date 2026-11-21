@@ -258,7 +258,7 @@ export function BalanceSheetMemberModal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.16 }}
             onClick={() => onCloseRef.current()}
-            className="fixed inset-0 bg-slate-950/55 dark:bg-slate-950/75 backdrop-blur-[2px]"
+            className="fixed inset-0 bg-slate-950/60 dark:bg-slate-950/75 backdrop-blur-xs"
             aria-hidden="true"
           />
 
@@ -269,7 +269,7 @@ export function BalanceSheetMemberModal({
             exit={{ opacity: 0, scale: 0.97, y: 6 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.38)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden my-auto flex flex-col max-h-[88vh]"
+            className="relative z-10 w-full max-w-2xl bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 rounded-2xl shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6)] overflow-hidden my-auto flex flex-col max-h-[88vh]"
           >
             {/* Header */}
             <header className="px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-200/90 dark:border-slate-800 flex items-start justify-between gap-4 shrink-0 bg-slate-50/70 dark:bg-slate-950/50">
@@ -332,7 +332,7 @@ export function BalanceSheetMemberModal({
                 type="button"
                 onClick={() => onCloseRef.current()}
                 aria-label={tCommon('closeDialog')}
-                className="w-9 h-9 rounded-lg inline-flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors cursor-pointer shrink-0"
+                className="w-9 h-9 rounded-xl inline-flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/70 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 transition-colors cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>
@@ -488,7 +488,7 @@ export function BalanceSheetMemberModal({
                 <div className="overflow-x-auto border border-slate-200/90 dark:border-slate-800 rounded-xl">
                   <table className="w-full text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-950/70 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                      <tr className="bg-slate-50/90 dark:bg-slate-950/75 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                         <th className="py-2 px-3 text-left font-semibold">Variable</th>
                         <th className="py-2 px-3 text-right font-semibold whitespace-nowrap">
                           Previous ({prevMonthLabel})
@@ -697,7 +697,7 @@ export function BalanceSheetMemberModal({
                         <div className="overflow-x-auto border border-slate-200/90 dark:border-slate-800 rounded-xl">
                           <table className="w-full text-xs border-collapse">
                             <thead>
-                              <tr className="bg-slate-50 dark:bg-slate-950/70 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                              <tr className="bg-slate-50/90 dark:bg-slate-950/75 text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                                 <th className="py-1.5 px-3 text-left font-semibold">Billing Month</th>
                                 <th className="py-1.5 px-3 text-left font-semibold">Channel</th>
                                 <th className="py-1.5 px-3 text-left font-semibold">Submitted</th>
@@ -747,7 +747,7 @@ export function BalanceSheetMemberModal({
                       disabled={!canGoPrev}
                       onClick={() => canGoPrev && onNavigateRow(rowIndex - 1)}
                       aria-label="Previous member"
-                      className="h-9 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                      className="h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" aria-hidden="true" />
                       <span className="hidden sm:inline">Prev</span>
@@ -760,7 +760,7 @@ export function BalanceSheetMemberModal({
                       disabled={!canGoNext}
                       onClick={() => canGoNext && onNavigateRow(rowIndex + 1)}
                       aria-label="Next member"
-                      className="h-9 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                      className="h-9 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                     >
                       <span className="hidden sm:inline">Next</span>
                       <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -778,7 +778,7 @@ export function BalanceSheetMemberModal({
                       onCloseRef.current();
                       onViewMemberProfile(targetId);
                     }}
-                    className="h-9 px-3.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                    className="h-9 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Open Full Profile</span>
@@ -788,7 +788,7 @@ export function BalanceSheetMemberModal({
                 <button
                   type="button"
                   onClick={() => onCloseRef.current()}
-                  className="h-9 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  className="h-9 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
                 >
                   Close
                 </button>

@@ -389,7 +389,7 @@ export function RequestQardHasanLoanForm({
   const wrapperClass =
     variant === 'modal'
       ? 'space-y-4'
-      : 'bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200';
+      : 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200';
 
   return (
     <section aria-label={t('ariaLabel')} className={wrapperClass}>
@@ -524,7 +524,7 @@ export function RequestQardHasanLoanForm({
                     amountEditedRef.current = true;
                     setAmount(String(preset));
                   }}
-                  className={`px-2 py-0.5 rounded text-[11px] font-mono tabular-nums border transition-colors cursor-pointer disabled:opacity-50 ${
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-mono tabular-nums border transition-colors cursor-pointer disabled:opacity-50 ${
                     parsedAmount === preset
                       ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
                       : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -548,7 +548,7 @@ export function RequestQardHasanLoanForm({
               amountEditedRef.current = true;
               setAmount(e.target.value);
             }}
-            className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
+            className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
           {parsedAmount > availableLiquidity && (
             <p className="text-[11px] text-amber-700 dark:text-amber-400">
@@ -599,7 +599,7 @@ export function RequestQardHasanLoanForm({
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
             placeholder={t('purposePlaceholder')}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
+            className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
 
@@ -621,7 +621,7 @@ export function RequestQardHasanLoanForm({
                     monthsEditedRef.current = true;
                     setInstallmentMonths(String(m));
                   }}
-                  className={`px-2 py-0.5 rounded text-[11px] font-mono tabular-nums border transition-colors cursor-pointer disabled:opacity-50 ${
+                  className={`px-2 py-0.5 rounded-lg text-[11px] font-mono tabular-nums border transition-colors cursor-pointer disabled:opacity-50 ${
                     parsedMonths === m
                       ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400'
                       : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -646,7 +646,7 @@ export function RequestQardHasanLoanForm({
               monthsEditedRef.current = true;
               setInstallmentMonths(e.target.value);
             }}
-            className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
+            className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
           {installmentMonths.trim() !== '' &&
             (!Number.isInteger(rawMonths) || rawMonths < 1 || rawMonths > maxInstallmentMonths) && (
@@ -655,7 +655,7 @@ export function RequestQardHasanLoanForm({
               </p>
             )}
 
-          <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-slate-600 dark:text-slate-400">{t('monthlyInstallmentLabel')}</span>
               <span className="font-mono font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -741,7 +741,7 @@ export function RequestQardHasanLoanForm({
                 setChannel(ch);
                 setProvider(ch === 'mfs' ? MFS_PROVIDERS[0] : BANK_PROVIDERS[0]);
               }}
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
             >
               <option value="mfs">{t('channelMfs')}</option>
               <option value="bank">{t('channelBank')}</option>
@@ -784,7 +784,7 @@ export function RequestQardHasanLoanForm({
             value={disbursementAccount}
             onChange={(e) => setDisbursementAccount(e.target.value)}
             placeholder={channel === 'mfs' ? '017XX-XXXXXX' : t('bankAccountPlaceholder')}
-            className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
+            className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
 
@@ -829,12 +829,12 @@ export function RequestQardHasanLoanForm({
             value={emergencyContext}
             onChange={(e) => setEmergencyContext(e.target.value)}
             placeholder={t('confidentialNotesPlaceholder')}
-            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
+            className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50"
           />
         </div>
 
         {exceedsGuarantorThreshold && (needsGuarantors || membersLoading || membersError) && (
-          <div className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 space-y-2.5">
+          <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 space-y-2.5">
             <div className="flex items-center justify-between gap-2 text-xs">
               <span className="font-semibold text-amber-900 dark:text-amber-200 inline-flex items-center gap-1.5">
                 <UserCheck className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
@@ -914,7 +914,7 @@ export function RequestQardHasanLoanForm({
         )}
 
         <label
-          className={`flex items-start gap-2.5 p-3 rounded-lg border transition-colors cursor-pointer ${
+          className={`flex items-start gap-2.5 p-3 rounded-xl border transition-colors cursor-pointer ${
             termsHighlight && !agreedToTerms
               ? 'border-rose-400 dark:border-rose-700 bg-rose-50/70 dark:bg-rose-950/30'
               : 'border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60'
@@ -940,7 +940,7 @@ export function RequestQardHasanLoanForm({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               {t('cancel')}
             </button>
@@ -948,7 +948,7 @@ export function RequestQardHasanLoanForm({
           <button
             type="submit"
             disabled={!canAttemptSubmit}
-            className="flex-1 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-300 disabled:to-slate-300 dark:disabled:from-slate-800 dark:disabled:to-slate-800 disabled:text-slate-500 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             <Lock className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>

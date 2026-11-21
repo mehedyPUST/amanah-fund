@@ -116,7 +116,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
             transition={{ duration: 0.22 }}
-            className="amanah-card-emerald rounded-2xl border p-6 sm:p-8 shadow-xs space-y-6"
+            className="amanah-card-emerald backdrop-blur-xl rounded-2xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-6"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/80 dark:border-slate-800/80">
               <div className="flex items-start gap-4 max-w-2xl">
@@ -174,7 +174,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                     hue={cardHue}
                     delay={idx * 0.04}
                     inView
-                    className="backdrop-blur-xl p-4 rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 space-y-2.5 transition-all duration-200"
+                    className="backdrop-blur-xl p-4 rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] space-y-2.5 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between">
                       <div className={`w-9 h-9 rounded-xl border shadow-2xs flex items-center justify-center ${iconBoxClass}`}>
@@ -196,7 +196,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             </div>
           </motion.div>
         ) : user.status !== 'active' ? (
-          <div className="bg-amber-50/70 dark:bg-amber-950/35 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="w-11 h-11 rounded-xl bg-amber-100/80 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
                 <UserCheck className="w-5 h-5" aria-hidden="true" />
@@ -212,7 +212,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
             </div>
             <Link
               href="/dashboard"
-              className="px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 whitespace-nowrap self-start sm:self-auto transition-colors"
+              className="px-4 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-amber-50 dark:hover:bg-amber-950/30 whitespace-nowrap self-start sm:self-auto transition-colors"
             >
               {t('checkAccountStatus')}
             </Link>

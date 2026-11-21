@@ -18,7 +18,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
 
   if (recent.length === 0) {
     return (
-      <div className="h-56 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+      <div className="h-56 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white/40 dark:bg-slate-950/25">
         {t('noCashflowActivity')}
       </div>
     );
@@ -131,7 +131,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   y={0}
                   width={slotWidth - 8}
                   height={chartHeight}
-                  rx={4}
+                  rx={6}
                   className={
                     hoveredIdx === idx
                       ? 'fill-indigo-50/70 dark:fill-indigo-950/35'
@@ -143,7 +143,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   y={chartHeight - h1}
                   width={barW}
                   height={Math.max(point.contributions > 0 ? 3 : 0, h1)}
-                  rx={2}
+                  rx={3}
                   initial={{ opacity: 0, scaleY: 0 }}
                   animate={{ opacity: 1, scaleY: 1 }}
                   transition={{ duration: 0.35, delay: idx * 0.04 }}
@@ -155,7 +155,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   y={chartHeight - h2}
                   width={barW}
                   height={Math.max(point.disbursed > 0 ? 3 : 0, h2)}
-                  rx={2}
+                  rx={3}
                   initial={{ opacity: 0, scaleY: 0 }}
                   animate={{ opacity: 1, scaleY: 1 }}
                   transition={{ duration: 0.35, delay: idx * 0.04 + 0.04 }}
@@ -167,7 +167,7 @@ export function CashflowChart({ data, currency }: CashflowChartProps) {
                   y={chartHeight - h3}
                   width={barW}
                   height={Math.max(point.repaid > 0 ? 3 : 0, h3)}
-                  rx={2}
+                  rx={3}
                   initial={{ opacity: 0, scaleY: 0 }}
                   animate={{ opacity: 1, scaleY: 1 }}
                   transition={{ duration: 0.35, delay: idx * 0.04 + 0.08 }}

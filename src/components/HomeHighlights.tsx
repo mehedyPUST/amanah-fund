@@ -99,7 +99,7 @@ export function HomeHighlights() {
                 delay={idx * 0.04}
                 inView
                 interactive
-                className="w-full rounded-2xl backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 p-5 sm:p-6 flex flex-col justify-between gap-5 transition-all duration-200"
+                className="w-full rounded-2xl backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 p-5 sm:p-6 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-[0_12px_30px_-12px_rgba(15,23,42,0.12)] flex flex-col justify-between gap-5 transition-all duration-200"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">

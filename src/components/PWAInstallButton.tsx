@@ -42,7 +42,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
         onClick={() => void handleClick()}
         title={tPwa('installTitle')}
         aria-label={tPwa('installTitle')}
-        className={`inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/35 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white text-emerald-700 dark:text-emerald-300 font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
+        className={`inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/35 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-white text-emerald-700 dark:text-emerald-300 font-medium transition-all duration-200 cursor-pointer whitespace-nowrap ${
           compact ? 'px-2.5 py-2 text-xs' : 'px-3 py-2 text-xs'
         } ${className}`}
       >
@@ -89,7 +89,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                   initial={{ opacity: 0, scale: 0.96, y: 8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.96, y: 8 }}
-                  className="relative z-10 w-full max-w-md bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4"
+                  className="relative z-10 w-full max-w-md bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 rounded-2xl shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)] p-5 sm:p-6 space-y-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
@@ -123,7 +123,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                         {tPwa('iframeBlockedPrefix')}{' '}
                         <strong>{tPwa('installApp')}</strong> {tPwa('iframeBlockedSuffix')}
                       </p>
-                      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 space-y-1.5 text-[11px]">
+                      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 p-3 space-y-1.5 text-[11px]">
                         <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
                           <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                           <span>{tPwa('swVerifiedActive')}</span>
@@ -170,7 +170,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={() => setGuideMode(null)}
-                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs"
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
                       >
                         <span>{tPwa('openNewTab')}</span>
                         <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
@@ -179,7 +179,7 @@ export function PWAInstallButton({ compact = false, className = '' }: PWAInstall
                     <button
                       type="button"
                       onClick={() => setGuideMode(null)}
-                      className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                      className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                     >
                       {tCommon('close')}
                     </button>

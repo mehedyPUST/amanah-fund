@@ -487,7 +487,7 @@ export function ContributionsView({
           <MotionCard
             hue="emerald"
             delay={0.02}
-            className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
           >
             <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">{t('ownSummary')}</div>
             <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -506,7 +506,7 @@ export function ContributionsView({
         <MotionCard
           hue="violet"
           delay={0.06}
-          className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
             {isAdmin ? t('allMembersApprovedPool') : t('otherMembersSummary')}
@@ -522,7 +522,7 @@ export function ContributionsView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">{t('activeRequests')}</div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
@@ -536,7 +536,7 @@ export function ContributionsView({
         <MotionCard
           hue="rose"
           delay={0.14}
-          className={`backdrop-blur-md border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200 ${isAdmin ? 'col-span-2 sm:col-span-1' : ''}`}
+          className={`backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200 ${isAdmin ? 'col-span-2 sm:col-span-1' : ''}`}
         >
           <div className="text-[11px] sm:text-xs font-medium text-rose-700 dark:text-rose-400">{t('deniedRequests')}</div>
           <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
@@ -552,7 +552,7 @@ export function ContributionsView({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, delay: 0.04 }}
-        className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs"
+        className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 mb-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -563,7 +563,7 @@ export function ContributionsView({
               <button
                 type="button"
                 onClick={() => openDepositModal()}
-                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('submitCapitalDeposit')}</span>
@@ -582,11 +582,11 @@ export function ContributionsView({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t('searchPlaceholder')}
-                  className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                  className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-xl border border-slate-200/90 dark:border-slate-700/85 bg-white/95 dark:bg-slate-950/90 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                 />
               </div>
 
-              <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-full sm:w-fit">
+              <div className="flex flex-nowrap overflow-x-auto no-scrollbar items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75 w-full sm:w-fit">
                 {(
                   [
                     { id: 'all', label: t('tabAllCount', { count: contributions.length }) },
@@ -601,7 +601,7 @@ export function ContributionsView({
                       key={tab.id}
                       type="button"
                       onClick={() => setFilter(tab.id)}
-                      className={`relative px-3 py-1.5 sm:px-2.5 sm:py-1 min-h-[36px] sm:min-h-0 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      className={`relative px-3 py-1.5 sm:px-2.5 sm:py-1 min-h-[36px] sm:min-h-0 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                         active
                           ? 'text-slate-900 dark:text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -611,7 +611,7 @@ export function ContributionsView({
                         <motion.span
                           layoutId="contrib-filter-pill"
                           transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
+                          className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                         />
                       )}
                       <span className="relative z-10">{tab.label}</span>
@@ -646,7 +646,7 @@ export function ContributionsView({
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               {t('emptyFiltered')}
             </div>
           ) : (
@@ -831,16 +831,16 @@ export function ContributionsView({
                 })}
               </div>
 
-              <div className="hidden lg:block overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/55 dark:bg-slate-950/35">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <th className="py-2.5 pr-4">{t('colMember')}</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="py-2.5 pl-4 pr-4">{t('colMember')}</th>
                       <th className="py-2.5 pr-4">{t('colMonth')}</th>
                       <th className="py-2.5 pr-4">{t('colBankTx')}</th>
                       <th className="py-2.5 pr-4 text-right">{t('colAmount')}</th>
                       <th className="py-2.5 pr-4">{t('colStatus')}</th>
-                      <th className="py-2.5 text-right">{t('colActions')}</th>
+                      <th className="py-2.5 pr-4 text-right">{t('colActions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
@@ -849,8 +849,8 @@ export function ContributionsView({
                       const txNumber =
                         item.decryptedDetails?.referenceId || item.maskedReference;
                       return (
-                        <tr key={item.id} className="group hover:bg-slate-50/70 dark:hover:bg-slate-800/30">
-                          <td colSpan={6} className="p-0">
+                        <tr key={item.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/35 transition-colors">
+                          <td colSpan={6} className="px-4 py-0">
                             <div className="grid grid-cols-12 items-center py-3 gap-2">
                               <div className="col-span-12 sm:col-span-3 pr-2">
                                 {onViewMemberProfile ? (
@@ -1087,7 +1087,7 @@ export function ContributionsView({
                   exit={{ opacity: 0, scale: 0.97, y: 10 }}
                   transition={{ duration: 0.18 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="relative z-10 w-full max-w-xl bg-white/92 dark:bg-slate-900/92 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
+                  className="relative z-10 w-full max-w-xl bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 rounded-2xl shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)] overflow-hidden my-auto max-h-[90vh] flex flex-col"
                 >
                   <div className="px-5 sm:px-6 py-4 border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/60 flex items-start justify-between gap-4 shrink-0">
                     <div className="space-y-1">
@@ -1113,7 +1113,7 @@ export function ContributionsView({
                       type="button"
                       onClick={() => setDepositModalOpen(false)}
                       aria-label={tCommon('closeDialog')}
-                      className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                      className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1121,13 +1121,13 @@ export function ContributionsView({
 
                   <form onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 overflow-y-auto space-y-4">
                     {prefillBanner && (
-                      <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-0.5">
+                      <div className="p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 text-xs text-amber-900 dark:text-amber-200 space-y-0.5">
                         <div className="font-semibold">{t('prefilledTitle')}</div>
                         <p className="text-amber-800 dark:text-amber-300 leading-relaxed">{prefillBanner}</p>
                       </div>
                     )}
 
-                    <div className="p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
+                    <div className="p-3.5 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/60 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center gap-1.5">
                           <Sparkles className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
@@ -1148,7 +1148,7 @@ export function ContributionsView({
                         )}
                       </div>
 
-                      <label className="w-full py-2 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                      <label className="w-full py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-emerald-400 text-xs font-medium text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 cursor-pointer transition-colors">
                         <FileImage className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
                         <span>
                           {scanningReceipt
@@ -1211,7 +1211,7 @@ export function ContributionsView({
                               setAdvanceMonths([next]);
                             }
                           }}
-                          className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                          className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                         />
                       </div>
 
@@ -1230,7 +1230,7 @@ export function ContributionsView({
                             amountEditedRef.current = true;
                             setAmount(e.target.value);
                           }}
-                          className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                          className="w-full px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                         />
                       </div>
                     </div>
@@ -1261,7 +1261,7 @@ export function ContributionsView({
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="overflow-hidden p-2.5 rounded-lg border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2"
+                            className="overflow-hidden p-2.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2"
                           >
                             <div className="grid grid-cols-3 gap-1.5">
                               {upcomingMonthOptions.map((m) => {
@@ -1273,7 +1273,7 @@ export function ContributionsView({
                                     type="button"
                                     disabled={isPrimary}
                                     onClick={() => toggleAdvanceMonth(m)}
-                                    className={`px-2 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
+                                    className={`px-2 py-1 rounded-lg text-[11px] font-mono transition-colors cursor-pointer disabled:cursor-default ${
                                       active
                                         ? 'bg-emerald-600 text-white font-medium shadow-2xs'
                                         : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-teal-400'
@@ -1302,14 +1302,14 @@ export function ContributionsView({
                       <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                         {t('paymentChannel')}
                       </label>
-                      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70">
+                      <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75">
                         <button
                           type="button"
                           onClick={() => {
                             setChannel('mfs');
                             setProviderName(MFS_PROVIDERS[0]);
                           }}
-                          className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                          className={`relative py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                             channel === 'mfs'
                               ? 'text-slate-900 dark:text-white'
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -1319,7 +1319,7 @@ export function ContributionsView({
                             <motion.span
                               layoutId="contrib-channel-pill"
                               transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                              className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                              className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                             />
                           )}
                           <span className="relative z-10">{t('mfsWallet')}</span>
@@ -1330,7 +1330,7 @@ export function ContributionsView({
                             setChannel('bank');
                             setProviderName(BANK_PROVIDERS[0]);
                           }}
-                          className={`relative py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                          className={`relative py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer ${
                             channel === 'bank'
                               ? 'text-slate-900 dark:text-white'
                               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -1340,7 +1340,7 @@ export function ContributionsView({
                             <motion.span
                               layoutId="contrib-channel-pill"
                               transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                              className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                              className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                             />
                           )}
                           <span className="relative z-10">{t('bdBankTransfer')}</span>
@@ -1375,7 +1375,7 @@ export function ContributionsView({
                         value={senderAccount}
                         onChange={(e) => setSenderAccount(e.target.value)}
                         placeholder={channel === 'mfs' ? '017XX-XXXXXX' : '2050-XXXX-XXXX'}
-                        className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                        className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                       />
                     </div>
 
@@ -1389,7 +1389,7 @@ export function ContributionsView({
                         value={referenceId}
                         onChange={(e) => setReferenceId(e.target.value)}
                         placeholder={channel === 'mfs' ? 'e.g. BKX9984120A' : 'e.g. IBBL-BEFTN-8821'}
-                        className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                        className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                       />
                     </div>
 
@@ -1402,7 +1402,7 @@ export function ContributionsView({
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         placeholder={t('optionalNotePlaceholder')}
-                        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                        className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                       />
                     </div>
 
@@ -1410,14 +1410,14 @@ export function ContributionsView({
                       <button
                         type="button"
                         onClick={() => setDepositModalOpen(false)}
-                        className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       >
                         {tCommon('cancel')}
                       </button>
                       <button
                         type="submit"
                         disabled={modalBusy}
-                        className="py-2.5 px-5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-xs sm:text-sm font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Lock className="w-4 h-4" aria-hidden="true" />
                         <span>{t('reviewSubmitBtn')}</span>

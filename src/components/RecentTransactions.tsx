@@ -209,7 +209,7 @@ export function RecentTransactions({
       as="section"
       hue="sky"
       aria-labelledby="recent-transactions-heading"
-      className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 border rounded-2xl p-5 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -234,7 +234,7 @@ export function RecentTransactions({
           <div
             role="group"
             aria-label={t('filterRecentAria')}
-            className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200/70 dark:border-slate-700/70"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75"
           >
             {(
               [
@@ -252,7 +252,7 @@ export function RecentTransactions({
                     setFilter(tab.id);
                     scrollFilterButtonWithNeighbors(e.currentTarget);
                   }}
-                  className={`relative px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -262,7 +262,7 @@ export function RecentTransactions({
                     <motion.span
                       layoutId="recent-tx-filter-pill"
                       transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                       aria-hidden="true"
                     />
                   )}
@@ -276,7 +276,7 @@ export function RecentTransactions({
             <button
               type="button"
               onClick={() => onNavigate('transaction-history')}
-              className="group px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
+              className="group px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all active:scale-[0.98]"
             >
               <span>{t('openTransactions')}</span>
               <ArrowRight
@@ -307,7 +307,7 @@ export function RecentTransactions({
           ))}
         </div>
       ) : visibleItems.length === 0 ? (
-        <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
+        <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white/40 dark:bg-slate-950/25 space-y-3">
           <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
             {items.length === 0
               ? t('noActivityYet')
@@ -323,7 +323,7 @@ export function RecentTransactions({
               <button
                 type="button"
                 onClick={() => setFilter('all')}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer whitespace-nowrap"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer whitespace-nowrap transition-colors"
               >
                 {t('showAllActivity')}
               </button>
@@ -332,7 +332,7 @@ export function RecentTransactions({
               <button
                 type="button"
                 onClick={() => onNavigate('monthly-contribution')}
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
               >
                 <CreditCard className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('submitCapitalDeposit')}</span>
@@ -342,7 +342,7 @@ export function RecentTransactions({
               <button
                 type="button"
                 onClick={() => onNavigate('quard-hasan')}
-                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap transition-colors"
               >
                 <HandCoins className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('viewQardHasanLoans')}</span>
@@ -363,11 +363,11 @@ export function RecentTransactions({
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : item.id)}
                   aria-expanded={isExpanded}
-                  className="w-full py-3.5 px-2 -mx-2 rounded-lg flex items-center justify-between gap-4 text-left hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+                  className="w-full py-3.5 px-2.5 -mx-2.5 rounded-xl flex items-center justify-between gap-4 text-left hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div
-                      className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+                      className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
                         isContribution
                           ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-700 dark:text-emerald-400'
                           : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-900/60 text-amber-700 dark:text-amber-400'
@@ -435,7 +435,7 @@ export function RecentTransactions({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.16 }}
-                      className="mb-3 ml-0 sm:ml-12 p-3.5 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                      className="mb-3 ml-0 sm:ml-12 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                     >
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
                         <div>
@@ -467,7 +467,7 @@ export function RecentTransactions({
                         <button
                           type="button"
                           onClick={() => onNavigate(item.targetTab)}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-300 dark:hover:border-teal-700 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-center transition-colors"
+                          className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-300 dark:hover:border-teal-700 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer self-start sm:self-center transition-colors"
                         >
                           <span>
                             {item.status === 'scheduled' || item.status === 'overdue'

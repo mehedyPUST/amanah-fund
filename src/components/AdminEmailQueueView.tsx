@@ -345,7 +345,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header Banner */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4">
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -365,7 +365,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               type="button"
               disabled={batchBusy}
               onClick={() => void loadQueue(false)}
-              className="px-3 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-3 py-2 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
               <span>{t('refresh')}</span>
@@ -374,7 +374,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               type="button"
               disabled={batchBusy || stats.pending + stats.retrying === 0}
               onClick={handleProcessDue}
-              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/80 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
             >
               <Play className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('processPending')}</span>
@@ -383,7 +383,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               type="button"
               disabled={batchBusy || attentionCount === 0}
               onClick={confirmRetryAll}
-              className="col-span-2 sm:col-span-1 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50 transition-colors whitespace-nowrap shrink-0"
+              className="col-span-2 sm:col-span-1 px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98] whitespace-nowrap shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('retryAllBtn', { count: attentionCount })}</span>
@@ -393,7 +393,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
 
         {/* Summary KPI Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
-          <div className="rounded-xl border amanah-card-violet p-3 sm:p-3.5">
+          <div className="rounded-2xl border backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] amanah-card-violet p-3.5 sm:p-4">
             <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 dark:text-slate-400">
               <span>{t('kpiSmtp')}</span>
               <Server className="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
@@ -417,7 +417,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </div>
           </div>
 
-          <div className="rounded-xl border amanah-card-amber p-3 sm:p-3.5">
+          <div className="rounded-2xl border backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] amanah-card-amber p-3.5 sm:p-4">
             <div className="flex items-center justify-between text-[11px] font-medium text-amber-800/80 dark:text-amber-300/80">
               <span>{t('kpiPendingRetrying')}</span>
               <Clock className="w-3.5 h-3.5 text-amber-600" aria-hidden="true" />
@@ -427,7 +427,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </div>
           </div>
 
-          <div className="rounded-xl border amanah-card-rose p-3 sm:p-3.5">
+          <div className="rounded-2xl border backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] amanah-card-rose p-3.5 sm:p-4">
             <div className="flex items-center justify-between text-[11px] font-medium text-rose-800/80 dark:text-rose-300/80">
               <span>{t('kpiFailed')}</span>
               <XCircle className="w-3.5 h-3.5 text-rose-600" aria-hidden="true" />
@@ -437,7 +437,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </div>
           </div>
 
-          <div className="rounded-xl border amanah-card-emerald p-3 sm:p-3.5">
+          <div className="rounded-2xl border backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] amanah-card-emerald p-3.5 sm:p-4">
             <div className="flex items-center justify-between text-[11px] font-medium text-emerald-800/80 dark:text-emerald-300/80">
               <span>{t('kpiRecovered')}</span>
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
@@ -450,9 +450,9 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
       </section>
 
       {/* Queue Filter & List */}
-      <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4">
+      <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex flex-nowrap md:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 md:pb-0">
+          <div className="flex flex-nowrap md:flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 overflow-x-auto no-scrollbar">
             {(
               [
                 { id: 'attention', label: t('tabAttention', { count: attentionCount }) },
@@ -469,8 +469,8 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 onClick={() => setStatusFilter(tab.id)}
                 className={`px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   statusFilter === tab.id
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                    ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-300 shadow-xs ring-1 ring-indigo-500/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -489,14 +489,14 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchPlaceholder')}
-                className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
               />
             </div>
             {stats.sent > 0 && (
               <button
                 type="button"
                 onClick={confirmClearSent}
-                className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-700 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-rose-700 hover:border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center justify-center gap-1 cursor-pointer shrink-0 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('clearSentBtn')}</span>
@@ -512,7 +512,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             ))}
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950/50 p-8 text-center space-y-2">
+          <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/55 dark:bg-slate-950/35 p-8 text-center space-y-2">
             <Inbox className="w-8 h-8 text-slate-400 mx-auto" aria-hidden="true" />
             <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
               {statusFilter === 'attention'
@@ -526,7 +526,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+          <div className="divide-y divide-slate-200/80 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-2xl bg-white/55 dark:bg-slate-950/35 overflow-hidden">
             {filteredItems.map((item) => {
               const isBusy = busyId === item.id;
               const statusBadgeClass =
@@ -539,7 +539,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
               return (
                 <div
                   key={item.id}
-                  className="p-3.5 sm:p-4 bg-white/50 dark:bg-slate-900/50 hover:bg-slate-50/70 dark:hover:bg-slate-950/50 transition-colors flex flex-col lg:flex-row lg:items-start justify-between gap-3 sm:gap-4"
+                  className="p-3.5 sm:p-4 hover:bg-slate-50/70 dark:hover:bg-slate-900/40 transition-colors flex flex-col lg:flex-row lg:items-start justify-between gap-3 sm:gap-4"
                 >
                   <div className="space-y-2 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -587,7 +587,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                     </div>
 
                     {item.lastError && (
-                      <div className="rounded-lg border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 px-3 py-2 text-[11px] font-mono text-rose-800 dark:text-rose-300 break-words">
+                      <div className="rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/60 dark:bg-rose-950/30 px-3 py-2 text-[11px] font-mono text-rose-800 dark:text-rose-300 break-words">
                         {t('errorLabel', { error: item.lastError })}
                       </div>
                     )}
@@ -597,7 +597,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                     <button
                       type="button"
                       onClick={() => openPayloadPreview(item)}
-                      className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('detailsBtn')}</span>
@@ -607,7 +607,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                         type="button"
                         disabled={isBusy || batchBusy}
                         onClick={() => void handleSingleRetry(item)}
-                        className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shadow-sm shadow-emerald-600/20 transition-all duration-150"
                       >
                         <RotateCcw
                           className={`w-3.5 h-3.5 ${isBusy ? 'animate-spin' : ''}`}
@@ -620,7 +620,7 @@ export function AdminEmailQueueView({ onRefreshWorkspace }: AdminEmailQueueViewP
                       type="button"
                       disabled={isBusy || batchBusy}
                       onClick={() => confirmDeleteItem(item)}
-                      className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-600 hover:text-white text-xs font-medium text-rose-700 dark:text-rose-400 inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
+                      className="flex-1 sm:flex-initial min-h-[40px] sm:min-h-0 px-2.5 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50/70 dark:bg-rose-950/30 hover:bg-rose-600 hover:text-white text-xs font-medium text-rose-700 dark:text-rose-400 inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('discardBtn')}</span>

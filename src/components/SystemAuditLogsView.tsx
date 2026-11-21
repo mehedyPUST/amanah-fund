@@ -429,7 +429,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
   if (!canViewSystemLogs) {
     return (
-      <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-3 shadow-xs">
+      <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 flex items-center justify-center mx-auto">
           <ShieldAlert className="w-5 h-5" aria-hidden="true" />
         </div>
@@ -464,7 +464,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="violet"
           delay={0.02}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 space-y-1 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>{t('kpiImmutableRecords')}</span>
@@ -499,7 +499,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="emerald"
           delay={0.06}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 space-y-1 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>{t('kpiUserApprovals')}</span>
@@ -523,7 +523,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="teal"
           delay={0.1}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 space-y-1 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>{t('kpiSettingMods')}</span>
@@ -544,7 +544,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         <MotionCard
           hue="amber"
           delay={0.14}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-1 shadow-xs hover:shadow-md transition-all duration-200"
+          className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 space-y-1 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
             <span>{t('kpiFinancialMod')}</span>
@@ -567,7 +567,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
       </div>
 
       {/* Main Immutable Audit Ledger Panel */}
-      <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 sm:space-y-5 shadow-xs">
+      <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
@@ -590,7 +590,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               type="button"
               onClick={() => void fetchLogs(false, true)}
               disabled={loading || verifying}
-              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/75 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 ${loading || verifying ? 'animate-spin' : ''}`}
@@ -603,7 +603,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               type="button"
               onClick={handleExportImmutableJson}
               disabled={filteredLogs.length === 0}
-              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
+              className="px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/75 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <FileJson className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
               <span>{t('exportJsonProof')}</span>
@@ -612,7 +612,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             <button
               type="button"
               onClick={() => window.location.assign(api.getCsvReportExportUrl('audit', 'admin'))}
-              className="col-span-2 sm:col-span-1 px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all"
+              className="col-span-2 sm:col-span-1 px-3.5 py-2 min-h-[44px] sm:min-h-0 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('exportAdminCsv')}</span>
@@ -623,7 +623,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         {verificationNote && (
           <div
             role="status"
-            className={`p-3 rounded-lg border text-xs flex items-center justify-between gap-3 ${
+            className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-3 ${
               chainValid
                 ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300'
                 : 'border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 text-red-800 dark:text-red-300'
@@ -650,7 +650,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         {error && (
           <div
             role="alert"
-            className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300"
+            className="p-3.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300"
           >
             {error}
           </div>
@@ -658,7 +658,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
 
         {/* Filter & Search Bar */}
         <div className="space-y-3">
-          <div className="flex flex-nowrap lg:flex-wrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg w-full lg:w-fit max-w-full overflow-x-auto no-scrollbar">
+          <div className="flex flex-nowrap lg:flex-wrap items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl w-full lg:w-fit max-w-full overflow-x-auto no-scrollbar">
             {(
               [
                 { id: 'all', label: t('tabAllAdmin', { count: metrics.total }) },
@@ -684,7 +684,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     setCategoryFilter(tab.id);
                     setVisibleLimit(30);
                   }}
-                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -694,7 +694,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     <motion.span
                       layoutId="system-audit-category-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-indigo-500/20"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>
@@ -718,7 +718,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   setActorFilter(e.target.value);
                   setVisibleLimit(30);
                 }}
-                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/25 focus:border-indigo-500 transition-colors"
               >
                 <option value="all">{t('allAdminsManagers')}</option>
                 {actorOptions.map((actor) => (
@@ -744,7 +744,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   setDateFrom(e.target.value);
                   setVisibleLimit(30);
                 }}
-                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/25 focus:border-indigo-500 transition-colors"
               />
             </div>
 
@@ -763,7 +763,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                   setDateTo(e.target.value);
                   setVisibleLimit(30);
                 }}
-                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200"
+                className="w-full px-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/25 focus:border-indigo-500 transition-colors"
               />
             </div>
 
@@ -788,7 +788,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                     setVisibleLimit(30);
                   }}
                   placeholder={t('searchPlaceholder')}
-                  className="w-full pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                  className="w-full pl-8 pr-3 py-2 min-h-[44px] sm:min-h-0 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/25 focus:border-indigo-500 transition-colors"
                 />
               </div>
             </div>
@@ -802,7 +802,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-950/70 space-y-2"
+                  className="p-3.5 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/70 dark:bg-slate-950/60 space-y-2"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <Skeleton width={130} height={14} />
@@ -814,16 +814,16 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               ))}
             </div>
 
-            <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="hidden lg:block overflow-x-auto rounded-xl overflow-hidden border border-slate-200/85 dark:border-slate-800/85 bg-white/55 dark:bg-slate-950/35">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                    <th className="py-2.5 px-4 font-medium">{t('colTimestamp')}</th>
-                    <th className="py-2.5 px-4 font-medium">{t('colActionCategory')}</th>
-                    <th className="py-2.5 px-4 font-medium">{t('colAdministrator')}</th>
-                    <th className="py-2.5 px-4 font-medium">{t('colSummaryTarget')}</th>
-                    <th className="py-2.5 px-4 font-medium">{t('colImmutableProof')}</th>
-                    <th className="py-2.5 px-4 font-medium text-right">{t('colRecord')}</th>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="py-2.5 px-4 font-semibold">{t('colTimestamp')}</th>
+                    <th className="py-2.5 px-4 font-semibold">{t('colActionCategory')}</th>
+                    <th className="py-2.5 px-4 font-semibold">{t('colAdministrator')}</th>
+                    <th className="py-2.5 px-4 font-semibold">{t('colSummaryTarget')}</th>
+                    <th className="py-2.5 px-4 font-semibold">{t('colImmutableProof')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-right">{t('colRecord')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -842,7 +842,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             </div>
           </>
         ) : filteredLogs.length === 0 ? (
-          <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
+          <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white/40 dark:bg-slate-950/30 space-y-3">
             <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
               {adminLogs.length === 0 ? t('emptyNone') : t('emptyFiltered')}
             </div>
@@ -850,7 +850,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="px-4 py-2 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                className="px-4 py-2 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
               >
                 {tCommon('resetFilters')}
               </button>
@@ -859,7 +859,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
         ) : (
           <>
             {/* Mobile Tap-Cards (< lg) */}
-            <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white/75 dark:bg-slate-950/70">
+            <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-2xl overflow-hidden bg-white/75 dark:bg-slate-950/65">
               {displayedLogs.map((entry) => {
                 const isOpen = expandedId === entry.id;
                 const meta = getAdminActionMeta(entry.action);
@@ -916,7 +916,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                       type="button"
                       onClick={() => setExpandedId(isOpen ? null : entry.id)}
                       aria-expanded={isOpen}
-                      className="w-full min-h-[40px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center justify-between cursor-pointer"
+                      className="w-full min-h-[40px] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/70 text-xs font-medium text-slate-700 dark:text-slate-300 inline-flex items-center justify-between cursor-pointer transition-colors"
                     >
                       <span>
                         {isOpen
@@ -939,7 +939,7 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -4 }}
                           transition={{ duration: 0.16 }}
-                          className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-indigo-200/80 dark:border-indigo-900/50 space-y-3 text-[11px]"
+                          className="p-3 rounded-xl bg-slate-50/90 dark:bg-slate-900/90 border border-indigo-200/80 dark:border-indigo-900/50 space-y-3 text-[11px]"
                         >
                           <div className="space-y-1.5 font-mono text-slate-600 dark:text-slate-400 break-all">
                             <div>
@@ -1015,16 +1015,16 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
             </div>
 
             {/* Desktop Table (>= lg) */}
-            <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="hidden lg:block overflow-x-auto rounded-xl overflow-hidden border border-slate-200/85 dark:border-slate-800/85 bg-white/55 dark:bg-slate-950/35">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colTimestamp')}</th>
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colActionCategory')}</th>
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colAdministrator')}</th>
-                    <th className="py-2.5 px-4 font-medium">{t('colSummaryTarget')}</th>
-                    <th className="py-2.5 px-4 font-medium whitespace-nowrap">{t('colImmutableProof')}</th>
-                    <th className="py-2.5 px-4 font-medium text-right whitespace-nowrap">{t('colRecord')}</th>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <th className="py-2.5 px-4 font-semibold whitespace-nowrap">{t('colTimestamp')}</th>
+                    <th className="py-2.5 px-4 font-semibold whitespace-nowrap">{t('colActionCategory')}</th>
+                    <th className="py-2.5 px-4 font-semibold whitespace-nowrap">{t('colAdministrator')}</th>
+                    <th className="py-2.5 px-4 font-semibold">{t('colSummaryTarget')}</th>
+                    <th className="py-2.5 px-4 font-semibold whitespace-nowrap">{t('colImmutableProof')}</th>
+                    <th className="py-2.5 px-4 font-semibold text-right whitespace-nowrap">{t('colRecord')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1067,14 +1067,14 @@ export function SystemAuditLogsView({ user }: SystemAuditLogsViewProps) {
                 <button
                   type="button"
                   onClick={() => setVisibleLimit((n) => n + 30)}
-                  className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center justify-center cursor-pointer transition-colors"
                 >
                   {t('loadMore')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setVisibleLimit(filteredLogs.length)}
-                  className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 inline-flex items-center justify-center cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 inline-flex items-center justify-center cursor-pointer transition-colors"
                 >
                   {t('showAllCount', { total: filteredLogs.length })}
                 </button>
@@ -1181,7 +1181,7 @@ function AdminAuditTableRow({
             type="button"
             onClick={onToggle}
             aria-expanded={isOpen}
-            className="px-2.5 py-1.5 rounded-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
+            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/30 hover:border-indigo-300 dark:hover:border-indigo-700 inline-flex items-center gap-1 cursor-pointer transition-colors"
           >
             <span>{isOpen ? tCommon('hide') : t('inspectBtn')}</span>
             {isOpen ? (
@@ -1232,13 +1232,13 @@ function AdminAuditTableRow({
                     <div className="text-[11px] font-semibold text-slate-700 dark:text-slate-300">
                       {t('modifiedFieldsHeader')}
                     </div>
-                    <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
+                    <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-slate-900">
                       <table className="w-full text-left border-collapse text-[11px] font-mono">
                         <thead>
-                          <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
-                            <th className="py-1.5 px-3 font-medium">{t('colField')}</th>
-                            <th className="py-1.5 px-3 font-medium">{t('colPrevValue')}</th>
-                            <th className="py-1.5 px-3 font-medium">{t('colNewValue')}</th>
+                          <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-slate-500 dark:text-slate-400">
+                            <th className="py-1.5 px-3 font-semibold">{t('colField')}</th>
+                            <th className="py-1.5 px-3 font-semibold">{t('colPrevValue')}</th>
+                            <th className="py-1.5 px-3 font-semibold">{t('colNewValue')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">

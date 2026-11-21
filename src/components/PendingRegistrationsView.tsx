@@ -339,7 +339,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
 
   if (!isAdmin) {
     return (
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 sm:p-8 shadow-xs">
+      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
@@ -363,7 +363,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       className="space-y-6"
     >
       {/* Header & Controls */}
-      <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs transition-all duration-200">
+      <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -393,7 +393,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('searchPlaceholder')}
                 aria-label={t('searchAria')}
-                className="w-full sm:w-64 min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+                className="w-full sm:w-64 min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition-colors"
               />
             </div>
 
@@ -401,7 +401,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
               type="button"
               onClick={() => void loadPendingRegistrations()}
               disabled={loading}
-              className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <RefreshCw
                 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
@@ -413,7 +413,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
         </div>
 
         {/* Segmented Queue Filter Bar */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-200/70 dark:border-slate-800">
+        <div className="flex flex-wrap items-center gap-1.5 pt-3 border-t border-slate-200/70 dark:border-slate-800">
           {(
             [
               { id: 'all', label: t('filterAll'), count: registrations.length },
@@ -431,9 +431,9 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                 key={tab.id}
                 type="button"
                 onClick={() => setQueueFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer inline-flex items-center gap-1.5 ${
                   active
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xs'
                     : 'bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
@@ -449,7 +449,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
       {loading ? (
         <div className="space-y-4">
           {[1, 2].map((item) => (
-            <div key={item} className="amanah-card-violet border rounded-2xl p-6 space-y-4">
+            <div key={item} className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Skeleton width={56} height={56} borderRadius={8} />
@@ -468,8 +468,8 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           ))}
         </div>
       ) : registrations.length === 0 ? (
-        <section className="amanah-card-emerald border rounded-2xl p-8 text-center space-y-2 shadow-xs">
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto">
+        <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-2 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
           </div>
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -480,7 +480,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
           </p>
         </section>
       ) : filteredRegistrations.length === 0 ? (
-        <section className="amanah-card-violet border rounded-2xl p-8 text-center space-y-2 shadow-xs">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-2 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             {t('noMatchTitle')}
           </h3>
@@ -493,7 +493,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
               setSearchQuery('');
               setQueueFilter('all');
             }}
-            className="mt-2 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+            className="mt-2 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
           >
             {t('resetFilters')}
           </button>
@@ -522,7 +522,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             return (
               <article
                 key={applicant.id}
-                className={`${cardHueClass} border rounded-2xl overflow-hidden shadow-xs hover:-translate-y-0.5 hover:shadow-md transition-all duration-200`}
+                className={`${cardHueClass} backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl overflow-hidden shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:-translate-y-0.5 hover:shadow-md transition-all duration-200`}
               >
                 {/* Applicant Header & Primary Approve / Reject Actions */}
                 <div className="p-3.5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4 border-b border-slate-100 dark:border-slate-800">
@@ -600,7 +600,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         type="button"
                         disabled={downloadingPdfId === applicant.id}
                         onClick={() => void handleDownloadApplicantPdf(applicant)}
-                        className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
+                        className="col-span-2 sm:col-span-1 min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-colors"
                       >
                         {downloadingPdfId === applicant.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
@@ -618,7 +618,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                       type="button"
                       disabled={isBusy || modalBusy}
                       onClick={() => confirmReject(applicant)}
-                      className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                      className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98]"
                     >
                       <UserX className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>
@@ -635,7 +635,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         type="button"
                         disabled={isBusy || modalBusy}
                         onClick={() => void handleResendEmail(applicant)}
-                        className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200"
+                        className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/80 dark:bg-indigo-950/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white shadow-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98]"
                       >
                         <Mail className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>
@@ -647,7 +647,7 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         type="button"
                         disabled={isBusy || modalBusy}
                         onClick={() => confirmApprove(applicant)}
-                        className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-200 active:scale-[0.98]"
+                        className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50 transition-all duration-150 active:scale-[0.98]"
                       >
                         <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>

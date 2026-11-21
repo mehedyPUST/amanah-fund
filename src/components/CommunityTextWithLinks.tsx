@@ -144,7 +144,7 @@ export function CommunityEmojiPicker({
     <div
       role="group"
       aria-label={tLinks('insertEmojiAria')}
-      className={`rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-900/88 backdrop-blur-md shadow-sm p-2.5 ${
+      className={`rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white/94 dark:bg-slate-900/94 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_12px_32px_-12px_rgba(15,23,42,0.2)] p-2.5 ${
         compact ? 'max-w-sm' : ''
       }`}
     >

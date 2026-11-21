@@ -44,7 +44,7 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
           return (
             <div
               key={`${nominee.name}-${idx}`}
-              className="rounded-lg border border-indigo-200/70 dark:border-indigo-900/50 bg-indigo-50/30 dark:bg-indigo-950/15 p-3.5 space-y-3 text-xs"
+              className="rounded-xl border border-indigo-200/75 dark:border-indigo-900/50 bg-indigo-50/35 dark:bg-indigo-950/20 p-3.5 space-y-3 text-xs shadow-2xs"
             >
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-2">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">

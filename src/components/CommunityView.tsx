@@ -3072,7 +3072,7 @@ export function CommunityView({
       className="space-y-6"
     >
       {/* Top Toolbar: Mode Switch + Primary Action */}
-      <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+      <div className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="space-y-1">
           <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
             <Users className="w-3.5 h-3.5" aria-hidden="true" />
@@ -3087,7 +3087,7 @@ export function CommunityView({
           <div
             role="tablist"
             aria-label={t('tabsAria')}
-            className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full w-full sm:w-fit items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75"
           >
             {(
               [
@@ -3119,7 +3119,7 @@ export function CommunityView({
                     setActiveTab(tab.id);
                     scrollFilterButtonWithNeighbors(e.currentTarget);
                   }}
-                  className={`relative px-3.5 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+                  className={`relative px-3.5 py-1.5 min-h-[38px] sm:min-h-0 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -3129,7 +3129,7 @@ export function CommunityView({
                     <motion.span
                       layoutId="community-main-tab-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <Icon className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
@@ -3150,7 +3150,7 @@ export function CommunityView({
               onClick={() => {
                 setComposerOpen((prev) => !prev);
               }}
-              className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+              className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
             >
               {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
               <span>{composerOpen ? t('closeComposer') : t('newPost')}</span>
@@ -3194,7 +3194,7 @@ export function CommunityView({
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.16 }}
                 onSubmit={handleCreatePost}
-                className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs"
+                className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -3217,7 +3217,7 @@ export function CommunityView({
                       id="post-category"
                       value={newCategory}
                       onChange={(e) => setNewCategory(e.target.value as CommunityCategory)}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                     >
                       {CATEGORIES.map((cat) => (
                         <option key={cat} value={cat}>
@@ -3242,7 +3242,7 @@ export function CommunityView({
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       placeholder={t('placeholderHeadline')}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                     />
                   </div>
                 </div>
@@ -3268,7 +3268,7 @@ export function CommunityView({
                       setPostMentionQuery(extractTrailingMentionQuery(val));
                     }}
                     placeholder={t('placeholderPostBody')}
-                    className="w-full px-3 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600 resize-y"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 resize-y"
                   />
                   {postMentionQuery !== null && filterMentionMatches(postMentionQuery).length > 0 && (
                     <div
@@ -3579,7 +3579,7 @@ export function CommunityView({
                     <button
                       type="button"
                       onClick={() => setNewEmojiOpen((prev) => !prev)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
                         newEmojiOpen
                           ? 'border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
                           : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -3591,7 +3591,7 @@ export function CommunityView({
                     <button
                       type="button"
                       onClick={() => setLinkBuilderOpen((prev) => !prev)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
                         linkBuilderOpen
                           ? 'border-teal-300 dark:border-teal-700 bg-teal-50/70 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300'
                           : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -3604,19 +3604,19 @@ export function CommunityView({
                       <button
                         type="button"
                         onClick={() => setPollEnabled(true)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 cursor-pointer transition-colors"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/30 cursor-pointer transition-colors"
                       >
                         <BarChart2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                         <span>{t('attachPollBtn')}</span>
                       </button>
                     )}
 
-                    <div className="inline-flex items-center rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 overflow-hidden">
+                    <div className="inline-flex items-center rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 overflow-hidden">
                       <select
                         value={aiTone}
                         onChange={(e) => setAiTone(e.target.value as AiRewriteTone)}
                         aria-label={t('aiToneAria')}
-                        className="px-2 py-2 bg-transparent text-[11px] font-medium text-indigo-800 dark:text-indigo-200 border-r border-indigo-200 dark:border-indigo-800/70 focus:outline-none cursor-pointer"
+                        className="px-2.5 py-2 bg-transparent text-[11px] font-medium text-indigo-800 dark:text-indigo-200 border-r border-indigo-200 dark:border-indigo-800/70 focus:outline-none cursor-pointer"
                       >
                         <option value="clear">{t('toneClear')}</option>
                         <option value="concise">{t('toneConcise')}</option>
@@ -3637,7 +3637,7 @@ export function CommunityView({
                       type="button"
                       disabled={checkingNewSpam}
                       onClick={() => void handleCheckNewSpam()}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-700 dark:text-emerald-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-700 dark:text-emerald-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                     >
                       <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{checkingNewSpam ? t('scanning') : t('spamLinkCheck')}</span>
@@ -3648,7 +3648,7 @@ export function CommunityView({
                     <button
                       type="button"
                       onClick={() => setComposerOpen(false)}
-                      className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                      className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                     >
                       {tCommon('cancel')}
                     </button>
@@ -3662,7 +3662,7 @@ export function CommunityView({
                             ? t('checkingLinksTooltip')
                             : undefined
                       }
-                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-xs cursor-pointer transition-all"
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:via-teal-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] cursor-pointer transition-all"
                     >
                       {creatingPost
                         ? t('publishing')
@@ -3696,10 +3696,10 @@ export function CommunityView({
                     setFeedCategory(item.id);
                     scrollFilterButtonWithNeighbors(e.currentTarget);
                   }}
-                  className={`min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
                     feedCategory === item.id
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-xs'
-                      : 'bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm border border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm shadow-emerald-600/20'
+                      : 'bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   {item.label}
@@ -3717,7 +3717,7 @@ export function CommunityView({
                 value={feedSearch}
                 onChange={(e) => setFeedSearch(e.target.value)}
                 placeholder={t('searchFeedPlaceholder')}
-                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
               />
             </div>
           </div>
@@ -3728,7 +3728,7 @@ export function CommunityView({
               {[1, 2].map((i) => (
                 <div
                   key={i}
-                  className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3"
+                  className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3"
                 >
                   <div className="flex items-center gap-3">
                     <Skeleton width={36} height={36} borderRadius={8} />
@@ -3748,7 +3748,7 @@ export function CommunityView({
               ))}
             </div>
           ) : filteredPosts.length === 0 ? (
-            <div className="amanah-card-violet border rounded-2xl p-10 text-center space-y-3">
+            <div className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-10 text-center space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
               <MessageSquare className="w-8 h-8 text-slate-400 mx-auto" />
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -3764,7 +3764,7 @@ export function CommunityView({
                 <button
                   type="button"
                   onClick={() => setComposerOpen(true)}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 cursor-pointer"
                 >
                   {t('createFirstPost')}
                 </button>
@@ -3781,9 +3781,9 @@ export function CommunityView({
                 return (
                   <article
                     key={post.id}
-                    className={`border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 transition-all duration-200 ${
+                    className={`backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200 ${
                       post.status === 'hidden'
-                        ? 'border-amber-300/80 dark:border-amber-800/80 bg-amber-50/60 dark:bg-amber-950/25'
+                        ? 'border-amber-300/80 dark:border-amber-800/80 bg-amber-50/75 dark:bg-amber-950/25'
                         : post.isPinned
                           ? 'amanah-card-emerald'
                           : idx % 2 === 0
@@ -4657,7 +4657,7 @@ export function CommunityView({
                                   ? t('placeholderCommentLocked')
                                   : t('placeholderComment')
                               }
-                              className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                              className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                             />
                             <button
                               type="button"
@@ -4668,7 +4668,7 @@ export function CommunityView({
                               }
                               title={t('insertEmojiTitle')}
                               aria-label={t('insertEmojiAria')}
-                              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 p-2 rounded-lg border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
+                              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 p-2 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
                                 commentEmojiPostId === post.id
                                   ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'
                                   : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -4682,7 +4682,7 @@ export function CommunityView({
                                 !(commentDrafts[post.id] || '').trim() ||
                                 submittingCommentPostId === post.id
                               }
-                              className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                              className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
                             >
                               {submittingCommentPostId === post.id ? t('postingComment') : t('postComment')}
                             </button>
@@ -4768,7 +4768,7 @@ export function CommunityView({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.16 }}
-              className="bg-white dark:bg-slate-950 border border-slate-200/90 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs grid grid-cols-1 lg:grid-cols-[336px_minmax(0,1fr)] h-[74dvh] min-h-[500px] lg:h-[640px] lg:max-h-[75vh]"
+              className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl overflow-hidden shadow-[0_8px_32px_-16px_rgba(15,23,42,0.14)] grid grid-cols-1 lg:grid-cols-[336px_minmax(0,1fr)] h-[74dvh] min-h-[500px] lg:h-[640px] lg:max-h-[75vh]"
             >
               {/* Left Pane: Messenger Chats List */}
               <aside className="flex border-b lg:border-b-0 lg:border-r border-slate-200/90 dark:border-slate-800 flex-col min-h-0 bg-white dark:bg-slate-950">

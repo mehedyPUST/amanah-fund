@@ -239,7 +239,7 @@ export function MemberPublicProfileView({
           <Skeleton width={130} height={36} />
           <Skeleton width={150} height={36} />
         </div>
-        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 space-y-4">
+        <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
           <div className="flex items-center gap-4">
             <Skeleton width={72} height={72} borderRadius={12} />
             <div className="space-y-2">
@@ -253,7 +253,7 @@ export function MemberPublicProfileView({
             ))}
           </div>
         </section>
-        <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6">
+        <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
           <Skeleton height={220} />
         </section>
       </div>
@@ -262,11 +262,11 @@ export function MemberPublicProfileView({
 
   if (error || !profile) {
     return (
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-6 sm:p-8 space-y-4">
+      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
         <button
           type="button"
           onClick={onBack}
-          className="hidden lg:inline-flex px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer"
+          className="hidden lg:inline-flex px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{tCommon('back')}</span>
@@ -305,7 +305,7 @@ export function MemberPublicProfileView({
         <button
           type="button"
           onClick={onBack}
-          className="hidden lg:inline-flex min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 items-center gap-1.5 cursor-pointer transition-colors"
+          className="hidden lg:inline-flex min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 items-center gap-1.5 cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
           <span>{tCommon('back')}</span>
@@ -316,7 +316,7 @@ export function MemberPublicProfileView({
             type="button"
             onClick={() => void loadMemberProfile(true)}
             disabled={refreshing}
-            className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+            className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
           >
             <RefreshCw
               className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`}
@@ -329,7 +329,7 @@ export function MemberPublicProfileView({
             <button
               type="button"
               onClick={onOpenOwnProfile}
-              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150"
             >
               <UserCheck className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('editMyProfile')}</span>
@@ -346,7 +346,7 @@ export function MemberPublicProfileView({
                   photoUrl: profile.photoUrl,
                 })
               }
-              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 cursor-pointer transition-all"
+              className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150"
             >
               <Mail className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('sendPrivateMessage')}</span>
@@ -356,7 +356,7 @@ export function MemberPublicProfileView({
       </div>
 
       {/* Member Identity & Quick Metrics Banner */}
-      <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs">
+      <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4 min-w-0">
             {profile.photoUrl && !photoBroken ? (
@@ -425,7 +425,7 @@ export function MemberPublicProfileView({
           <div
             role="tablist"
             aria-label={t('sectionsAria')}
-            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full md:w-auto items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start md:self-center shrink-0"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full md:w-auto items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 self-start md:self-center shrink-0"
           >
             {(
               [
@@ -443,7 +443,7 @@ export function MemberPublicProfileView({
                   role="tab"
                   aria-selected={active}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -453,7 +453,7 @@ export function MemberPublicProfileView({
                     <motion.span
                       layoutId="member-public-profile-pill"
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>
@@ -519,7 +519,7 @@ export function MemberPublicProfileView({
               aria-label={t('fundSectionAria')}
               className={`${
                 showAbout ? 'xl:col-span-7' : ''
-              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs`}
+              } bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -628,13 +628,13 @@ export function MemberPublicProfileView({
                 </div>
 
                 {fundSummary.recentContributions.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-950/25 p-4 text-center text-xs text-slate-500 dark:text-slate-400">
                     {t('noApprovedDeposits')}
                   </div>
                 ) : (
                   <>
                     {/* Mobile Compact Rows (< lg) */}
-                    <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-lg">
+                    <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                       {fundSummary.recentContributions.map((item) => (
                         <div
                           key={item.id}
@@ -658,14 +658,14 @@ export function MemberPublicProfileView({
                       ))}
                     </div>
 
-                    <div className="hidden lg:block overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-lg">
+                    <div className="hidden lg:block overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 rounded-xl bg-white/55 dark:bg-slate-950/35">
                       <table className="w-full text-left border-collapse text-xs">
                         <thead>
-                          <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                            <th className="py-2 px-3 font-medium">{t('colBillingMonth')}</th>
-                            <th className="py-2 px-3 font-medium">{t('colChannel')}</th>
-                            <th className="py-2 px-3 font-medium">{t('colSubmitted')}</th>
-                            <th className="py-2 px-3 font-medium text-right">{t('colAmount')}</th>
+                          <tr className="bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                            <th className="py-2.5 px-3">{t('colBillingMonth')}</th>
+                            <th className="py-2.5 px-3">{t('colChannel')}</th>
+                            <th className="py-2.5 px-3">{t('colSubmitted')}</th>
+                            <th className="py-2.5 px-3 text-right">{t('colAmount')}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -700,7 +700,7 @@ export function MemberPublicProfileView({
               aria-label={t('aboutSectionAria')}
               className={`${
                 showFund ? 'xl:col-span-5' : ''
-              } bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs`}
+              } bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
             >
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 dark:text-indigo-400">
@@ -821,7 +821,7 @@ export function MemberPublicProfileView({
           aria-label={t('postsSectionAria')}
           className="space-y-4"
         >
-          <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
@@ -843,7 +843,7 @@ export function MemberPublicProfileView({
           </div>
 
           {communityPosts.length === 0 ? (
-            <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center space-y-2">
+            <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-8 text-center space-y-2 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]">
               <MessageSquare className="w-7 h-7 text-slate-400 mx-auto" />
               <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {t('noPostsTitle')}
@@ -870,7 +870,7 @@ export function MemberPublicProfileView({
                 return (
                   <article
                     key={post.id}
-                    className={`bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border rounded-xl p-3.5 sm:p-5 space-y-4 ${
+                    className={`bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] ${
                       post.isPinned
                         ? 'border-emerald-300/80 dark:border-emerald-800/80'
                         : 'border-slate-200/80 dark:border-slate-800/80'
@@ -1102,7 +1102,7 @@ export function MemberPublicProfileView({
                               }))
                             }
                             placeholder={t('writeCommentPlaceholder')}
-                            className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                           />
                           <button
                             type="submit"
@@ -1110,7 +1110,7 @@ export function MemberPublicProfileView({
                               !(commentDrafts[post.id] || '').trim() ||
                               submittingCommentPostId === post.id
                             }
-                            className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                            className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
                           >
                             {submittingCommentPostId === post.id ? t('postingComment') : t('postComment')}
                           </button>

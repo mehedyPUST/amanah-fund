@@ -58,7 +58,7 @@ function CollectionGoalTooltip({ active, payload, label, currency, formatGoalPct
   const point = payload[0]?.payload;
 
   return (
-    <div className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-lg px-3.5 py-2.5 shadow-md text-xs space-y-1.5">
+    <div className="bg-white/94 dark:bg-slate-900/94 backdrop-blur-xl border border-slate-200/85 dark:border-slate-700/85 ring-1 ring-inset ring-white/75 dark:ring-white/10 rounded-xl px-3.5 py-2.5 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.2)] text-xs space-y-1.5">
       <div className="flex items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-1">
         <span className="font-semibold text-slate-900 dark:text-white">{label}</span>
         {point && (
@@ -234,7 +234,7 @@ export function ManagerCollectionGoalChart({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       aria-label={t('collectionGoalAria')}
-      className="amanah-card-teal border rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-5 transition-all duration-200"
+      className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-col justify-between gap-5 transition-all duration-200"
     >
       {/* Header & Controls */}
       <div className="space-y-4">
@@ -258,7 +258,7 @@ export function ManagerCollectionGoalChart({
             <div
               role="group"
               aria-label={t('comparisonModeAria')}
-              className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+              className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75"
             >
               {(
                 [
@@ -272,7 +272,7 @@ export function ManagerCollectionGoalChart({
                     key={tab.id}
                     type="button"
                     onClick={() => setMode(tab.id)}
-                    className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`relative px-2.5 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       active
                         ? 'text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -282,7 +282,7 @@ export function ManagerCollectionGoalChart({
                       <motion.span
                         layoutId="mgr-collection-mode-pill"
                         transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs ring-1 ring-teal-500/20"
+                        className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
                       />
                     )}
                     <span className="relative z-10">{tab.label}</span>
@@ -294,7 +294,7 @@ export function ManagerCollectionGoalChart({
             <div
               role="group"
               aria-label={t('chartRangeAria')}
-              className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+              className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75"
             >
               {(
                 [
@@ -309,7 +309,7 @@ export function ManagerCollectionGoalChart({
                     key={r.id}
                     type="button"
                     onClick={() => setRange(r.id)}
-                    className={`relative px-2 py-1 rounded-md text-xs font-mono font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`relative px-2 py-1 rounded-lg text-xs font-mono font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       active
                         ? 'text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -319,7 +319,7 @@ export function ManagerCollectionGoalChart({
                       <motion.span
                         layoutId="mgr-collection-range-pill"
                         transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs ring-1 ring-indigo-500/20"
+                        className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
                       />
                     )}
                     <span className="relative z-10">{r.label}</span>

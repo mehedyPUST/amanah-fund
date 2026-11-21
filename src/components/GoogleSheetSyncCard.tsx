@@ -355,7 +355,7 @@ export function GoogleSheetSyncCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -430,10 +430,10 @@ export function GoogleSheetSyncCard({
       )}
 
       {/* 8-Tab Blueprint Summary Strip (includes live Balance_Sheet) */}
-      <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+      <div className="overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 bg-white/55 dark:bg-slate-950/35 rounded-xl">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
+            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               <th className="py-2.5 px-4">{t('colSheetTab')}</th>
               <th className="py-2.5 px-4">{t('colColumns')}</th>
               <th className="py-2.5 px-4 text-right">{t('colRowsReady')}</th>
@@ -558,7 +558,7 @@ export function GoogleSheetSyncCard({
                 type="button"
                 disabled={!workspace.connected || syncing}
                 onClick={() => requestSync(true)}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer"
+                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer"
               >
                 {t('createNewSheetBtn')}
               </button>
@@ -567,7 +567,7 @@ export function GoogleSheetSyncCard({
             <a
               href={api.getBackupJsonUrl()}
               download
-              className="px-3.5 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
+              className="px-3.5 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/70 dark:bg-indigo-950/30 hover:bg-indigo-100/80 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 inline-flex items-center gap-1.5 transition-colors whitespace-nowrap"
             >
               <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('downloadBackupBtn')}</span>
@@ -577,7 +577,7 @@ export function GoogleSheetSyncCard({
               type="button"
               disabled={!workspace.connected || syncing}
               onClick={() => requestSync(!config?.googleSheetId)}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`} />
               <span>{config?.googleSheetId ? t('syncBlueprintBtn') : t('createSyncBtn')}</span>
@@ -586,18 +586,18 @@ export function GoogleSheetSyncCard({
         </div>
 
         {showLinkInput && (
-          <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 flex flex-col sm:flex-row gap-2">
+          <div className="p-3 rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/60 dark:bg-slate-950/55 flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={manualSheetInput}
               onChange={(e) => setManualSheetInput(e.target.value)}
               placeholder={t('manualInputPlaceholder')}
-              className="flex-1 px-3 py-1.5 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+              className="flex-1 px-3 py-1.5 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/25"
             />
             <button
               type="button"
               onClick={handleRequestLinkSheet}
-              className="px-3.5 py-1.5 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer whitespace-nowrap"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer whitespace-nowrap transition-colors"
             >
               {t('saveLinkedIdBtn')}
             </button>
@@ -605,7 +605,7 @@ export function GoogleSheetSyncCard({
         )}
 
         {showLivePreview && workspace.connected && config?.googleSheetId && (
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden">
+          <div className="rounded-xl border border-slate-200/85 dark:border-slate-800/85 bg-white/80 dark:bg-slate-950/75 overflow-hidden">
             <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/70 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200">
                 <Table2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />

@@ -301,7 +301,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22 }}
       aria-label={t('ariaLabel')}
-      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-4"
+      className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-col justify-between gap-4"
     >
       <div className="space-y-3.5">
         {/* Header */}
@@ -331,14 +331,14 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
             onClick={() => void loadLogs(false)}
             disabled={loading}
             aria-label={t('refreshAria')}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 shrink-0"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 shrink-0 transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
         {/* Category Filter Tabs */}
-        <div className="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+        <div className="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75">
           {(
             [
               { id: 'all', label: t('tabAll'), count: counts.all },
@@ -357,7 +357,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
                   setFilter(tab.id);
                   setLimit(12);
                 }}
-                className={`relative px-2 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1 ${
+                className={`relative px-2 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1 ${
                   active
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -367,7 +367,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
                   <motion.span
                     layoutId="member-audit-filter-pill"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 bg-white dark:bg-slate-800 rounded-md shadow-xs"
+                    className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-teal-500/20"
                   />
                 )}
                 <span className="relative z-10">{tab.label}</span>
@@ -390,16 +390,16 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600"
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-600/30 focus:border-teal-600 transition-colors"
           />
         </div>
 
         {/* Log Stream */}
         {loading && logs.length === 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="p-3 flex items-start gap-2.5">
-                <Skeleton width={28} height={28} borderRadius={6} />
+                <Skeleton width={28} height={28} borderRadius={8} />
                 <div className="flex-1 space-y-1">
                   <Skeleton width="55%" height={12} />
                   <Skeleton width="88%" height={14} />
@@ -411,16 +411,16 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
         ) : error ? (
           <div
             role="alert"
-            className="p-4 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
+            className="p-4 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-800 dark:text-rose-300"
           >
             {error}
           </div>
         ) : visibleLogs.length === 0 ? (
-          <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-lg text-xs text-slate-500 dark:text-slate-400">
+          <div className="py-10 px-4 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-500 dark:text-slate-400">
             {t('emptyFiltered')}
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg max-h-[300px] overflow-y-auto scrollbar-subtle">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl bg-white/55 dark:bg-slate-950/35 max-h-[300px] overflow-y-auto scrollbar-subtle">
             {visibleLogs.map((entry) => {
               const meta = classifyAction(entry.action, (k) => t(k));
               const Icon = meta.Icon;
@@ -436,7 +436,7 @@ export function MemberAuditLogWidget({ onViewMemberProfile }: MemberAuditLogWidg
                   className="p-3 flex items-start gap-2.5 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
                 >
                   <div
-                    className={`w-7 h-7 rounded-md border flex items-center justify-center shrink-0 mt-0.5 ${meta.iconBgClass} ${meta.toneClass}`}
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 mt-0.5 ${meta.iconBgClass} ${meta.toneClass}`}
                   >
                     <Icon className="w-3.5 h-3.5" aria-hidden="true" />
                   </div>

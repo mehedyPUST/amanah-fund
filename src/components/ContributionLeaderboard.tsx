@@ -97,7 +97,7 @@ export function ContributionLeaderboard({
 
   if (loading) {
     return (
-      <section className="amanah-card-amber border rounded-2xl p-5 sm:p-6 space-y-4">
+      <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1.5">
             <Skeleton width={180} height={12} />
@@ -132,7 +132,7 @@ export function ContributionLeaderboard({
       as="section"
       hue="amber"
       aria-label={t('title')}
-      className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -149,7 +149,7 @@ export function ContributionLeaderboard({
           <div
             role="tablist"
             aria-label={t('modeAria')}
-            className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
+            className="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75"
           >
             {(
               [
@@ -165,7 +165,7 @@ export function ContributionLeaderboard({
                   role="tab"
                   aria-selected={active}
                   onClick={() => setMode(tab.id)}
-                  className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`relative px-3 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -175,7 +175,7 @@ export function ContributionLeaderboard({
                     <motion.span
                       layoutId="leaderboard-mode-pill"
                       transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-amber-500/20"
                       aria-hidden="true"
                     />
                   )}
@@ -197,7 +197,7 @@ export function ContributionLeaderboard({
             <button
               type="button"
               onClick={() => onNavigate('monthly-contribution')}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer transition-colors"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all"
             >
               {t('submitMonthlyBtn')}
             </button>

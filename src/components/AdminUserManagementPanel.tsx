@@ -663,7 +663,7 @@ export function AdminUserManagementPanel({
   }
 
   return (
-    <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-5 shadow-xs">
+    <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
       {/* Header & Add User CTA */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -680,7 +680,7 @@ export function AdminUserManagementPanel({
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-200 active:scale-[0.98]"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 self-start lg:self-center cursor-pointer transition-all duration-150 active:scale-[0.98]"
           >
             <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t('addNewUser')}</span>
@@ -796,7 +796,7 @@ export function AdminUserManagementPanel({
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2">
-          <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit">
+          <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit">
             {(
               [
                 { id: 'all', label: t('filterAllStatuses') },
@@ -812,7 +812,7 @@ export function AdminUserManagementPanel({
                   key={s.id}
                   type="button"
                   onClick={() => setStatusFilter(s.id)}
-                  className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-indigo-700 dark:text-indigo-300'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -822,7 +822,7 @@ export function AdminUserManagementPanel({
                     <motion.span
                       layoutId="admin-user-status-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-md shadow-xs"
+                      className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-xs ring-1 ring-indigo-500/20"
                     />
                   )}
                   <span className="relative z-10">{s.label}</span>
@@ -835,7 +835,7 @@ export function AdminUserManagementPanel({
             aria-label={t('filterRoleAria')}
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value as 'all' | UserRole)}
-            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200"
+            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition-colors"
           >
             <option value="all">{t('filterAllRoles')}</option>
             <option value="admin">{tRoles('admin')}</option>
@@ -855,7 +855,7 @@ export function AdminUserManagementPanel({
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('searchPlaceholder')}
             aria-label={t('searchAria')}
-            className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600"
+            className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 focus:border-indigo-600 transition-colors"
           />
         </div>
       </div>
@@ -1072,17 +1072,17 @@ export function AdminUserManagementPanel({
         </div>
 
         {/* Desktop Table (>= lg) */}
-        <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+        <div className="hidden lg:block overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 rounded-xl bg-white/55 dark:bg-slate-950/35">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                <th className="py-2.5 px-4 font-medium">{t('colUser')}</th>
-                <th className="py-2.5 px-4 font-medium">{t('colRole')}</th>
-                <th className="py-2.5 px-4 font-medium text-right">{t('colTotalContributed')}</th>
-                <th className="py-2.5 px-4 font-medium text-right">{t('colLoansPerYear')}</th>
-                <th className="py-2.5 px-4 font-medium text-right">{t('colActiveBalance')}</th>
-                <th className="py-2.5 px-4 font-medium">{t('colStatus')}</th>
-                {isAdmin && <th className="py-2.5 px-4 font-medium text-right">{t('colManageActions')}</th>}
+              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th className="py-2.5 px-4">{t('colUser')}</th>
+                <th className="py-2.5 px-4">{t('colRole')}</th>
+                <th className="py-2.5 px-4 text-right">{t('colTotalContributed')}</th>
+                <th className="py-2.5 px-4 text-right">{t('colLoansPerYear')}</th>
+                <th className="py-2.5 px-4 text-right">{t('colActiveBalance')}</th>
+                <th className="py-2.5 px-4">{t('colStatus')}</th>
+                {isAdmin && <th className="py-2.5 px-4 text-right">{t('colManageActions')}</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -1283,7 +1283,7 @@ export function AdminUserManagementPanel({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-xl"
+            className="bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 rounded-2xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)]"
           >
             <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
@@ -1298,7 +1298,7 @@ export function AdminUserManagementPanel({
                 type="button"
                 onClick={() => setCreateOpen(false)}
                 aria-label={t('closeModalAria')}
-                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center"
+                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1315,7 +1315,7 @@ export function AdminUserManagementPanel({
                     required
                     value={createForm.name}
                     onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <div>
@@ -1327,7 +1327,7 @@ export function AdminUserManagementPanel({
                     required
                     value={createForm.email}
                     onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <div>
@@ -1340,7 +1340,7 @@ export function AdminUserManagementPanel({
                     minLength={6}
                     value={createForm.password}
                     onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -1353,7 +1353,7 @@ export function AdminUserManagementPanel({
                       onChange={(e) =>
                         setCreateForm((p) => ({ ...p, role: e.target.value as UserRole }))
                       }
-                      className="w-full px-2.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-2.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                     >
                       <option value="member">{tRoles('member')}</option>
                       <option value="manager">{tRoles('manager')}</option>
@@ -1369,7 +1369,7 @@ export function AdminUserManagementPanel({
                       onChange={(e) =>
                         setCreateForm((p) => ({ ...p, status: e.target.value as UserStatus }))
                       }
-                      className="w-full px-2.5 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="w-full px-2.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                     >
                       <option value="active">{t('filterActive')}</option>
                       <option value="pending_approval">{t('statusPending')}</option>
@@ -1384,7 +1384,7 @@ export function AdminUserManagementPanel({
                     type="tel"
                     value={createForm.mobile}
                     onChange={(e) => setCreateForm((p) => ({ ...p, mobile: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
                 <div>
@@ -1395,7 +1395,7 @@ export function AdminUserManagementPanel({
                     type="text"
                     value={createForm.occupation}
                     onChange={(e) => setCreateForm((p) => ({ ...p, occupation: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
               </div>
@@ -1410,7 +1410,7 @@ export function AdminUserManagementPanel({
                   onChange={(e) =>
                     setCreateForm((p) => ({ ...p, companyOrganization: e.target.value }))
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                 />
               </div>
 
@@ -1424,7 +1424,7 @@ export function AdminUserManagementPanel({
                   onChange={(e) =>
                     setCreateForm((p) => ({ ...p, presentAddress: e.target.value }))
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                 />
               </div>
 
@@ -1432,14 +1432,14 @@ export function AdminUserManagementPanel({
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={createSaving}
-                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{createSaving ? t('creatingUser') : t('createUserBtn')}</span>
@@ -1468,7 +1468,7 @@ export function AdminUserManagementPanel({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
             transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-            className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-xl"
+            className="bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 rounded-2xl max-w-xl w-full max-h-[92dvh] overflow-y-auto shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)]"
           >
             <div className="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
               <div className="min-w-0">
@@ -1486,7 +1486,7 @@ export function AdminUserManagementPanel({
                 type="button"
                 onClick={() => setEditingMember(null)}
                 aria-label={t('closeModalAria')}
-                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center shrink-0"
+                className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer inline-flex items-center justify-center shrink-0 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1636,14 +1636,14 @@ export function AdminUserManagementPanel({
                 <button
                   type="button"
                   onClick={() => setEditingMember(null)}
-                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   {tCommon('cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={editSaving}
-                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 text-white font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] sm:min-h-0 justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{editSaving ? t('savingChanges') : t('saveUserChangesBtn')}</span>

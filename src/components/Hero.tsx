@@ -83,9 +83,8 @@ export function Hero({
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
-                  <span>{tHero('kickerTreasury')}</span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                  {tHero('kickerTreasury')}
                 </span>
                 <span aria-hidden="true">·</span>
                 <span className="font-mono tabular-nums">{tHero('kickerCharter')}</span>

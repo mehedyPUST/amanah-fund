@@ -653,7 +653,7 @@ export function VotingView({
       {isAdmin && (
         <div
           role="note"
-          className="amanah-card-violet p-3.5 rounded-2xl border text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5 shadow-xs"
+          className="amanah-card-violet backdrop-blur-xl p-3.5 sm:p-4 rounded-2xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 text-xs text-slate-700 dark:text-slate-300 flex items-center gap-2.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]"
         >
           <Lock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           <span>
@@ -665,7 +665,7 @@ export function VotingView({
       {!isVerifiedMember && !isAdmin && (
         <div
           role="alert"
-          className="p-3.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2"
+          className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2"
         >
           <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>
@@ -680,7 +680,7 @@ export function VotingView({
         </div>
       )}
 
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -696,14 +696,14 @@ export function VotingView({
               <button
                 type="button"
                 onClick={() => setShowCreatePoll((v) => !v)}
-                className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-all duration-150"
               >
                 <PlusCircle className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{showCreatePoll ? t('closePollForm') : t('initiateDecisionPoll')}</span>
               </button>
             )}
 
-            <div className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-fit items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <div className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full lg:w-fit items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl">
               {(
                 [
                   { id: 'all', label: t('tabAll') },
@@ -718,7 +718,7 @@ export function VotingView({
                     key={tab.id}
                     type="button"
                     onClick={() => setCategoryFilter(tab.id)}
-                    className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                    className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 text-xs font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                       active
                         ? 'text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -728,7 +728,7 @@ export function VotingView({
                       <motion.span
                         layoutId="voting-category-pill"
                         transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                        className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                        className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                       />
                     )}
                     <span className="relative z-10">{tab.label}</span>
@@ -763,7 +763,7 @@ export function VotingView({
                 value={pollTitle}
                 onChange={(e) => setPollTitle(e.target.value)}
                 placeholder={t('pollTitlePlaceholder')}
-                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
               />
             </div>
 
@@ -779,7 +779,7 @@ export function VotingView({
                   id="poll-category"
                   value={pollCategory}
                   onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
-                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 >
                   <option value="general">{t('catGeneral')}</option>
                   <option value="policy">{t('catPolicy')}</option>
@@ -799,7 +799,7 @@ export function VotingView({
                   type="datetime-local"
                   value={pollClosesAt}
                   onChange={(e) => setPollClosesAt(e.target.value)}
-                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                 />
               </div>
             </div>
@@ -817,7 +817,7 @@ export function VotingView({
                 value={pollDescription}
                 onChange={(e) => setPollDescription(e.target.value)}
                 placeholder={t('pollContextPlaceholder')}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
               />
             </div>
 
@@ -834,7 +834,7 @@ export function VotingView({
                 required
                 value={pollOptionsText}
                 onChange={(e) => setPollOptionsText(e.target.value)}
-                className="w-full px-3 py-2 text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
               />
             </div>
 
@@ -878,7 +878,7 @@ export function VotingView({
                     setRewritingPoll(false);
                   }
                 }}
-                className="col-span-2 sm:col-span-1 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
+                className="col-span-2 sm:col-span-1 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{rewritingPoll ? t('rewriting') : t('aiRewrite')}</span>
@@ -886,14 +886,14 @@ export function VotingView({
               <button
                 type="button"
                 onClick={() => setShowCreatePoll(false)}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
                 {tCommon('cancel')}
               </button>
               <button
                 type="submit"
                 disabled={creatingPoll}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
               >
                 {creatingPoll ? t('launching') : t('launchSecretPoll')}
               </button>
@@ -904,7 +904,7 @@ export function VotingView({
       </section>
 
       {!isAdmin && guarantorPendingForMe.length > 0 && (
-        <section className="bg-amber-50/75 dark:bg-amber-950/30 backdrop-blur-md border border-amber-200/80 dark:border-amber-900/60 rounded-xl p-3.5 sm:p-5 space-y-3">
+        <section className="bg-amber-50/85 dark:bg-amber-950/35 backdrop-blur-xl border border-amber-200/80 dark:border-amber-900/60 ring-1 ring-inset ring-white/60 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)]">
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
             <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400" aria-hidden="true" />
             <span>{t('awaitingGuarantorHeading', { count: guarantorPendingForMe.length })}</span>
@@ -940,7 +940,7 @@ export function VotingView({
                     type="button"
                     disabled={busyId === loan.id}
                     onClick={() => void handleGuarantorRespond(loan.id, 'accept')}
-                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
                   >
                     {t('acceptCoSignBtn')}
                   </button>
@@ -948,7 +948,7 @@ export function VotingView({
                     type="button"
                     disabled={busyId === loan.id}
                     onClick={() => void handleGuarantorRespond(loan.id, 'decline')}
-                    className="px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 text-xs font-medium cursor-pointer disabled:opacity-50"
+                    className="px-3.5 py-1.5 rounded-xl border border-red-200 dark:border-red-900/70 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-medium cursor-pointer disabled:opacity-50"
                   >
                     {t('decline')}
                   </button>
@@ -964,7 +964,7 @@ export function VotingView({
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-5 sm:p-6 space-y-4"
+              className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)]"
             >
               <div className="flex flex-col lg:flex-row justify-between gap-4">
                 <div className="space-y-2 flex-1">
@@ -994,7 +994,7 @@ export function VotingView({
               </div>
 
               {pendingOrApprovedLoans.length === 0 ? (
-                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   {t('emptyLoans')}
                 </div>
               ) : (
@@ -1027,7 +1027,7 @@ export function VotingView({
                   return (
                     <article
                       key={loan.id}
-                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-xl p-3.5 sm:p-6 space-y-5 shadow-xs transition-all duration-200"
+                      className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 hover:border-amber-300 dark:hover:border-amber-700/70 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5 min-w-0 flex-1">
@@ -1130,7 +1130,7 @@ export function VotingView({
                           )}
                         </div>
 
-                        <div className="lg:w-80 shrink-0 space-y-2.5 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                        <div className="lg:w-80 shrink-0 space-y-2.5 p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80">
                           {loan.status === 'pending_vote' && !isRevealed && (
                             <div className="flex items-center justify-between gap-2 text-xs pb-2 border-b border-slate-200 dark:border-slate-800">
                               <span className="inline-flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-300">
@@ -1219,7 +1219,7 @@ export function VotingView({
                                 type="button"
                                 disabled={busyId === `extend-${loan.id}`}
                                 onClick={() => handleExtendDeadline(loan.id)}
-                                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
                               >
                                 <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>
@@ -1232,7 +1232,7 @@ export function VotingView({
                                 type="button"
                                 disabled={busyId === `reveal-${loan.id}`}
                                 onClick={() => void handleRevealLoanVote(loan.id)}
-                                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
                               >
                                 <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>
@@ -1343,14 +1343,14 @@ export function VotingView({
                                   setComments((prev) => ({ ...prev, [loan.id]: e.target.value }))
                                 }
                                 placeholder={t('optionalRationalePlaceholder')}
-                                className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50"
+                                className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                               />
                               <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
                                 <button
                                   type="button"
                                   disabled={!canCastBallot || busyId === loan.id}
                                   onClick={() => void handleLoanVote(loan.id, 'upvote')}
-                                  className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium shadow-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
                                 >
                                   <ThumbsUp className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{myVote ? t('changeToUpvote') : t('upvote')}</span>
@@ -1359,7 +1359,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!canCastBallot || busyId === loan.id}
                                   onClick={() => void handleLoanVote(loan.id, 'downvote')}
-                                  className="px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white transition-all duration-200 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50/80 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 dark:hover:bg-rose-600 dark:hover:text-white active:scale-[0.98] transition-all duration-150 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <ThumbsDown className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{myVote ? t('changeToDownvote') : t('downvote')}</span>
@@ -1399,7 +1399,7 @@ export function VotingView({
                                     loan.amount > availableLiquidity)
                                 }
                                 onClick={() => handleDisburse(loan.id)}
-                                className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                               >
                                 {busyId === loan.id
                                   ? t('disbursing')
@@ -1433,7 +1433,7 @@ export function VotingView({
               </div>
 
               {openPolls.length === 0 ? (
-                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   {t('emptyPolls')}
                 </div>
               ) : (
@@ -1451,7 +1451,7 @@ export function VotingView({
                   return (
                     <article
                       key={poll.id}
-                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-4 shadow-xs"
+                      className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -1480,7 +1480,7 @@ export function VotingView({
                           )}
                         </div>
 
-                        <div className="lg:w-72 shrink-0 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                        <div className="lg:w-72 shrink-0 p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2 text-xs">
                           <div className="flex items-center justify-between">
                             <span className="text-slate-500 dark:text-slate-400">
                               {t('ballotsCastHeading')}
@@ -1500,7 +1500,7 @@ export function VotingView({
                               type="button"
                               disabled={busyId === `reveal-poll-${poll.id}`}
                               onClick={() => void handleRevealPoll(poll.id)}
-                              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
                             >
                               <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>
@@ -1620,9 +1620,9 @@ export function VotingView({
                                           [poll.id]: opt.id,
                                         }))
                                       }
-                                      className={`min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-lg border text-xs font-medium cursor-pointer transition-colors disabled:opacity-50 ${
+                                      className={`min-h-[40px] sm:min-h-0 px-3.5 py-2 rounded-xl border text-xs font-medium cursor-pointer transition-colors disabled:opacity-50 ${
                                         selected
-                                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300'
+                                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-500/20'
                                           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                                       }`}
                                     >
@@ -1643,13 +1643,13 @@ export function VotingView({
                                     }))
                                   }
                                   placeholder={t('optionalNotePlaceholder')}
-                                  className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                                  className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                                 />
                                 <button
                                   type="button"
                                   disabled={!canCastBallot || busyId === `poll-${poll.id}`}
                                   onClick={() => void handlePollVote(poll.id)}
-                                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   {t('submitSecretVote')}
                                 </button>
@@ -1678,7 +1678,7 @@ export function VotingView({
               </div>
 
               {openProjects.length === 0 ? (
-                <div className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                <div className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-dashed border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   {t('emptyInvestments')}
                 </div>
               ) : (
@@ -1702,7 +1702,7 @@ export function VotingView({
                   return (
                     <article
                       key={proj.id}
-                      className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-xl p-3.5 sm:p-6 space-y-4 shadow-xs transition-all duration-200"
+                      className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 hover:border-emerald-300 dark:hover:border-emerald-700/70 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
                     >
                       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                         <div className="space-y-1.5">
@@ -1735,7 +1735,7 @@ export function VotingView({
                           </div>
                         </div>
 
-                        <div className="lg:w-72 shrink-0 space-y-2 p-3.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                        <div className="lg:w-72 shrink-0 space-y-2 p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80">
                           {canSeeTally ? (
                             <>
                               <div className="flex items-center justify-between text-xs">
@@ -1782,7 +1782,7 @@ export function VotingView({
                               type="button"
                               disabled={busyId === `reveal-proj-${proj.id}`}
                               onClick={() => void handleRevealProjectVote(proj.id)}
-                              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-lg bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 text-white text-xs font-medium inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
                             >
                               <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                               <span>
@@ -1857,14 +1857,14 @@ export function VotingView({
                                   setComments((prev) => ({ ...prev, [proj.id]: e.target.value }))
                                 }
                                 placeholder={t('optionalConfidentialRationale')}
-                                className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                                className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                               />
                               <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
                                 <button
                                   type="button"
                                   disabled={!canCastBallot || busyId === proj.id}
                                   onClick={() => void handleProjectVote(proj.id, 'yes')}
-                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <Check className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{t('voteYes')}</span>
@@ -1873,7 +1873,7 @@ export function VotingView({
                                   type="button"
                                   disabled={!canCastBallot || busyId === proj.id}
                                   onClick={() => void handleProjectVote(proj.id, 'no')}
-                                  className="px-4 py-2 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                                  className="px-4 py-2 rounded-xl border border-red-200 dark:border-red-900/70 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white active:scale-[0.98] transition-all text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap"
                                 >
                                   <X className="w-3.5 h-3.5" aria-hidden="true" />
                                   <span>{t('voteNo')}</span>
@@ -1892,7 +1892,7 @@ export function VotingView({
 
           {/* Completed Voting Outcomes (Revealed Tallies Only) */}
           {(closedProjects.length > 0 || archivedLoans.length > 0 || closedPolls.length > 0) && (
-            <section className="bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl p-3.5 sm:p-6 space-y-3">
+            <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 {t('completedOutcomesHeading')}
               </h3>

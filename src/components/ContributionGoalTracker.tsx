@@ -249,24 +249,24 @@ export function ContributionGoalTracker({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
       aria-label={t('eyebrow')}
-      className="amanah-card-teal border rounded-2xl p-5 sm:p-6 space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200"
     >
 
       {/* Current Month Contribution Status Banner */}
       <div
-        className={`rounded-xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
+        className={`rounded-2xl border p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 ${
           currentMonthSummary.state === 'paid'
-            ? 'bg-emerald-50/75 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/60'
+            ? 'bg-emerald-50/75 dark:bg-emerald-950/30 border-emerald-200/90 dark:border-emerald-900/60'
             : currentMonthSummary.state === 'pending'
-              ? 'bg-amber-50/75 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60'
+              ? 'bg-amber-50/75 dark:bg-amber-950/30 border-amber-200/90 dark:border-amber-900/60'
               : currentMonthSummary.state === 'rejected'
-                ? 'bg-red-50/75 dark:bg-red-950/30 border-red-200 dark:border-red-900/60'
-                : 'bg-slate-50/90 dark:bg-slate-950/60 border-slate-200 dark:border-slate-800'
+                ? 'bg-red-50/75 dark:bg-red-950/30 border-red-200/90 dark:border-red-900/60'
+                : 'bg-slate-50/90 dark:bg-slate-950/60 border-slate-200/85 dark:border-slate-800'
         }`}
       >
         <div className="flex items-start gap-3 min-w-0">
           <div
-            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${
               currentMonthSummary.state === 'paid'
                 ? 'bg-emerald-600/15 text-emerald-700 dark:text-emerald-400'
                 : currentMonthSummary.state === 'pending'
@@ -348,7 +348,7 @@ export function ContributionGoalTracker({
             <button
               type="button"
               onClick={() => onSubmitContribution(nowBillingMonth)}
-              className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all duration-200 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
             >
               <span>
                 {currentMonthSummary.state === 'rejected'
@@ -613,7 +613,7 @@ export function ContributionGoalTracker({
                   key={month.billingMonth}
                   type="button"
                   onClick={() => onSubmitContribution(month.billingMonth)}
-                  className={`text-left py-2.5 px-3 rounded-lg border transition-all duration-200 space-y-1.5 cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
+                  className={`text-left py-2.5 px-3 rounded-xl border transition-all duration-200 space-y-1.5 cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
                     isCurrentMonth
                       ? 'bg-emerald-50/75 dark:bg-emerald-950/35 border-emerald-300/90 dark:border-emerald-800/70'
                       : 'bg-slate-50/70 dark:bg-slate-950/50 border-slate-200/80 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700/60'
@@ -627,7 +627,7 @@ export function ContributionGoalTracker({
             return (
               <div
                 key={month.billingMonth}
-                className={`py-2.5 px-3 rounded-lg border space-y-1.5 ${
+                className={`py-2.5 px-3 rounded-xl border space-y-1.5 ${
                   isCurrentMonth
                     ? 'bg-emerald-50/75 dark:bg-emerald-950/35 border-emerald-300/90 dark:border-emerald-800/70'
                     : 'bg-slate-50/70 dark:bg-slate-950/50 border-slate-200/80 dark:border-slate-800'
@@ -655,27 +655,27 @@ export function ContributionGoalTracker({
         </div>
 
         {personalPaymentHistory.length === 0 ? (
-          <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 text-center">
+          <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 text-center">
             {t('noHistoryYet')}
           </div>
         ) : (
-          <div className="overflow-x-auto border border-slate-200/80 dark:border-slate-800 rounded-lg max-h-64 overflow-y-auto">
+          <div className="overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 rounded-xl max-h-64 overflow-y-auto">
             <table className="w-full text-left border-collapse text-xs">
-              <thead className="sticky top-0 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+              <thead className="sticky top-0 bg-slate-50/95 dark:bg-slate-950/90 backdrop-blur-xs border-b border-slate-200 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
-                  <th className="py-2 px-3 font-medium">{t('colBillingMonth')}</th>
-                  <th className="py-2 px-3 font-medium">{t('colSubmitted')}</th>
-                  <th className="py-2 px-3 font-medium">{t('colChannelRef')}</th>
-                  <th className="py-2 px-3 font-medium">{t('colStatus')}</th>
-                  <th className="py-2 px-3 font-medium text-right">{t('colAmount')}</th>
-                  <th className="py-2 px-3 font-medium">{t('colVerificationNote')}</th>
+                  <th className="py-2.5 px-3">{t('colBillingMonth')}</th>
+                  <th className="py-2.5 px-3">{t('colSubmitted')}</th>
+                  <th className="py-2.5 px-3">{t('colChannelRef')}</th>
+                  <th className="py-2.5 px-3">{t('colStatus')}</th>
+                  <th className="py-2.5 px-3 text-right">{t('colAmount')}</th>
+                  <th className="py-2.5 px-3">{t('colVerificationNote')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {personalPaymentHistory.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/35 transition-colors"
                   >
                     <td className="py-2.5 px-3 font-mono font-medium text-slate-900 dark:text-white whitespace-nowrap">
                       {formatBillingMonth(item.billingMonth)}

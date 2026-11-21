@@ -49,7 +49,7 @@ export function TeletalkAddressFields({
   const postOfficeHasBn = containsBanglaScript(value.postOffice);
 
   const baseInputClass =
-    'w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 disabled:opacity-65 disabled:cursor-not-allowed';
+    'w-full px-3 py-2 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 transition-colors disabled:opacity-65 disabled:cursor-not-allowed';
   const inputClass = `${baseInputClass} border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600`;
   const getTextInputClass = (invalid: boolean) =>
     invalid

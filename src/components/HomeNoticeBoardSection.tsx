@@ -334,7 +334,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
 
           <div className="flex flex-wrap items-center gap-2.5">
             <div
-              className="inline-flex items-center rounded-xl border border-slate-200/85 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-950/75 p-1"
+              className="inline-flex items-center rounded-xl border border-slate-200/75 dark:border-slate-700/75 bg-slate-100/90 dark:bg-slate-800/80 p-1"
               role="tablist"
               aria-label={t('filterAria')}
             >
@@ -352,9 +352,9 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   role="tab"
                   aria-selected={filter === tab.id}
                   onClick={() => setFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
                     filter === tab.id
-                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs ring-1 ring-emerald-500/20 font-semibold'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
@@ -410,7 +410,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
               onSubmit={handleSubmit}
-              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4"
+              className="bg-white/90 dark:bg-slate-900/85 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
@@ -421,7 +421,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   onClick={closeComposer}
                   disabled={submitting}
                   aria-label={t('closeFormAria')}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -430,7 +430,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               {formError && (
                 <div
                   role="alert"
-                  className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
+                  className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
                 >
                   {formError}
                 </div>
@@ -454,7 +454,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder={t('titlePlaceholder')}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -469,7 +469,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                         type="button"
                         disabled={submitting}
                         onClick={() => setPriority(level)}
-                        className={`py-2.5 px-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                        className={`py-2.5 px-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
                           priority === level
                             ? level === 'urgent'
                               ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300'
@@ -506,7 +506,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   placeholder={t('messagePlaceholder')}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500 transition-colors"
                 />
               </div>
 
@@ -552,7 +552,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                         setRewritingNotice(false);
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{rewritingNotice ? t('rewriting') : t('aiRewrite')}</span>
@@ -561,14 +561,14 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                     type="button"
                     disabled={submitting}
                     onClick={closeComposer}
-                    className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-500 hover:from-emerald-800 hover:via-emerald-700 hover:to-emerald-600 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
                   >
                     {submitting
                       ? tCommon('saving')
@@ -587,7 +587,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2.5"
+                className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-2.5"
               >
                 <div className="flex items-center gap-3">
                   <Skeleton width={36} height={36} borderRadius={10} />
@@ -601,7 +601,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
             ))}
           </div>
         ) : filteredNotices.length === 0 ? (
-          <div className="bg-slate-50/70 dark:bg-slate-950/60 border border-slate-200/90 dark:border-slate-800 rounded-xl p-6 text-center space-y-2">
+          <div className="bg-white/60 dark:bg-slate-950/50 border border-slate-200/85 dark:border-slate-800/85 rounded-2xl p-6 text-center space-y-2.5">
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {notices.length === 0 ? t('emptyAll') : t('emptyFiltered')}
             </p>
@@ -609,7 +609,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               <button
                 type="button"
                 onClick={openCreateComposer}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium hover:bg-emerald-100/70 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium hover:bg-emerald-100/70 dark:hover:bg-emerald-950/60 transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{t('postFirst')}</span>
@@ -617,7 +617,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {filteredNotices.map((notice, idx) => {
               const meta = PRIORITY_STYLE_META[notice.priority] || PRIORITY_STYLE_META.normal;
               const PriorityIcon = meta.Icon;
@@ -633,7 +633,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   key={notice.id}
                   hue={meta.hue}
                   delay={Math.min(idx * 0.04, 0.2)}
-                  className={`border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-4 sm:p-5 transition-all duration-200 flex flex-col justify-between gap-3 ${meta.cardClass}`}
+                  className={`backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-4 sm:p-5 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] transition-all duration-200 flex flex-col justify-between gap-3 ${meta.cardClass}`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">

@@ -263,7 +263,7 @@ export function ManagerRotationTimeline({
   return (
     <section
       aria-label={t('regionAria')}
-      className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-4 sm:space-y-5 transition-all duration-200"
+      className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4 sm:space-y-5 transition-all duration-200"
     >
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -282,7 +282,7 @@ export function ManagerRotationTimeline({
           <div
             role="tablist"
             aria-label={t('filterAria')}
-            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"
+            className="flex flex-nowrap overflow-x-auto no-scrollbar max-w-full w-full sm:w-fit items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75"
           >
             {filterTabs.map((tab) => {
               const active = filter === tab.id;
@@ -293,7 +293,7 @@ export function ManagerRotationTimeline({
                   type="button"
                   aria-selected={active}
                   onClick={() => setFilter(tab.id)}
-                  className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+                  className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -303,7 +303,7 @@ export function ManagerRotationTimeline({
                     <motion.span
                       layoutId="rotation-filter-pill"
                       transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>
@@ -316,11 +316,11 @@ export function ManagerRotationTimeline({
           </div>
 
           {/* Layout Toggle */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 w-fit">
+          <div className="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 w-fit">
             <button
               type="button"
               onClick={() => setLayout('track')}
-              className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                 layout === 'track'
                   ? 'text-slate-900 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -330,7 +330,7 @@ export function ManagerRotationTimeline({
                 <motion.span
                   layoutId="rotation-layout-pill"
                   transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                  className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs"
+                  className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
                 />
               )}
               <Columns3 className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
@@ -339,7 +339,7 @@ export function ManagerRotationTimeline({
             <button
               type="button"
               onClick={() => setLayout('vertical')}
-              className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
+              className={`relative min-h-[38px] sm:min-h-0 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5 ${
                 layout === 'vertical'
                   ? 'text-slate-900 dark:text-white'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -349,7 +349,7 @@ export function ManagerRotationTimeline({
                 <motion.span
                   layoutId="rotation-layout-pill"
                   transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                  className="absolute inset-0 rounded-md bg-white dark:bg-slate-800 shadow-xs"
+                  className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
                 />
               )}
               <ListTree className="relative z-10 w-3.5 h-3.5" aria-hidden="true" />
@@ -439,7 +439,7 @@ export function ManagerRotationTimeline({
             <button
               type="button"
               onClick={() => setFilter('all')}
-              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
             >
               {t('showAllTurns')}
             </button>
@@ -461,7 +461,7 @@ export function ManagerRotationTimeline({
                 <button
                   type="button"
                   onClick={jumpToCurrent}
-                  className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900/70 bg-emerald-50/70 dark:bg-emerald-950/30 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/40 cursor-pointer whitespace-nowrap"
+                  className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-900/70 bg-emerald-50/75 dark:bg-emerald-950/35 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/75 dark:hover:bg-emerald-900/45 cursor-pointer whitespace-nowrap transition-colors"
                 >
                   {t('focusCurrent')}
                 </button>
@@ -470,7 +470,7 @@ export function ManagerRotationTimeline({
                 type="button"
                 onClick={() => scrollTrackBy('left')}
                 aria-label={t('scrollLeftAria')}
-                className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center"
+                className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -478,7 +478,7 @@ export function ManagerRotationTimeline({
                 type="button"
                 onClick={() => scrollTrackBy('right')}
                 aria-label={t('scrollRightAria')}
-                className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center"
+                className="min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer inline-flex items-center justify-center transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -562,14 +562,14 @@ export function ManagerRotationTimeline({
                     <div className="px-1.5 flex-1 flex">
                       <article
                         onClick={() => setSelectedCycleNumber(slot.cycleNumber)}
-                        className={`w-full rounded-xl border p-4 flex flex-col justify-between gap-3 transition-colors cursor-pointer backdrop-blur-md ${
+                        className={`w-full rounded-2xl border p-4 flex flex-col justify-between gap-3 transition-all cursor-pointer backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-xs ${
                           slot.status === 'current'
-                            ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/60 dark:bg-emerald-950/30'
+                            ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/70 dark:bg-emerald-950/35'
                             : isSelected
-                              ? 'border-slate-400 dark:border-slate-600 bg-slate-50/80 dark:bg-slate-800/50'
+                              ? 'border-slate-400 dark:border-slate-600 bg-slate-50/85 dark:bg-slate-800/55'
                               : slot.status === 'completed'
-                                ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/65 hover:border-slate-300 dark:hover:border-slate-700'
-                                : 'border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75 hover:border-slate-300 dark:hover:border-slate-700'
+                                ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/70 hover:border-slate-300 dark:hover:border-slate-700'
+                                : 'border-slate-200/80 dark:border-slate-800/80 bg-white/85 dark:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700'
                         }`}
                       >
                         <div className="space-y-3">
@@ -748,12 +748,12 @@ export function ManagerRotationTimeline({
                 {/* Timeline Row Content */}
                 <div className={`flex-1 min-w-0 ${isLast ? 'pb-0' : 'pb-4'}`}>
                   <div
-                    className={`rounded-xl border p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 backdrop-blur-md ${
+                    className={`rounded-2xl border p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 shadow-xs ${
                       slot.status === 'current'
-                        ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/60 dark:bg-emerald-950/30'
+                        ? 'border-emerald-500/80 dark:border-emerald-600/80 bg-emerald-50/70 dark:bg-emerald-950/35'
                         : slot.status === 'completed'
-                          ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/65'
-                          : 'border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75'
+                          ? 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/70'
+                          : 'border-slate-200/80 dark:border-slate-800/80 bg-white/85 dark:bg-slate-900/80'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -822,7 +822,7 @@ export function ManagerRotationTimeline({
                             <button
                               type="button"
                               onClick={() => onViewMemberProfile(slot.memberId)}
-                              className="min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                              className="min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap transition-colors"
                             >
                               {tCycle('profileBtn')}
                             </button>
@@ -832,7 +832,7 @@ export function ManagerRotationTimeline({
                               type="button"
                               disabled={modalBusy}
                               onClick={() => onToggleManagerRole(slot)}
-                              className={`min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap ${
+                              className={`min-h-[40px] sm:min-h-0 flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap transition-colors ${
                                 slot.currentRole === 'manager'
                                   ? 'border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                                   : 'bg-emerald-600 hover:bg-emerald-700 text-white'

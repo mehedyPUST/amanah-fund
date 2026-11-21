@@ -119,8 +119,8 @@ export function PWAUpdateButton({
               ? 'w-full min-h-[34px] py-1.5 px-2 rounded-xl text-[11px]'
               : 'w-full min-h-[40px] py-2 px-2.5 rounded-xl text-[13.5px]'
             : compact
-              ? 'h-9 px-2.5 rounded-lg text-xs'
-              : 'h-9 px-3 rounded-lg text-xs'
+              ? 'h-9 px-2.5 rounded-xl text-xs'
+              : 'h-9 px-3 rounded-xl text-xs'
         } ${
           updateAvailable
             ? 'border-emerald-500/80 dark:border-emerald-400/70 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
@@ -162,7 +162,7 @@ export function PWAUpdateButton({
             transition={{ duration: 0.15 }}
             role="dialog"
             aria-label={tPwa('versionStatusTitle')}
-            className={`absolute ${popoverPositionClass} z-[70] amanah-card-violet border rounded-xl p-3.5 shadow-xl space-y-2.5 text-left`}
+            className={`absolute ${popoverPositionClass} z-[70] amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3.5 shadow-[0_18px_44px_-14px_rgba(15,23,42,0.22)] space-y-2.5 text-left`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
@@ -210,7 +210,7 @@ export function PWAUpdateButton({
                 type="button"
                 onClick={() => void checkForUpdates(true)}
                 disabled={checkingUpdate || applyingUpdate}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
               >
                 <RefreshCw
                   className={`w-3 h-3 ${checkingUpdate ? 'animate-spin' : ''}`}
@@ -223,7 +223,7 @@ export function PWAUpdateButton({
                   type="button"
                   onClick={() => void applyUpdate()}
                   disabled={applyingUpdate}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60"
                 >
                   <ArrowUpCircle className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{applyingUpdate ? tPwa('updating') : tPwa('applyUpdate')}</span>

@@ -810,7 +810,7 @@ export function ManagerDeskView({
       className="space-y-3 sm:space-y-5"
     >
       {/* Manager Desk Header + Interactive Queue KPI Cards */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-3 sm:space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-0.5 sm:space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -826,13 +826,13 @@ export function ManagerDeskView({
               <button
                 type="button"
                 onClick={onOpenManagerCycle}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
+                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-teal-50/70 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-800 inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors"
               >
                 <CalendarClock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
                 <span>{t('rotationTimeline')}</span>
               </button>
             )}
-            <div className="text-xs font-mono tabular-nums px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/35 dark:to-teal-950/35 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+            <div className="text-xs font-mono tabular-nums px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/35 dark:to-teal-950/35 border border-emerald-200 dark:border-emerald-900/60 text-emerald-800 dark:text-emerald-300">
               {t('availableFundBalanceLabel', { amount: formatMoney(availableLiquidity, ccy) })}
             </div>
           </div>
@@ -854,7 +854,7 @@ export function ManagerDeskView({
                   hasUserSelectedTabRef.current = true;
                   setActiveTab(tab.id);
                 }}
-                className={`p-3 sm:p-3.5 rounded-xl border text-left transition-all cursor-pointer active:scale-[0.99] ${
+                className={`p-3 sm:p-3.5 rounded-2xl border backdrop-blur-xl ring-1 ring-inset ring-white/70 dark:ring-white/5 text-left transition-all cursor-pointer active:scale-[0.99] ${
                   active
                     ? tab.activeClass
                     : `${idleGradient} shadow-xs hover:shadow-md`
@@ -893,7 +893,7 @@ export function ManagerDeskView({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.16 }}
-          className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs"
+          className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -911,7 +911,7 @@ export function ManagerDeskView({
                 value={contribSearch}
                 onChange={(e) => setContribSearch(e.target.value)}
                 placeholder={t('searchContribPlaceholder')}
-                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-colors"
               />
             </div>
           </div>
@@ -921,7 +921,7 @@ export function ManagerDeskView({
               {[1, 2, 3].map((row) => (
                 <div
                   key={row}
-                  className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                 >
                   <div className="space-y-1.5 flex-1">
                     <Skeleton width={260} height={14} />
@@ -935,13 +935,13 @@ export function ManagerDeskView({
               ))}
             </div>
           ) : filteredPendingContributions.length === 0 ? (
-            <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
+            <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
               {pendingContributions.length === 0
                 ? t('allContribProcessed')
                 : t('noContribMatch')}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
               {filteredPendingContributions.map((c) => {
                 const txNo = c.decryptedDetails?.referenceId || c.maskedReference;
                 return (
@@ -1001,7 +1001,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'approved')}
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('approve')}</span>
@@ -1010,14 +1010,14 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmContributionDecision(c, 'rejected')}
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-all active:scale-[0.98]"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('denyWithNote')}</span>
                           </button>
                         </>
                       ) : (
-                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
+                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
                           {t('peerAdminRequired')}
                         </span>
                       )}
@@ -1041,7 +1041,7 @@ export function ManagerDeskView({
           className="space-y-6"
         >
           {/* Stage 1: Awaiting Vote Initiation */}
-          <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('stage1Heading', { count: pendingReviewLoans.length })}
@@ -1049,11 +1049,11 @@ export function ManagerDeskView({
             </div>
 
             {pendingReviewLoans.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 {t('stage1Empty')}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                 {pendingReviewLoans.map((loan) => (
                   <div
                     key={loan.id}
@@ -1098,7 +1098,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmInitiateLoanVote(loan)}
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                           >
                             <Vote className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('initiateVote')}</span>
@@ -1107,13 +1107,13 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmDeclineLoanReview(loan)}
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                           >
                             {t('decline')}
                           </button>
                         </>
                       ) : (
-                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
+                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30">
                           {t('selfSubmittedVoteNote')}
                         </span>
                       )}
@@ -1125,13 +1125,13 @@ export function ManagerDeskView({
           </section>
 
           {pendingGuarantorLoans.length > 0 && (
-            <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+            <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
               <div>
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                   {t('guarantorHeading', { count: pendingGuarantorLoans.length })}
                 </h3>
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                 {pendingGuarantorLoans.map((loan) => (
                   <div
                     key={loan.id}
@@ -1187,7 +1187,7 @@ export function ManagerDeskView({
           )}
 
           {/* Stage 2: Ongoing Ballots */}
-          <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('stage2Heading', { count: votingLoans.length })}
@@ -1195,11 +1195,11 @@ export function ManagerDeskView({
             </div>
 
             {votingLoans.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 {t('stage2Empty')}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                 {votingLoans.map((loan) => (
                   <div
                     key={loan.id}
@@ -1240,7 +1240,7 @@ export function ManagerDeskView({
                           loan.totalVotesCast ?? loan.votes.length
                         )
                       }
-                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('stopRevealBtn')}</span>
@@ -1252,7 +1252,7 @@ export function ManagerDeskView({
           </section>
 
           {/* Stage 3: Approved Awaiting Disbursement Confirmation */}
-          <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('stage3Heading', { count: pendingDisbursementLoans.length })}
@@ -1260,11 +1260,11 @@ export function ManagerDeskView({
             </div>
 
             {pendingDisbursementLoans.length === 0 ? (
-              <div className="p-4 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+              <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 {t('stage3Empty')}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                 {pendingDisbursementLoans.map((loan) => {
                   const shortLiquidity = loan.amount > availableLiquidity;
                   return (
@@ -1313,13 +1313,13 @@ export function ManagerDeskView({
                           type="button"
                           disabled={modalBusy}
                           onClick={() => confirmDisbursement(loan)}
-                          className="min-h-[44px] sm:min-h-0 w-full lg:w-auto justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                          className="min-h-[44px] sm:min-h-0 w-full lg:w-auto justify-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('confirmDisburseBtn')}</span>
                         </button>
                       ) : (
-                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 shrink-0">
+                        <span className="text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 shrink-0">
                           {t('selfSubmittedPayoutNote')}
                         </span>
                       )}
@@ -1340,7 +1340,7 @@ export function ManagerDeskView({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4 }}
           transition={{ duration: 0.16 }}
-          className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs"
+          className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
         >
           <div>
             <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -1349,11 +1349,11 @@ export function ManagerDeskView({
           </div>
 
           {pendingInstallments.length === 0 ? (
-            <div className="p-6 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
+            <div className="p-6 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-center text-slate-500 dark:text-slate-400">
               {t('installmentsEmpty')}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
               {pendingInstallments.map(({ loan, inst }) => {
                 const key = `${loan.id}#${inst.installmentNumber}`;
                 const txNo = inst.decryptedReceipt?.referenceId || inst.maskedReference;
@@ -1406,7 +1406,7 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'approve')
                             }
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                           >
                             <Check className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('accept')}</span>
@@ -1417,14 +1417,14 @@ export function ManagerDeskView({
                             onClick={() =>
                               confirmInstallmentDecision(loan, inst.installmentNumber, 'reject')
                             }
-                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0"
+                            className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 whitespace-nowrap shrink-0 transition-colors"
                           >
                             <X className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>{t('denyWithNote')}</span>
                           </button>
                         </>
                       ) : (
-                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
+                        <span className="col-span-2 text-[11px] font-medium text-amber-700 dark:text-amber-400 px-2.5 py-1.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-center">
                           {t('peerAdminRequired')}
                         </span>
                       )}
@@ -1447,7 +1447,7 @@ export function ManagerDeskView({
           transition={{ duration: 0.16 }}
           className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start"
         >
-          <section className="xl:col-span-5 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section className="xl:col-span-5 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
               <Vote className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span>{t('initiatePollEyebrow')}</span>
@@ -1468,7 +1468,7 @@ export function ManagerDeskView({
                   value={pollTitle}
                   onChange={(e) => setPollTitle(e.target.value)}
                   placeholder={t('pollQuestionPlaceholder')}
-                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1479,7 +1479,7 @@ export function ManagerDeskView({
                   <select
                     value={pollCategory}
                     onChange={(e) => setPollCategory(e.target.value as DecisionPoll['category'])}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
                   >
                     <option value="general">{t('pollCategoryGeneral')}</option>
                     <option value="policy">{t('pollCategoryPolicy')}</option>
@@ -1495,7 +1495,7 @@ export function ManagerDeskView({
                     type="date"
                     value={pollClosesAt}
                     onChange={(e) => setPollClosesAt(e.target.value)}
-                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                    className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
                   />
                 </div>
               </div>
@@ -1508,7 +1508,7 @@ export function ManagerDeskView({
                   value={pollDesc}
                   onChange={(e) => setPollDesc(e.target.value)}
                   placeholder={t('contextDescPlaceholder')}
-                  className="w-full px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
                 />
               </div>
 
@@ -1538,7 +1538,7 @@ export function ManagerDeskView({
                         )
                       }
                       placeholder={t('optionPlaceholder', { num: idx + 1 })}
-                      className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                      className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-1.5 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-colors"
                     />
                     {pollOptions.length > 2 && (
                       <button
@@ -1546,7 +1546,7 @@ export function ManagerDeskView({
                         onClick={() =>
                           setPollOptions((prev) => prev.filter((_, i) => i !== idx))
                         }
-                        className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer inline-flex items-center justify-center"
+                        className="min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 cursor-pointer inline-flex items-center justify-center transition-colors"
                         aria-label={t('removeOptionAria')}
                       >
                         <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
@@ -1559,14 +1559,14 @@ export function ManagerDeskView({
               <button
                 type="submit"
                 disabled={modalBusy}
-                className="w-full min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors"
+                className="w-full min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
               >
                 {t('reviewLaunchPollBtn')}
               </button>
             </form>
           </section>
 
-          <section className="xl:col-span-7 amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section className="xl:col-span-7 amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('ongoingBallotsHeading', { count: ballotsCount })}
@@ -1574,11 +1574,11 @@ export function ManagerDeskView({
             </div>
 
             {ballotsCount === 0 ? (
-              <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+              <div className="p-5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                 {t('noActiveBallots')}
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                 {votingLoans.map((loan) => (
                   <div
                     key={loan.id}
@@ -1604,7 +1604,7 @@ export function ManagerDeskView({
                           loan.totalVotesCast ?? loan.votes.length
                         )
                       }
-                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('stopRevealBtn')}</span>
@@ -1636,7 +1636,7 @@ export function ManagerDeskView({
                           poll.totalVotesCast ?? poll.votes.length
                         )
                       }
-                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('stopRevealBtn')}</span>
@@ -1671,7 +1671,7 @@ export function ManagerDeskView({
                           proj.totalVotesCast ?? proj.votes.length
                         )
                       }
-                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+                      className="min-h-[44px] sm:min-h-0 w-full sm:w-auto justify-center px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 transition-colors"
                     >
                       <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{t('stopRevealBtn')}</span>
@@ -1697,7 +1697,7 @@ export function ManagerDeskView({
           <section
             className={`${
               user.role === 'admin' ? 'xl:col-span-6' : 'xl:col-span-12'
-            } amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs`}
+            } amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]`}
           >
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
               <CalendarPlus className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -1714,7 +1714,7 @@ export function ManagerDeskView({
                 value={meetingTitle}
                 onChange={(e) => setMeetingTitle(e.target.value)}
                 placeholder={t('meetingTitlePlaceholder')}
-                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-colors"
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
@@ -1722,7 +1722,7 @@ export function ManagerDeskView({
                   required
                   value={meetingWhen}
                   onChange={(e) => setMeetingWhen(e.target.value)}
-                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-colors"
                 />
                 <input
                   type="text"
@@ -1730,7 +1730,7 @@ export function ManagerDeskView({
                   value={meetingWhere}
                   onChange={(e) => setMeetingWhere(e.target.value)}
                   placeholder={t('meetingWherePlaceholder')}
-                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                  className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-colors"
                 />
               </div>
               <textarea
@@ -1738,13 +1738,13 @@ export function ManagerDeskView({
                 value={meetingAgenda}
                 onChange={(e) => setMeetingAgenda(e.target.value)}
                 placeholder={t('meetingAgendaPlaceholder')}
-                className="w-full px-3 py-2 text-sm sm:text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full px-3 py-2 text-sm sm:text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-teal-500/30 transition-colors"
               />
               <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2">
                 <button
                   type="submit"
                   disabled={modalBusy || rewritingMeeting}
-                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                  className="min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                 >
                   {t('scheduleNotifyAllBtn')}
                 </button>
@@ -1752,7 +1752,7 @@ export function ManagerDeskView({
                   type="button"
                   disabled={modalBusy || rewritingMeeting}
                   onClick={() => void handleRewriteMeeting()}
-                  className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50"
+                  className="min-h-[44px] sm:min-h-0 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800/70 bg-indigo-50/50 dark:bg-indigo-950/25 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{rewritingMeeting ? t('rewriting') : t('aiRewriteBtn')}</span>
@@ -1765,7 +1765,7 @@ export function ManagerDeskView({
                 <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   {t('scheduledMeetingsHeading', { count: meetings.length })}
                 </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35 text-xs">
                   {meetings.slice(0, 8).map((m) => (
                     <div
                       key={m.id}
@@ -1786,7 +1786,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmMeetingStatus(m, 'completed')}
-                            className="px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 cursor-pointer transition-colors"
                           >
                             {t('done')}
                           </button>
@@ -1794,7 +1794,7 @@ export function ManagerDeskView({
                             type="button"
                             disabled={modalBusy}
                             onClick={() => confirmMeetingStatus(m, 'cancelled')}
-                            className="px-2 py-1 rounded border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                            className="px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer transition-colors"
                           >
                             {tCommon('cancel')}
                           </button>
@@ -1808,7 +1808,7 @@ export function ManagerDeskView({
           </section>
 
           {user.role === 'admin' && (
-            <section className="xl:col-span-6 amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+            <section className="xl:col-span-6 amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
               <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
                 <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t('profileRequestsEyebrow')}</span>
@@ -1818,11 +1818,11 @@ export function ManagerDeskView({
               </h3>
 
               {pendingProfileRequests.length === 0 ? (
-                <div className="p-5 rounded-lg border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
+                <div className="p-5 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
                   {t('noProfileRequests')}
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg text-xs">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35 text-xs">
                   {pendingProfileRequests.map((req) => (
                     <div key={req.id} className="p-4 space-y-2.5">
                       <div className="flex items-center justify-between gap-2">
@@ -1847,7 +1847,7 @@ export function ManagerDeskView({
                           {formatShortDate(req.requestedAt)}
                         </span>
                       </div>
-                      <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-950 font-mono text-[11px] space-y-0.5 text-slate-700 dark:text-slate-300">
+                      <div className="p-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/80 border border-slate-200/60 dark:border-slate-800/60 font-mono text-[11px] space-y-0.5 text-slate-700 dark:text-slate-300">
                         {formatProfileChangeEntries(req.requestedChanges).map((item) => (
                           <div key={item.key}>
                             <span className="text-slate-500 dark:text-slate-400">{item.label}:</span>{' '}
@@ -1860,7 +1860,7 @@ export function ManagerDeskView({
                           type="button"
                           disabled={modalBusy}
                           onClick={() => confirmProfileReqReview(req, 'approved')}
-                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
                         >
                           <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('approve')}</span>
@@ -1869,7 +1869,7 @@ export function ManagerDeskView({
                           type="button"
                           disabled={modalBusy}
                           onClick={() => confirmProfileReqReview(req, 'rejected')}
-                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
+                          className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white font-medium inline-flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50 transition-colors"
                         >
                           <X className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>{t('decline')}</span>
@@ -1893,7 +1893,7 @@ export function ManagerDeskView({
           transition={{ duration: 0.18 }}
           className="space-y-4"
         >
-          <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-4 shadow-xs">
+          <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {t('communityDraftsHeading', { count: communityDrafts.length })}
@@ -1913,7 +1913,7 @@ export function ManagerDeskView({
                 {t('noSavedDrafts')}
               </p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/55 dark:bg-slate-950/35">
                 {communityDrafts.map((draft) => (
                   <div
                     key={draft.id}
@@ -1963,7 +1963,7 @@ export function ManagerDeskView({
                             setModalBusy(false);
                           }
                         }}
-                        className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="min-h-[44px] sm:min-h-0 justify-center px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{t('publish')}</span>
@@ -1985,7 +1985,7 @@ export function ManagerDeskView({
                             setModalBusy(false);
                           }
                         }}
-                        className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-lg border border-rose-200 dark:border-rose-900/70 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50"
+                        className="min-h-[44px] sm:min-h-0 justify-center px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900/70 text-rose-700 dark:text-rose-400 hover:bg-rose-600 hover:text-white text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors"
                       >
                         {t('discard')}
                       </button>
@@ -2117,7 +2117,7 @@ function LoanApprovedPostModal({
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-3 sm:p-6">
       <div
-        className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs"
         onClick={() => {
           if (!busy) onClose();
         }}
@@ -2127,9 +2127,9 @@ function LoanApprovedPostModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="loan-approved-post-title"
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-xl"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)]"
       >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 py-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur">
           <div className="space-y-1 min-w-0">
             <h2
               id="loan-approved-post-title"
@@ -2145,7 +2145,7 @@ function LoanApprovedPostModal({
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="shrink-0 p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+            className="shrink-0 p-1.5 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 transition-colors"
             aria-label={tCommon('close')}
           >
             <X className="w-4 h-4" />
@@ -2163,7 +2163,7 @@ function LoanApprovedPostModal({
               onChange={(e) => setTitle(e.target.value)}
               disabled={busy}
               maxLength={140}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-colors"
             />
           </div>
           <div className="space-y-1.5">
@@ -2176,17 +2176,17 @@ function LoanApprovedPostModal({
               disabled={busy}
               rows={8}
               maxLength={4000}
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-y"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/40 resize-y transition-colors"
             />
           </div>
         </div>
 
-        <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 px-5 py-4 border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95">
+        <div className="sticky bottom-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 px-5 py-4 border-t border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95">
           <button
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 transition-colors"
           >
             {t('dismiss')}
           </button>
@@ -2194,7 +2194,7 @@ function LoanApprovedPostModal({
             type="button"
             disabled={busy || title.trim().length < 3 || content.trim().length < 3}
             onClick={() => void onSaveDraft(title.trim(), content.trim())}
-            className="px-4 py-2 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/50 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-950/50 cursor-pointer disabled:opacity-50 transition-colors"
           >
             {busy ? t('saving') : t('saveForLater')}
           </button>
@@ -2202,7 +2202,7 @@ function LoanApprovedPostModal({
             type="button"
             disabled={busy || title.trim().length < 3 || content.trim().length < 3}
             onClick={() => void onPostNow(title.trim(), content.trim())}
-            className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 hover:shadow-md transition-all duration-150 active:scale-[0.98]"
           >
             <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{busy ? t('posting') : t('postNow')}</span>

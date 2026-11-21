@@ -64,7 +64,7 @@ function TreasuryChartTooltip({ active, payload, label, currency }: CustomToolti
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-lg px-3.5 py-2.5 shadow-md text-xs space-y-1.5">
+    <div className="bg-white/94 dark:bg-slate-900/94 backdrop-blur-xl border border-slate-200/85 dark:border-slate-700/85 rounded-xl px-3.5 py-2.5 shadow-lg text-xs space-y-1.5">
       <div className="font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-1">
         {label}
       </div>
@@ -253,13 +253,13 @@ export function TreasuryGrowthChart({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4 sm:space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       {/* Header & Interactive Chart Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
               <TrendingUp className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
             <span>{t('treasuryAnalyticsBadge')}</span>
@@ -273,7 +273,7 @@ export function TreasuryGrowthChart({
           <div
             role="group"
             aria-label={t('datasetViewAria')}
-            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 shrink-0"
+            className="flex items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75 shrink-0"
           >
             {(
               [
@@ -288,7 +288,7 @@ export function TreasuryGrowthChart({
                   key={tab.id}
                   type="button"
                   onClick={() => setViewMode(tab.id)}
-                  className={`relative min-h-[36px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative min-h-[36px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -298,7 +298,7 @@ export function TreasuryGrowthChart({
                     <motion.span
                       layoutId="treasury-view-mode-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                     />
                   )}
                   <span className="relative z-10">{tab.label}</span>
@@ -310,7 +310,7 @@ export function TreasuryGrowthChart({
           <div
             role="group"
             aria-label={t('timeframeAria')}
-            className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 shrink-0"
+            className="flex items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75 shrink-0"
           >
             {(
               [
@@ -325,7 +325,7 @@ export function TreasuryGrowthChart({
                   key={r.id}
                   type="button"
                   onClick={() => setRange(r.id)}
-                  className={`relative min-h-[36px] sm:min-h-0 px-2.5 py-1.5 text-xs font-mono font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  className={`relative min-h-[36px] sm:min-h-0 px-2.5 py-1.5 text-xs font-mono font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                     active
                       ? 'text-slate-900 dark:text-white'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -335,7 +335,7 @@ export function TreasuryGrowthChart({
                     <motion.span
                       layoutId="treasury-range-pill"
                       transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                      className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
                     />
                   )}
                   <span className="relative z-10">{r.label}</span>
@@ -419,7 +419,7 @@ export function TreasuryGrowthChart({
       {loading ? (
         <Skeleton height={272} borderRadius={10} />
       ) : visibleSeries.length === 0 ? (
-        <div className="h-64 flex flex-col items-center justify-center text-center px-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg space-y-3">
+        <div className="h-64 flex flex-col items-center justify-center text-center px-4 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white/40 dark:bg-slate-950/25 space-y-3">
           <div className="space-y-1">
             <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
               {t('noTreasuryActivity')}
@@ -429,7 +429,7 @@ export function TreasuryGrowthChart({
             <button
               type="button"
               onClick={onSubmitContribution}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-xs"
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-all shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98]"
             >
               <span>{t('submitFirstContribution')}</span>
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

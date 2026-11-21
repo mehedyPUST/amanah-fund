@@ -217,7 +217,7 @@ export function ManagerCycleView({
       className="space-y-6"
     >
       {/* Header Banner */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs">
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
@@ -236,21 +236,21 @@ export function ManagerCycleView({
 
           {schedule && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0 text-xs">
-              <div className="px-3.5 py-2 rounded-lg bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-900/50">
+              <div className="px-3.5 py-2.5 rounded-xl bg-teal-50/75 dark:bg-teal-950/35 border border-teal-200/80 dark:border-teal-900/50">
                 <div className="text-[11px] text-teal-700 dark:text-teal-400">{t('turnDuration')}</div>
-                <div className="font-mono font-semibold text-slate-900 dark:text-white mt-0.5">
+                <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
                   {t('nMonths', { count: schedule.cycleMonths })}
                 </div>
               </div>
-              <div className="px-3.5 py-2 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200/80 dark:border-indigo-900/50">
+              <div className="px-3.5 py-2.5 rounded-xl bg-indigo-50/75 dark:bg-indigo-950/35 border border-indigo-200/80 dark:border-indigo-900/50">
                 <div className="text-[11px] text-indigo-700 dark:text-indigo-400">{t('cycleAnchor')}</div>
-                <div className="font-mono font-semibold text-slate-900 dark:text-white mt-0.5">
+                <div className="font-mono font-semibold tabular-nums text-slate-900 dark:text-white mt-0.5">
                   {formatShortDate(schedule.cycleStartDate)}
                 </div>
               </div>
-              <div className="px-3.5 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 col-span-2 sm:col-span-1">
+              <div className="px-3.5 py-2.5 rounded-xl bg-emerald-50/85 dark:bg-emerald-950/35 border border-emerald-200/85 dark:border-emerald-900/60 col-span-2 sm:col-span-1">
                 <div className="text-[11px] text-emerald-700 dark:text-emerald-400">{t('rotationPool')}</div>
-                <div className="font-mono font-semibold text-emerald-800 dark:text-emerald-300 mt-0.5">
+                <div className="font-mono font-semibold tabular-nums text-emerald-800 dark:text-emerald-300 mt-0.5">
                   {t('nActiveMembers', { count: schedule.eligibleMembersCount })}
                 </div>
               </div>
@@ -261,7 +261,7 @@ export function ManagerCycleView({
 
       {/* Admin Controls */}
       {isAdmin && (
-        <section className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4">
+        <section className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -274,7 +274,7 @@ export function ManagerCycleView({
                   key={preset}
                   type="button"
                   onClick={() => setCycleMonthsInput(String(preset))}
-                  className={`min-h-[38px] sm:min-h-0 px-2.5 py-1 rounded-md text-xs font-mono border cursor-pointer transition-colors ${
+                  className={`min-h-[38px] sm:min-h-0 px-2.5 py-1 rounded-lg text-xs font-mono border cursor-pointer transition-colors ${
                     Number(cycleMonthsInput) === preset
                       ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold'
                       : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -287,7 +287,7 @@ export function ManagerCycleView({
                 <button
                   type="button"
                   onClick={onOpenConfig}
-                  className="min-h-[38px] sm:min-h-0 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                  className="min-h-[38px] sm:min-h-0 px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   {t('siteSettingsBtn')}
                 </button>
@@ -307,7 +307,7 @@ export function ManagerCycleView({
                 required
                 value={cycleMonthsInput}
                 onChange={(e) => setCycleMonthsInput(e.target.value)}
-                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-colors"
               />
             </div>
             <div>
@@ -319,13 +319,13 @@ export function ManagerCycleView({
                 required
                 value={cycleStartInput}
                 onChange={(e) => setCycleStartInput(e.target.value)}
-                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
+                className="w-full min-h-[44px] sm:min-h-0 px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-colors"
               />
             </div>
             <button
               type="submit"
               disabled={modalBusy}
-              className="min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="min-h-[44px] sm:min-h-0 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer disabled:opacity-50"
             >
               {t('updateIntervalBtn')}
             </button>
@@ -345,7 +345,7 @@ export function ManagerCycleView({
         <>
           {/* Current & Next Spotlight */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3">
+            <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
                   <Crown className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -372,7 +372,7 @@ export function ManagerCycleView({
                       <button
                         type="button"
                         onClick={() => onViewMemberProfile(schedule.currentSlot!.memberId)}
-                        className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer shrink-0"
+                        className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
                       >
                         <span>{t('viewProfile')}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -380,7 +380,7 @@ export function ManagerCycleView({
                     )}
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-1 text-xs font-mono">
+                  <div className="p-2.5 rounded-xl bg-emerald-50/75 dark:bg-emerald-950/35 border border-emerald-200/80 dark:border-emerald-900/50 flex flex-wrap items-center justify-between gap-1 text-xs font-mono tabular-nums">
                     <span className="text-emerald-800 dark:text-emerald-300">{t('activeTermWindow')}</span>
                     <span className="font-semibold text-emerald-900 dark:text-emerald-200">
                       {formatShortDate(schedule.currentSlot.startDate)} →{' '}
@@ -393,7 +393,7 @@ export function ManagerCycleView({
               )}
             </section>
 
-            <section className="amanah-card-amber border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-3">
+            <section className="amanah-card-amber backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-3">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400">
                   <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -420,7 +420,7 @@ export function ManagerCycleView({
                       <button
                         type="button"
                         onClick={() => onViewMemberProfile(schedule.nextSlot!.memberId)}
-                        className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer shrink-0"
+                        className="min-h-[38px] sm:min-h-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 inline-flex items-center gap-1 cursor-pointer shrink-0 transition-colors"
                       >
                         <span>{t('viewProfile')}</span>
                         <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -428,7 +428,7 @@ export function ManagerCycleView({
                     )}
                   </div>
 
-                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1 text-xs font-mono">
+                  <div className="p-2.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/75 border border-slate-200/80 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-1 text-xs font-mono tabular-nums">
                     <span className="text-slate-500 dark:text-slate-400">{t('upcomingTermWindow')}</span>
                     <span className="font-semibold text-slate-800 dark:text-slate-200">
                       {formatShortDate(schedule.nextSlot.startDate)} →{' '}
@@ -444,7 +444,7 @@ export function ManagerCycleView({
 
           {/* Active Assigned Managers Note */}
           {schedule.activeDesignatedManagers.length > 0 && (
-            <section className="bg-slate-50/75 dark:bg-slate-950/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <section className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl px-4 py-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="inline-flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" aria-hidden="true" />
                 <span>{t('activeHoldersLabel')}</span>
@@ -478,7 +478,7 @@ export function ManagerCycleView({
           />
 
           {/* Full Cyclic Rotation Table */}
-          <section className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4">
+          <section className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-600" aria-hidden="true" />
@@ -492,13 +492,13 @@ export function ManagerCycleView({
             </div>
 
             {schedule.slots.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+              <div className="py-10 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                 {t('emptyPool')}
               </div>
             ) : (
               <>
                 {/* Mobile Rotation Cards (< lg) */}
-                <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white/80 dark:bg-slate-900/60">
+                <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200/85 dark:border-slate-800/85 rounded-xl overflow-hidden bg-white/80 dark:bg-slate-900/60">
                   {schedule.slots.map((slot) => {
                     const isSelf = slot.memberId === user.id;
                     return (
@@ -542,7 +542,7 @@ export function ManagerCycleView({
                           </div>
                         </div>
 
-                        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800 rounded-lg px-2.5 py-1.5 flex items-center justify-between gap-2">
+                        <div className="text-[11px] font-mono tabular-nums text-slate-600 dark:text-slate-300 bg-slate-50/90 dark:bg-slate-950/60 border border-slate-200/75 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-2">
                           <span className="text-slate-500 dark:text-slate-400">
                             {t('termLabelMonths', { months: schedule.cycleMonths })}
                           </span>
@@ -557,7 +557,7 @@ export function ManagerCycleView({
                               <button
                                 type="button"
                                 onClick={() => onViewMemberProfile(slot.memberId)}
-                                className="min-h-[40px] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                                className="min-h-[40px] px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                               >
                                 {t('profileBtn')}
                               </button>
@@ -567,7 +567,7 @@ export function ManagerCycleView({
                                 type="button"
                                 disabled={modalBusy}
                                 onClick={() => confirmAssignManager(slot)}
-                                className={`min-h-[40px] px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-50 ${
+                                className={`min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer disabled:opacity-50 transition-colors ${
                                   slot.currentRole === 'manager'
                                     ? 'border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                                     : 'bg-emerald-600 hover:bg-emerald-700 text-white'
@@ -586,18 +586,18 @@ export function ManagerCycleView({
                 </div>
 
                 {/* Desktop Table (>= lg) */}
-                <div className="hidden lg:block overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
+                <div className="hidden lg:block overflow-x-auto border border-slate-200/85 dark:border-slate-800/85 rounded-xl bg-white/55 dark:bg-slate-950/35">
                   <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400">
-                      <th className="py-2.5 px-4 font-medium">{t('colCycle')}</th>
-                      <th className="py-2.5 px-4 font-medium">{t('colMember')}</th>
-                      <th className="py-2.5 px-4 font-medium">
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <th className="py-3 px-4 font-semibold">{t('colCycle')}</th>
+                      <th className="py-3 px-4 font-semibold">{t('colMember')}</th>
+                      <th className="py-3 px-4 font-semibold">
                         {t('colTermWindow', { months: schedule.cycleMonths })}
                       </th>
-                      <th className="py-2.5 px-4 font-medium">{t('colRole')}</th>
-                      <th className="py-2.5 px-4 font-medium">{t('colTurnStatus')}</th>
-                      <th className="py-2.5 px-4 font-medium text-right">{t('colActions')}</th>
+                      <th className="py-3 px-4 font-semibold">{t('colRole')}</th>
+                      <th className="py-3 px-4 font-semibold">{t('colTurnStatus')}</th>
+                      <th className="py-3 px-4 font-semibold text-right">{t('colActions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -654,7 +654,7 @@ export function ManagerCycleView({
                                 <button
                                   type="button"
                                   onClick={() => onViewMemberProfile(slot.memberId)}
-                                  className="px-2.5 py-1 rounded border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                                 >
                                   {t('profileBtn')}
                                 </button>
@@ -664,7 +664,7 @@ export function ManagerCycleView({
                                   type="button"
                                   disabled={modalBusy}
                                   onClick={() => confirmAssignManager(slot)}
-                                  className={`px-2.5 py-1 rounded text-[11px] font-medium cursor-pointer disabled:opacity-50 ${
+                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium cursor-pointer disabled:opacity-50 transition-colors ${
                                     slot.currentRole === 'manager'
                                       ? 'border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30'
                                       : 'bg-emerald-600 hover:bg-emerald-700 text-white'

@@ -217,7 +217,7 @@ export function MobilePinLoginPanel({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 divide-y divide-slate-100 dark:divide-slate-800"
+              className="overflow-hidden rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl shadow-lg divide-y divide-slate-100 dark:divide-slate-800"
             >
               {accounts.map((acc) => {
                 const isSelected = acc.userId === selectedAccount.userId;

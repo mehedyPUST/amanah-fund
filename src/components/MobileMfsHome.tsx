@@ -754,9 +754,8 @@ export function MobileMfsHome({
       >
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-snug text-slate-600 dark:text-slate-400">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
-              <span>{phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}</span>
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              {phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}
             </span>
             <span aria-hidden="true">·</span>
             <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">

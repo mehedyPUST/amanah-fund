@@ -167,7 +167,7 @@ export function RepaymentSchedule({
       as="section"
       hue="teal"
       aria-label={t('title')}
-      className="backdrop-blur-md border rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200"
     >
       <div className="space-y-4">
         {/* Header */}
@@ -184,7 +184,7 @@ export function RepaymentSchedule({
 
           <div className="flex flex-wrap items-center gap-2">
             {isStaff && allActiveLoans.length > 0 && (
-              <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75">
                 {(
                   [
                     { id: 'mine', label: t('myLoan') },
@@ -200,7 +200,7 @@ export function RepaymentSchedule({
                         setScope(tab.id);
                         setSelectedLoanId(null);
                       }}
-                      className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      className={`relative px-2.5 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                         active
                           ? 'text-slate-900 dark:text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -210,7 +210,7 @@ export function RepaymentSchedule({
                         <motion.span
                           layoutId="repayment-scope-pill"
                           transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                          className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                           aria-hidden="true"
                         />
                       )}
@@ -222,7 +222,7 @@ export function RepaymentSchedule({
             )}
 
             {activeLoan && (
-              <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <div className="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75">
                 {(
                   [
                     { id: 'upcoming', label: t('upcoming') },
@@ -235,7 +235,7 @@ export function RepaymentSchedule({
                       key={tab.id}
                       type="button"
                       onClick={() => setViewFilter(tab.id)}
-                      className={`relative px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                      className={`relative px-2.5 py-1 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                         active
                           ? 'text-slate-900 dark:text-white'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -245,7 +245,7 @@ export function RepaymentSchedule({
                         <motion.span
                           layoutId="repayment-view-pill"
                           transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                          className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs"
+                          className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                           aria-hidden="true"
                         />
                       )}
@@ -300,7 +300,7 @@ export function RepaymentSchedule({
                 <button
                   type="button"
                   onClick={onOpenLoanModal}
-                  className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium cursor-pointer transition-colors"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] cursor-pointer transition-all"
                 >
                   {t('requestLoan')}
                 </button>
@@ -309,7 +309,7 @@ export function RepaymentSchedule({
                 <button
                   type="button"
                   onClick={() => onNavigate('quard-hasan')}
-                  className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   {t('openQardHasan')}
                 </button>

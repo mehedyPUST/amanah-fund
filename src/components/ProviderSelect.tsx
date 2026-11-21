@@ -130,7 +130,7 @@ export function ProviderSelect({
             setQuery('');
           }
         }}
-        className={`w-full ${btnPadding} rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-left flex items-center justify-between gap-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed`}
+        className={`w-full ${btnPadding} rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-left flex items-center justify-between gap-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-600/30 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed transition-colors`}
       >
         <span className="truncate">{value || options[0] || t('selectFallback')}</span>
         <ChevronDown
@@ -158,7 +158,7 @@ export function ProviderSelect({
                   ...(coords.top !== undefined ? { top: coords.top } : {}),
                   ...(coords.bottom !== undefined ? { bottom: coords.bottom } : {}),
                 }}
-                className="z-[65] rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white/88 dark:bg-slate-950/88 backdrop-blur-md shadow-xl overflow-hidden"
+                className="z-[65] rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_16px_40px_-14px_rgba(15,23,42,0.2)] overflow-hidden"
               >
                 <div className="p-2 border-b border-slate-100 dark:border-slate-800 relative">
                   <Search
@@ -171,7 +171,7 @@ export function ProviderSelect({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder={resolvedPlaceholder}
-                    className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+                    className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500/30"
                   />
                 </div>
                 <ul

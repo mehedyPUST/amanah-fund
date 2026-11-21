@@ -60,7 +60,7 @@ function AuditChartTooltip({ active, payload, label, currency }: ChartTooltipPro
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-white/88 dark:bg-slate-900/88 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 rounded-lg px-3.5 py-2.5 shadow-md text-xs space-y-1.5">
+    <div className="bg-white/94 dark:bg-slate-900/94 backdrop-blur-xl border border-slate-200/85 dark:border-slate-700/85 rounded-xl px-3.5 py-2.5 shadow-lg text-xs space-y-1.5">
       <div className="font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-1">
         {label}
       </div>
@@ -212,12 +212,12 @@ export function AuditTrendsCharts({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      className="amanah-card-violet border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 space-y-4 sm:space-y-5 shadow-xs hover:shadow-md transition-all duration-200"
+      className="amanah-card-violet backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-indigo-700 dark:text-indigo-400">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
               <BarChart3 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
             <span>{t('auditTelemetryBadge')}</span>
@@ -227,7 +227,7 @@ export function AuditTrendsCharts({
           </h2>
         </div>
 
-        <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-lg border border-slate-200/70 dark:border-slate-700/70 w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
+        <div className="flex flex-nowrap items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 rounded-xl border border-slate-200/75 dark:border-slate-700/75 w-full sm:w-fit max-w-full overflow-x-auto no-scrollbar shrink-0">
           {(
             [
               { id: 'both', label: t('tabCombinedView') },
@@ -241,7 +241,7 @@ export function AuditTrendsCharts({
                 key={tab.id}
                 type="button"
                 onClick={() => setChartView(tab.id)}
-                className={`relative min-h-[36px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`relative min-h-[36px] sm:min-h-0 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                   active
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -251,7 +251,7 @@ export function AuditTrendsCharts({
                   <motion.span
                     layoutId="audit-trends-tab-pill"
                     transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-                    className="absolute inset-0 rounded-md bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-indigo-500/20"
                   />
                 )}
                 <span className="relative z-10">{tab.label}</span>
@@ -309,7 +309,7 @@ export function AuditTrendsCharts({
           <Skeleton height={270} borderRadius={10} />
         </div>
       ) : chartData.length === 0 ? (
-        <div className="h-60 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+        <div className="h-60 flex items-center justify-center text-sm text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-white/40 dark:bg-slate-950/25">
           {t('noAuditHistory')}
         </div>
       ) : (

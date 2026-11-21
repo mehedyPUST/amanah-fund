@@ -151,9 +151,8 @@ export function OverviewView({
       >
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
-              <span>{phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}</span>
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              {phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}
             </span>
             <span aria-hidden="true">·</span>
             <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
@@ -213,7 +212,7 @@ export function OverviewView({
         return (
           <section
             aria-label={t('alerts.activeLoanRequest')}
-            className="amanah-card-teal border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-4"
+            className="amanah-card-teal border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4 transition-all duration-200"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="space-y-1.5 min-w-0">
@@ -252,7 +251,7 @@ export function OverviewView({
                   <button
                     type="button"
                     onClick={() => onNavigate('ballot')}
-                    className="px-3.5 py-2 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                    className="px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-[0.98] transition-all"
                   >
                     <Vote className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{t('alerts.openVoting')}</span>
@@ -261,7 +260,7 @@ export function OverviewView({
                 <button
                   type="button"
                   onClick={() => onNavigate('quard-hasan')}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-medium shadow-xs inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap active:scale-[0.98] transition-all"
                 >
                   <span>{t('alerts.openQardHasan')}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />

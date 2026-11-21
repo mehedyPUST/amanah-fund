@@ -392,7 +392,7 @@ export function SignInForm() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                    className="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
                   >
                     {activationError}
                   </motion.div>
@@ -474,7 +474,7 @@ export function SignInForm() {
                 </button>
               </form>
 
-              <div className="p-3 rounded-lg border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+              <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
                 <Mail className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="leading-relaxed">{tAuth('activation.phoneHelp')}</p>
               </div>
@@ -512,7 +512,7 @@ export function SignInForm() {
                   </div>
                   <Link
                     href="/signup"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-xs transition-all whitespace-nowrap"
                   >
                     <span>{tAuth('signInPage.createFirstAdmin')}</span>
                     <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -527,7 +527,7 @@ export function SignInForm() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
-                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed space-y-2"
+                    className="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed space-y-2"
                   >
                     <p>{error}</p>
                     {error.includes('Join Amanah') && (
@@ -671,7 +671,7 @@ export function SignInForm() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 8 }}
               transition={{ duration: 0.16 }}
-              className="w-full max-w-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 shadow-2xl space-y-4"
+              className="w-full max-w-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl ring-1 ring-inset ring-white/80 dark:ring-white/10 p-6 shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)] space-y-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2.5">
@@ -694,7 +694,7 @@ export function SignInForm() {
                   type="button"
                   onClick={() => !forgotSubmitting && setForgotOpen(false)}
                   aria-label={tCommon('closeDialog')}
-                  className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                  className="p-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -703,7 +703,7 @@ export function SignInForm() {
               {forgotError && (
                 <div
                   role="alert"
-                  className="p-3 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
+                  className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
                 >
                   {forgotError}
                 </div>
@@ -724,7 +724,7 @@ export function SignInForm() {
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
                     placeholder={tAuth('emailPlaceholder')}
-                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
 
@@ -742,7 +742,7 @@ export function SignInForm() {
                     value={forgotReason}
                     onChange={(e) => setForgotReason(e.target.value)}
                     placeholder={tAuth('forgot.reasonPlaceholder')}
-                    className="w-full px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
                   />
                 </div>
 
@@ -751,14 +751,14 @@ export function SignInForm() {
                     type="button"
                     disabled={forgotSubmitting}
                     onClick={() => setForgotOpen(false)}
-                    className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50 transition-colors"
                   >
                     {tCommon('cancel')}
                   </button>
                   <button
                     type="submit"
                     disabled={forgotSubmitting}
-                    className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white font-medium shadow-xs cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 text-white font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all cursor-pointer"
                   >
                     {forgotSubmitting ? tAuth('forgot.submitting') : tAuth('forgot.submit')}
                   </button>

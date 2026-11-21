@@ -928,7 +928,7 @@ export function SignUpForm() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="p-6 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/40 space-y-4"
+              className="p-6 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/85 dark:bg-emerald-950/40 space-y-4"
             >
               <div className="flex items-start gap-3 text-emerald-900 dark:text-emerald-200">
                 <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600" aria-hidden="true" />
@@ -945,7 +945,7 @@ export function SignUpForm() {
                     type="button"
                     disabled={downloadingPdf}
                     onClick={() => void handleDownloadSubmittedPdf()}
-                    className="px-4 py-2 rounded-lg bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60 whitespace-nowrap transition-colors"
+                    className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-950 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-60 whitespace-nowrap transition-colors"
                   >
                     {downloadingPdf ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
@@ -959,7 +959,7 @@ export function SignUpForm() {
                 )}
                 <Link
                   href="/login"
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium inline-flex items-center gap-1.5 whitespace-nowrap"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 whitespace-nowrap transition-all"
                 >
                   <span>{t('goToSignIn')}</span>
                   <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -970,7 +970,7 @@ export function SignUpForm() {
                     setSuccessMessage(null);
                     setSubmittedApplication(null);
                   }}
-                  className="px-4 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 cursor-pointer whitespace-nowrap"
+                  className="px-4 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800 text-xs font-medium text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/50 cursor-pointer whitespace-nowrap transition-colors"
                 >
                   {t('submitAnother')}
                 </button>
@@ -978,7 +978,7 @@ export function SignUpForm() {
             </motion.div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-7">
-              <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                     {t('charterBannerTitle')}
@@ -993,7 +993,7 @@ export function SignUpForm() {
                     target="_blank"
                     rel="noopener noreferrer"
                     download={constitution.constitutionPdfName || 'cooperative-constitution.pdf'}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{t('constitutionPdf')}</span>
@@ -1001,7 +1001,7 @@ export function SignUpForm() {
                 ) : (
                   <Link
                     href="/rules"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors shrink-0 whitespace-nowrap"
                   >
                     <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{t('rulesCharter')}</span>
@@ -1010,7 +1010,7 @@ export function SignUpForm() {
               </div>
 
               {locale === 'bn' && (
-                <div className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 flex items-start gap-2.5">
+                <div className="p-3.5 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/70 dark:bg-emerald-950/30 flex items-start gap-2.5">
                   <Languages
                     className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5"
                     aria-hidden="true"
@@ -1027,7 +1027,7 @@ export function SignUpForm() {
               )}
 
               {isBootstrapSetup && (
-                <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/75 dark:bg-emerald-950/35 space-y-1">
+                <div className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/75 dark:bg-emerald-950/35 space-y-1">
                   <p className="text-xs font-semibold text-emerald-900 dark:text-emerald-200">
                     {t('bootstrapBannerTitle')}
                   </p>
@@ -1044,7 +1044,7 @@ export function SignUpForm() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     role="alert"
-                    className="p-3.5 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
+                    className="p-3.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 leading-relaxed"
                   >
                     {error}
                   </motion.div>
@@ -1067,7 +1067,7 @@ export function SignUpForm() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t('fullNamePh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(name)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1089,7 +1089,7 @@ export function SignUpForm() {
                     value={nameBn}
                     onChange={(e) => setNameBn(e.target.value)}
                     placeholder={t('fullNameBnPh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsLatinLetters(nameBn)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1112,7 +1112,7 @@ export function SignUpForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={tAuth('emailPlaceholder')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(email)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1135,7 +1135,7 @@ export function SignUpForm() {
                     value={mobile}
                     onChange={(e) => setMobile(e.target.value)}
                     placeholder={t('mobilePh')}
-                    className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(mobile)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1165,7 +1165,7 @@ export function SignUpForm() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder={t('passwordCreatePh')}
-                      className="w-full pl-3.5 pr-10 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                      className="w-full pl-3.5 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                     />
                     <button
                       type="button"
@@ -1199,7 +1199,7 @@ export function SignUpForm() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder={t('confirmPasswordPh')}
-                      className={`w-full pl-3.5 pr-10 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                      className={`w-full pl-3.5 pr-10 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                         passwordsMismatch
                           ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                           : passwordsMatch
@@ -1235,7 +1235,7 @@ export function SignUpForm() {
                 </div>
 
                 {/* Live Password Strength Meter & Rules Checklist */}
-                <div className="sm:col-span-2 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/60 space-y-2.5">
+                <div className="sm:col-span-2 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/60 space-y-2.5">
                   <div className="flex items-center justify-between gap-2 text-xs">
                     <span className="font-medium text-slate-700 dark:text-slate-300">
                       {t('strengthLabel')}
@@ -1322,7 +1322,7 @@ export function SignUpForm() {
                     value={fatherName}
                     onChange={(e) => setFatherName(e.target.value)}
                     placeholder={t('fatherNamePh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(fatherName)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1344,7 +1344,7 @@ export function SignUpForm() {
                     value={fatherNameBn}
                     onChange={(e) => setFatherNameBn(e.target.value)}
                     placeholder={t('fatherNameBnPh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsLatinLetters(fatherNameBn)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1367,7 +1367,7 @@ export function SignUpForm() {
                     value={motherName}
                     onChange={(e) => setMotherName(e.target.value)}
                     placeholder={t('motherNamePh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(motherName)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1389,7 +1389,7 @@ export function SignUpForm() {
                     value={motherNameBn}
                     onChange={(e) => setMotherNameBn(e.target.value)}
                     placeholder={t('motherNameBnPh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsLatinLetters(motherNameBn)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1411,7 +1411,7 @@ export function SignUpForm() {
                     required
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   />
                 </div>
 
@@ -1425,7 +1425,7 @@ export function SignUpForm() {
                     onChange={(e) =>
                       handleApplicantGenderChange(e.target.value as '' | MemberGender)
                     }
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   >
                     <option value="">{t('selectGender')}</option>
                     <option value="male">{t('male')}</option>
@@ -1449,7 +1449,7 @@ export function SignUpForm() {
                         setSpouseNameBn('');
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                   >
                     <option value="">{t('selectMaritalStatus')}</option>
                     <option value="single">{t('maritalSingle')}</option>
@@ -1469,7 +1469,7 @@ export function SignUpForm() {
                     value={nid}
                     onChange={(e) => setNid(e.target.value)}
                     placeholder={t('nidPh')}
-                    className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(nid)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1501,7 +1501,7 @@ export function SignUpForm() {
                         value={spouseName}
                         onChange={(e) => setSpouseName(e.target.value)}
                         placeholder={t('spouseNamePh')}
-                        className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                        className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                           containsBanglaScript(spouseName)
                             ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                             : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1523,7 +1523,7 @@ export function SignUpForm() {
                         value={spouseNameBn}
                         onChange={(e) => setSpouseNameBn(e.target.value)}
                         placeholder={t('spouseNameBnPh')}
-                        className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                        className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                           containsLatinLetters(spouseNameBn)
                             ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                             : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1564,7 +1564,7 @@ export function SignUpForm() {
                     value={referenceMemberName}
                     onChange={(e) => setReferenceMemberName(e.target.value)}
                     placeholder={isBootstrapSetup ? t('bootstrapReferencePh') : t('referencePh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(referenceMemberName)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1594,7 +1594,7 @@ export function SignUpForm() {
                     value={occupation}
                     onChange={(e) => setOccupation(e.target.value)}
                     placeholder={t('occupationPh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(occupation)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1617,7 +1617,7 @@ export function SignUpForm() {
                     value={companyOrganization}
                     onChange={(e) => setCompanyOrganization(e.target.value)}
                     placeholder={t('companyPh')}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                       containsBanglaScript(companyOrganization)
                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1631,7 +1631,7 @@ export function SignUpForm() {
                 </div>
               </div>
               {/* Optional Social Media Profiles (WhatsApp, Facebook, LinkedIn) */}
-              <div className="rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/55 dark:bg-slate-950/45 overflow-hidden">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/55 dark:bg-slate-950/45 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setShowSocialSection((prev) => !prev)}
@@ -1700,7 +1700,7 @@ export function SignUpForm() {
                             value={whatsapp}
                             onChange={(e) => setWhatsapp(e.target.value)}
                             placeholder={t('whatsappPh')}
-                            className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                               containsBanglaScript(whatsapp)
                                 ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                                 : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1726,7 +1726,7 @@ export function SignUpForm() {
                             value={facebook}
                             onChange={(e) => setFacebook(e.target.value)}
                             placeholder={t('facebookPh')}
-                            className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                               containsBanglaScript(facebook)
                                 ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                                 : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1752,7 +1752,7 @@ export function SignUpForm() {
                             value={linkedin}
                             onChange={(e) => setLinkedin(e.target.value)}
                             placeholder={t('linkedinPh')}
-                            className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                            className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                               containsBanglaScript(linkedin)
                                 ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                                 : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1830,7 +1830,7 @@ export function SignUpForm() {
                 {nominees.length > 1 && (
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <span
-                      className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-md border tabular-nums ${
+                      className={`text-xs font-mono font-semibold px-2.5 py-1 rounded-lg border tabular-nums ${
                         Math.abs(totalNomineeShare - 100) <= 0.05
                           ? 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
                           : 'border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300'
@@ -1841,7 +1841,7 @@ export function SignUpForm() {
                     <button
                       type="button"
                       onClick={handleEqualSplitShares}
-                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+                      className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       {t('equalSplit')}
                     </button>
@@ -1859,7 +1859,7 @@ export function SignUpForm() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="p-4 sm:p-5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/55 space-y-4"
+                      className="p-4 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/60 dark:ring-white/5 bg-slate-50/65 dark:bg-slate-950/55 space-y-4"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/70 dark:border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
@@ -1898,7 +1898,7 @@ export function SignUpForm() {
                           value={nominee.name}
                           onChange={(e) => updateNomineeField(idx, 'name', e.target.value)}
                           placeholder={t('fullNamePh')}
-                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                             containsBanglaScript(nominee.name)
                               ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                               : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1920,7 +1920,7 @@ export function SignUpForm() {
                           value={nominee.nameBn}
                           onChange={(e) => updateNomineeField(idx, 'nameBn', e.target.value)}
                           placeholder={t('nomineeNameBnPh')}
-                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                             containsLatinLetters(nominee.nameBn)
                               ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                               : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -1942,7 +1942,7 @@ export function SignUpForm() {
                           required
                           value={nominee.dateOfBirth}
                           onChange={(e) => updateNomineeField(idx, 'dateOfBirth', e.target.value)}
-                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          className="w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         />
                       </div>
 
@@ -1956,7 +1956,7 @@ export function SignUpForm() {
                           onChange={(e) =>
                             updateNomineeField(idx, 'gender', e.target.value as '' | NomineeGender)
                           }
-                          className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                          className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                         >
                           <option value="">{t('selectGender')}</option>
                           <option value="male">{t('male')}</option>
@@ -1975,7 +1975,7 @@ export function SignUpForm() {
                           value={nominee.occupation}
                           onChange={(e) => updateNomineeField(idx, 'occupation', e.target.value)}
                           placeholder={t('nomineeOccupationPh')}
-                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                             containsBanglaScript(nominee.occupation)
                               ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                               : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -2003,7 +2003,7 @@ export function SignUpForm() {
                                 onChange={(e) =>
                                   updateNomineeField(idx, 'relation', e.target.value)
                                 }
-                                className="w-full px-3.5 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 <option value="">
                                   {nominee.gender
@@ -2031,7 +2031,7 @@ export function SignUpForm() {
                                       updateNomineeField(idx, 'customRelation', e.target.value)
                                     }
                                     placeholder={t('customRelationPh')}
-                                    className={`w-full px-3.5 py-2 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                                    className={`w-full px-3.5 py-2 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                                       containsBanglaScript(nominee.customRelation)
                                         ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                                         : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -2059,7 +2059,7 @@ export function SignUpForm() {
                           value={nominee.nidOrBirthReg}
                           onChange={(e) => updateNomineeField(idx, 'nidOrBirthReg', e.target.value)}
                           placeholder={t('nidBirthRegPh')}
-                          className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                             containsBanglaScript(nominee.nidOrBirthReg)
                               ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                               : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -2084,7 +2084,7 @@ export function SignUpForm() {
                           value={nominee.mobile}
                           onChange={(e) => updateNomineeField(idx, 'mobile', e.target.value)}
                           placeholder={t('nomineeMobilePh')}
-                          className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
+                          className={`w-full px-3.5 py-2.5 text-sm font-mono rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 ${
                             containsBanglaScript(nominee.mobile)
                               ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                               : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -2113,7 +2113,7 @@ export function SignUpForm() {
                               updateNomineeField(idx, 'sharePercentage', e.target.value)
                             }
                             placeholder="50"
-                            className="w-full px-3.5 py-2.5 text-sm font-mono tabular-nums rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                            className="w-full px-3.5 py-2.5 text-sm font-mono tabular-nums rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
                           />
                         </div>
                       )}
@@ -2155,7 +2155,7 @@ export function SignUpForm() {
                           value={nominee.address}
                           onChange={(e) => updateNomineeField(idx, 'address', e.target.value)}
                           placeholder={t('nomineeAddressPh')}
-                          className={`w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 disabled:opacity-70 ${
+                          className={`w-full px-3.5 py-2.5 text-sm rounded-xl border bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 disabled:opacity-70 ${
                             containsBanglaScript(nominee.address)
                               ? 'border-rose-400 dark:border-rose-700 focus:ring-rose-500/30 focus:border-rose-500'
                               : 'border-slate-200 dark:border-slate-700 focus:ring-emerald-600/30 focus:border-emerald-600'
@@ -2169,7 +2169,7 @@ export function SignUpForm() {
                       </div>
 
                       {/* Nominee Photo (Not required when female) */}
-                      <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm space-y-2.5">
+                      <div className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-900/75 backdrop-blur-sm space-y-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                             {t('nomineePhoto')}{' '}
@@ -2190,7 +2190,7 @@ export function SignUpForm() {
                         </div>
 
                         {nominee.gender === 'female' ? (
-                          <div className="py-3 px-3 rounded-lg border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
+                          <div className="py-3 px-3 rounded-xl border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
                             {t('femalePhotoExempt')}
                           </div>
                         ) : nominee.photoUrl ? (
@@ -2199,7 +2199,7 @@ export function SignUpForm() {
                               src={nominee.photoUrl}
                               alt={`Nominee ${idx + 1} portrait`}
                               referrerPolicy="no-referrer"
-                              className="w-14 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                              className="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                             />
                             <div className="flex flex-col gap-1">
                               <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
@@ -2224,7 +2224,7 @@ export function SignUpForm() {
                             </div>
                           </div>
                         ) : (
-                          <label className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                          <label className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
                             {nominee.photoUploading ? (
                               <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
                             ) : (
@@ -2256,7 +2256,7 @@ export function SignUpForm() {
                   type="button"
                   onClick={handleAddNominee}
                   disabled={nominees.length >= 10}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors cursor-pointer disabled:opacity-50 whitespace-nowrap"
                 >
                   <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{t('addNominee')}</span>
@@ -2274,7 +2274,7 @@ export function SignUpForm() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Member Photo (Required) */}
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
+                <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/55 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                       {t('memberPhoto')} <span className="text-red-500">*</span>
@@ -2293,7 +2293,7 @@ export function SignUpForm() {
                         src={photoUrl}
                         alt={t('memberPhoto')}
                         referrerPolicy="no-referrer"
-                        className="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        className="w-16 h-16 rounded-xl object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                       />
                       <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
                         <span>{photoUploading ? t('uploading') : t('replacePhoto')}</span>
@@ -2307,7 +2307,7 @@ export function SignUpForm() {
                       </label>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-3 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
                       {photoUploading ? (
                         <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
                       ) : (
@@ -2328,7 +2328,7 @@ export function SignUpForm() {
                 </div>
 
                 {/* Applicant Signature 300x80 px (Required) */}
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-3">
+                <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/55 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
                       {t('signatureLabel')} <span className="text-red-500">*</span>
@@ -2342,7 +2342,7 @@ export function SignUpForm() {
                   </div>
 
                   {pendingSignature ? (
-                    <div className="p-3.5 rounded-lg border border-amber-300/80 dark:border-amber-800/80 bg-amber-50/75 dark:bg-amber-950/30 space-y-3">
+                    <div className="p-3.5 rounded-xl border border-amber-300/80 dark:border-amber-800/80 bg-amber-50/75 dark:bg-amber-950/30 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
                           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
@@ -2357,14 +2357,14 @@ export function SignUpForm() {
                           type="button"
                           onClick={() => setPendingSignature(null)}
                           aria-label={tCommon('cancel')}
-                          className="p-1 rounded text-amber-800 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/50 cursor-pointer shrink-0"
+                          className="p-1 rounded-lg text-amber-800 dark:text-amber-300 hover:bg-amber-200/50 dark:hover:bg-amber-900/50 cursor-pointer shrink-0"
                         >
                           <X className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                        <div className="w-[300px] max-w-full h-[80px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
+                        <div className="w-[300px] max-w-full h-[80px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
                           <img
                             src={pendingSignature.previewUrl}
                             alt={t('signatureLabel')}
@@ -2376,7 +2376,7 @@ export function SignUpForm() {
                             type="button"
                             disabled={signatureUploading}
                             onClick={() => void handleAutoResizeSignature()}
-                            className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-colors"
                           >
                             {signatureUploading ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
@@ -2391,7 +2391,7 @@ export function SignUpForm() {
                             type="button"
                             disabled={signatureUploading}
                             onClick={() => setPendingSignature(null)}
-                            className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
+                            className="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-900 cursor-pointer"
                           >
                             {tCommon('cancel')}
                           </button>
@@ -2400,7 +2400,7 @@ export function SignUpForm() {
                     </div>
                   ) : signatureUrl ? (
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="w-[300px] max-w-full h-[80px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-[300px] max-w-full h-[80px] rounded-xl border border-slate-200 dark:border-slate-700 bg-white flex items-center justify-center overflow-hidden shrink-0">
                         <img
                           src={signatureUrl}
                           alt={t('signatureLabel')}
@@ -2429,8 +2429,8 @@ export function SignUpForm() {
                       </div>
                     </div>
                   ) : (
-                    <label className="flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center sm:text-left transition-colors">
-                      <div className="w-[150px] h-[40px] rounded border border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-400 shrink-0">
+                    <label className="flex flex-col sm:flex-row items-center justify-center gap-3 py-4 px-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center sm:text-left transition-colors">
+                      <div className="w-[150px] h-[40px] rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 flex items-center justify-center gap-1.5 text-[10px] font-mono text-slate-400 shrink-0">
                         {signatureUploading ? (
                           <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
                         ) : (
@@ -2455,7 +2455,7 @@ export function SignUpForm() {
                 </div>
 
                 {/* Official Digital Membership Agreement Declaration (Required) */}
-                <div className="sm:col-span-2 p-4 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 space-y-3">
+                <div className="sm:col-span-2 p-4 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/55 dark:bg-emerald-950/25 space-y-3">
                   <div className="flex items-start gap-2.5">
                     <FileText
                       className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5"
@@ -2494,7 +2494,7 @@ export function SignUpForm() {
                   signatureUploading ||
                   anyNomineePhotoUploading
                 }
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 active:scale-[0.99] transition-all cursor-pointer shrink-0 whitespace-nowrap"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? t('submittingApp') : t('submitApp')}</span>
