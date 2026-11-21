@@ -10,7 +10,10 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
-import Skeleton from 'react-loading-skeleton';
+import {
+  MobileActivityRowsSkeleton,
+  MobileMfsHomeSkeleton,
+} from './DashboardSkeletons.tsx';
 import type {
   Contribution,
   DashboardOverview,
@@ -77,6 +80,7 @@ interface MobileMfsHomeProps {
   loans: LoanRequest[];
   user: PublicUser;
   loading: boolean;
+  activityLoading?: boolean;
   pendingBadgeCount: (sectionId: DashboardSectionId) => number;
   hasUnreadPriorityNotification?: boolean;
   onNavigate: (section: DashboardSectionId) => void;
@@ -269,6 +273,7 @@ export function MobileMfsHome({
   loans,
   user,
   loading,
+  activityLoading = false,
   pendingBadgeCount,
   hasUnreadPriorityNotification = false,
   onNavigate,
@@ -364,23 +369,7 @@ export function MobileMfsHome({
   }, [contributions, loans, isAdmin, user.id, user.memberCode, tDash, tCommon]);
 
   if (loading || !overview) {
-    return (
-      <div className="space-y-4">
-        <Skeleton height={118} borderRadius={16} />
-        <div className="grid grid-cols-2 gap-2.5">
-          {Array.from({ length: 2 }).map((_, idx) => (
-            <Skeleton key={idx} height={92} borderRadius={16} />
-          ))}
-        </div>
-        <div className="mfs-icon-grid-4">
-          {Array.from({ length: 8 }).map((_, idx) => (
-            <Skeleton key={idx} height={84} borderRadius={16} />
-          ))}
-        </div>
-        <Skeleton height={44} borderRadius={16} />
-        <Skeleton height={160} borderRadius={16} />
-      </div>
-    );
+    return <MobileMfsHomeSkeleton />;
   }
 
   const { config, treasury, personal, phase, daysUntilMaturity } = overview;
@@ -1062,7 +1051,9 @@ export function MobileMfsHome({
         </div>
 
         <div className="rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_20px_-10px_rgba(0,0,0,0.45)] divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
-          {recentActivity.length === 0 ? (
+          {activityLoading && recentActivity.length === 0 ? (
+            <MobileActivityRowsSkeleton rows={3} />
+          ) : recentActivity.length === 0 ? (
             <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
               {tDash('mobile.noRecentActivity')}
             </div>

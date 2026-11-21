@@ -490,16 +490,25 @@ export function ContributionsView({
             className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
           >
             <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">{t('ownSummary')}</div>
-            <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
-              {formatMoney(ownApprovedTotal, ccy)}
-            </div>
-            <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 leading-snug">
-              {t('ownSummaryCounts', {
-                approved: myContributions.filter((c) => c.status === 'approved').length,
-                active: ownActiveCount,
-                denied: ownDeniedCount,
-              })}
-            </div>
+            {loading ? (
+              <div className="mt-1.5 space-y-1.5">
+                <Skeleton width="68%" height={22} />
+                <Skeleton width="82%" height={12} />
+              </div>
+            ) : (
+              <>
+                <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+                  {formatMoney(ownApprovedTotal, ccy)}
+                </div>
+                <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400 leading-snug">
+                  {t('ownSummaryCounts', {
+                    approved: myContributions.filter((c) => c.status === 'approved').length,
+                    active: ownActiveCount,
+                    denied: ownDeniedCount,
+                  })}
+                </div>
+              </>
+            )}
           </MotionCard>
         )}
 
@@ -511,12 +520,21 @@ export function ContributionsView({
           <div className="text-[11px] sm:text-xs font-medium text-violet-700 dark:text-violet-400">
             {isAdmin ? t('allMembersApprovedPool') : t('otherMembersSummary')}
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
-            {formatMoney(othersApprovedTotal, ccy)}
-          </div>
-          <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-            {t('verifiedDepositsCount', { count: othersApprovedCount })}
-          </div>
+          {loading ? (
+            <div className="mt-1.5 space-y-1.5">
+              <Skeleton width="68%" height={22} />
+              <Skeleton width="72%" height={12} />
+            </div>
+          ) : (
+            <>
+              <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-white">
+                {formatMoney(othersApprovedTotal, ccy)}
+              </div>
+              <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                {t('verifiedDepositsCount', { count: othersApprovedCount })}
+              </div>
+            </>
+          )}
         </MotionCard>
 
         <MotionCard
@@ -525,12 +543,21 @@ export function ContributionsView({
           className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200"
         >
           <div className="text-[11px] sm:text-xs font-medium text-amber-700 dark:text-amber-400">{t('activeRequests')}</div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
-            {activeCount}
-          </div>
-          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {t('pendingManagerReview')}
-          </div>
+          {loading ? (
+            <div className="mt-1.5 space-y-1.5">
+              <Skeleton width="38%" height={22} />
+              <Skeleton width="76%" height={12} />
+            </div>
+          ) : (
+            <>
+              <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+                {activeCount}
+              </div>
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {t('pendingManagerReview')}
+              </div>
+            </>
+          )}
         </MotionCard>
 
         <MotionCard
@@ -539,12 +566,21 @@ export function ContributionsView({
           className={`backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-4 shadow-[0_6px_24px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.42)] hover:shadow-md transition-all duration-200 ${isAdmin ? 'col-span-2 sm:col-span-1' : ''}`}
         >
           <div className="text-[11px] sm:text-xs font-medium text-rose-700 dark:text-rose-400">{t('deniedRequests')}</div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
-            {deniedCount}
-          </div>
-          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            {t('requiresCorrection')}
-          </div>
+          {loading ? (
+            <div className="mt-1.5 space-y-1.5">
+              <Skeleton width="38%" height={22} />
+              <Skeleton width="76%" height={12} />
+            </div>
+          ) : (
+            <>
+              <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-rose-700 dark:text-rose-400">
+                {deniedCount}
+              </div>
+              <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {t('requiresCorrection')}
+              </div>
+            </>
+          )}
         </MotionCard>
       </section>
 
@@ -614,7 +650,9 @@ export function ContributionsView({
                           className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-emerald-500/20"
                         />
                       )}
-                      <span className="relative z-10">{tab.label}</span>
+                      <span className="relative z-10">
+                        {loading ? <Skeleton width={56} height={13} inline /> : tab.label}
+                      </span>
                     </button>
                   );
                 })}

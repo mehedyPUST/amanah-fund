@@ -1,22 +1,16 @@
 import Skeleton from 'react-loading-skeleton';
-import { AmanahLoadingLogo, AmanahLogo } from '../../components/AmanahLogo.tsx';
+import { AmanahLogo } from '../../components/AmanahLogo.tsx';
+import { MobileDashboardShellSkeleton } from '../../components/DashboardSkeletons.tsx';
 
 export default function DashboardLoading() {
   return (
     <div
-      className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3"
+      className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-0 lg:p-3 flex flex-col gap-0 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3"
       role="status"
       aria-live="polite"
       aria-label="Loading dashboard workspace"
     >
-      <div className="lg:hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <div className="mb-4">
-          <AmanahLoadingLogo variant="lockup" size="xl" />
-        </div>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-          Loading dashboard...
-        </p>
-      </div>
+      <MobileDashboardShellSkeleton />
 
       <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
         <AmanahLogo size="sm" decorative />

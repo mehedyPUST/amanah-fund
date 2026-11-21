@@ -48,13 +48,22 @@ export function StatisticsView({
         className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
       >
         <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{t('eyebrow')}</span>
-          </div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            {t('heading')}
-          </h2>
+          {loading && !overview ? (
+            <>
+              <Skeleton width={150} height={13} />
+              <Skeleton width={235} height={22} />
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t('eyebrow')}</span>
+              </div>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+                {t('heading')}
+              </h2>
+            </>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">

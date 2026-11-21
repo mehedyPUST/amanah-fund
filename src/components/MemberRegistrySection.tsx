@@ -17,6 +17,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import Skeleton from 'react-loading-skeleton';
 import type { AppLocale } from '../i18n/config.ts';
 import type {
   FundConfig,
@@ -370,11 +371,15 @@ export function MemberRegistrySection({
             <span>{t('eyebrow')}</span>
           </div>
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">
-            {t('heading', {
-              total: members.length,
-              pending: pendingCount,
-              awaiting: awaitingActivationCount,
-            })}
+            {loading && members.length === 0 ? (
+              <Skeleton width={250} height={22} />
+            ) : (
+              t('heading', {
+                total: members.length,
+                pending: pendingCount,
+                awaiting: awaitingActivationCount,
+              })
+            )}
           </h2>
         </div>
       </section>

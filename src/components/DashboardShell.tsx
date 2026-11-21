@@ -40,10 +40,11 @@ import Skeleton from 'react-loading-skeleton';
 import { ActiveMembersView } from './ActiveMembersView.tsx';
 import { AdminAuditLog } from './AdminAuditLog.tsx';
 import { AdminSiteSettingsView, type SettingsTabId } from './AdminSiteSettingsView.tsx';
-import { AmanahLoadingLogo, AmanahLogo } from './AmanahLogo.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { CommunityView } from './CommunityView.tsx';
 import { ContributionsView } from './ContributionsView.tsx';
+import { MobileDashboardShellSkeleton } from './DashboardSkeletons.tsx';
 import { HeaderNotificationBell } from './HeaderNotificationBell.tsx';
 import { LanguageSwitcher } from './LanguageSwitcher.tsx';
 import { LoansView } from './LoansView.tsx';
@@ -565,12 +566,23 @@ export function DashboardShell() {
     );
   }, [notifications, user]);
 
+  const overviewLoading = workspaceEnabled && overviewQuery.isPending && !overview;
+  const contributionsLoading =
+    workspaceEnabled && contributionsQuery.isPending && contributionsQuery.data === undefined;
+  const loansLoading = workspaceEnabled && loansQuery.isPending && loansQuery.data === undefined;
+  const halalProjectsLoading =
+    workspaceEnabled && halalProjectsQuery.isPending && halalProjectsQuery.data === undefined;
+  const pollsLoading = workspaceEnabled && pollsQuery.isPending && pollsQuery.data === undefined;
+  const meetingsLoading =
+    workspaceEnabled && meetingsQuery.isPending && meetingsQuery.data === undefined;
+  const profileChangeRequestsLoading =
+    workspaceEnabled &&
+    profileChangeRequestsQuery.isPending &&
+    profileChangeRequestsQuery.data === undefined;
+
   const [manualRefreshing, setManualRefreshing] = useState(false);
   const dataLoading =
-    manualRefreshing ||
-    (workspaceEnabled &&
-      !overview &&
-      (overviewQuery.isPending || contributionsQuery.isPending || loansQuery.isPending));
+    manualRefreshing || overviewLoading || contributionsLoading || loansLoading;
 
   const [loanModalOpen, setLoanModalOpen] = useState(false);
   const [loanGateNotice, setLoanGateNotice] = useState<{
@@ -1157,26 +1169,19 @@ export function DashboardShell() {
 
   if (authChecking || !user) {
     return (
-      <div className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-2.5 lg:p-3 flex flex-col gap-2.5 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3">
-        {/* Mobile clean session verification / redirect screen */}
-        <div className="lg:hidden flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="mb-4">
-            <AmanahLoadingLogo variant="lockup" size="xl" />
-          </div>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-            {authChecking ? tCommon('verifyingSession') : tCommon('redirectingSignIn')}
-          </p>
-        </div>
+      <div
+        className="h-dvh overflow-hidden w-full amanah-ambient-canvas p-0 lg:p-3 flex flex-col gap-0 lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3"
+        role="status"
+        aria-live="polite"
+        aria-label={authChecking ? tCommon('verifyingSession') : tCommon('redirectingSignIn')}
+      >
+        <MobileDashboardShellSkeleton />
 
         <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 px-4 items-center gap-2.5 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs">
           <AmanahLogo size="sm" decorative />
-          <div className="min-w-0">
-            <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-              {tCommon('brandName')}
-            </div>
-            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-              {authChecking ? tCommon('checkingSession') : tCommon('redirectingSignIn')}
-            </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <Skeleton width={96} height={14} />
+            <Skeleton width={72} height={10} />
           </div>
         </div>
         <div className="hidden lg:flex lg:col-start-2 lg:row-start-1 h-[60px] shrink-0 bg-white/80 dark:bg-slate-900/75 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xs px-4 sm:px-6 items-center justify-between gap-4">
@@ -2299,7 +2304,8 @@ export function DashboardShell() {
                       contributions={contributions}
                       loans={loans}
                       user={user}
-                      loading={dataLoading && !overview}
+                      loading={overviewLoading}
+                      activityLoading={contributionsLoading || loansLoading}
                       pendingBadgeCount={pendingBadgeCount}
                       hasUnreadPriorityNotification={hasUnreadPriorityNotification}
                       onNavigate={(sec) => navigateToPage(sec, false)}
@@ -2314,7 +2320,7 @@ export function DashboardShell() {
                       overview={overview}
                       loans={loans}
                       user={user}
-                      loading={dataLoading && !overview}
+                      loading={overviewLoading}
                       onNavigate={(sec) => navigateToPage(sec, false)}
                       onOpenManagerDeskTab={openManagerDeskTab}
                       onViewMemberProfile={handleViewMemberProfile}
@@ -2329,7 +2335,7 @@ export function DashboardShell() {
                     contributions={contributions}
                     config={overview?.config || null}
                     user={user}
-                    loading={dataLoading && contributions.length === 0}
+                    loading={contributionsLoading}
                     initialBillingMonth={preselectedBillingMonth}
                     onRefresh={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
@@ -2345,7 +2351,7 @@ export function DashboardShell() {
                     config={overview?.config || null}
                     availableLiquidity={overview?.treasury.availableLiquidity || 0}
                     user={user}
-                    loading={dataLoading && loans.length === 0}
+                    loading={loansLoading || overviewLoading}
                     onOpenLoanModal={() => void openLoanRequestModal()}
                     onLoanCreated={handleLoanCreatedOptimistic}
                     onRefresh={handleRefreshWithAutoSync}
@@ -2360,7 +2366,7 @@ export function DashboardShell() {
                     overview={overview}
                     loans={loans}
                     user={user}
-                    loading={dataLoading && !overview}
+                    loading={overviewLoading || loansLoading}
                     onNavigate={(sec) => navigateToPage(sec, false)}
                     onOpenLoanModal={() => void openLoanRequestModal()}
                   />
@@ -2396,7 +2402,7 @@ export function DashboardShell() {
                     contributions={contributions}
                     loans={loans}
                     user={user}
-                    loading={dataLoading && !overview}
+                    loading={overviewLoading || contributionsLoading || loansLoading}
                     onNavigate={(sec) => navigateToPage(sec, false)}
                     onViewMemberProfile={handleViewMemberProfile}
                   />
@@ -2412,7 +2418,7 @@ export function DashboardShell() {
                     availableLiquidity={overview?.treasury.availableLiquidity || 0}
                     config={overview?.config || null}
                     user={user}
-                    loading={dataLoading && loans.length === 0 && halalProjects.length === 0}
+                    loading={loansLoading || halalProjectsLoading || pollsLoading}
                     onRefresh={handleRefreshWithAutoSync}
                     onViewMemberProfile={handleViewMemberProfile}
                   />
@@ -2426,7 +2432,7 @@ export function DashboardShell() {
                     loans={loans}
                     config={overview?.config || null}
                     user={user}
-                    loading={dataLoading && contributions.length === 0 && loans.length === 0}
+                    loading={contributionsLoading || loansLoading}
                     onNavigate={(sec) => navigateToPage(sec, false)}
                     onViewMemberProfile={handleViewMemberProfile}
                   />
@@ -2519,7 +2525,15 @@ export function DashboardShell() {
                     user={user}
                     config={overview?.config || null}
                     treasury={overview?.treasury || null}
-                    loading={dataLoading && !overview}
+                    loading={
+                      overviewLoading ||
+                      contributionsLoading ||
+                      loansLoading ||
+                      halalProjectsLoading ||
+                      pollsLoading ||
+                      meetingsLoading ||
+                      profileChangeRequestsLoading
+                    }
                     availableLiquidity={overview?.treasury.availableLiquidity || 0}
                     contributions={contributions}
                     loans={loans}
@@ -2559,7 +2573,7 @@ export function DashboardShell() {
                     user={user}
                     loans={loans}
                     projects={halalProjects}
-                    loading={dataLoading && halalProjects.length === 0}
+                    loading={overviewLoading || halalProjectsLoading}
                     workspace={workspace}
                     connectingGoogle={connectingGoogle}
                     onConnectGoogle={handleConnectGoogle}
