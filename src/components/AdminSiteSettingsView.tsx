@@ -766,6 +766,14 @@ export function AdminSiteSettingsView({
         </div>
       </section>
 
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -3 }}
+          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        >
       {/* TAB 1: POLICY & LIMITS */}
       {isAdmin && activeTab === 'policy' && (
         <section className="bg-white/95 dark:bg-slate-900/92 border border-slate-200/85 dark:border-slate-800/85 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
@@ -1831,6 +1839,8 @@ export function AdminSiteSettingsView({
           onRefresh={onRefresh}
         />
       )}
+        </motion.div>
+      </AnimatePresence>
 
       <ActionModal
         open={Boolean(modal)}

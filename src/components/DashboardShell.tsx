@@ -238,6 +238,55 @@ function playSubtleAlertChime() {
   }
 }
 
+const DASHBOARD_VIEW_VARIANTS = {
+  enter: (dir: number) => ({
+    opacity: 0,
+    x: dir !== 0 ? dir * 10 : 0,
+    y: dir === 0 ? 5 : 0,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      duration: 0.18,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    x: dir !== 0 ? dir * -8 : 0,
+    y: dir === 0 ? -4 : 0,
+    transition: {
+      duration: 0.11,
+      ease: [0.4, 0, 1, 1] as const,
+    },
+  }),
+};
+
+const DASHBOARD_HEADER_TITLE_VARIANTS = {
+  enter: (dir: number) => ({
+    opacity: 0,
+    y: dir >= 0 ? 5 : -5,
+  }),
+  center: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.15,
+      ease: [0.16, 1, 0.3, 1] as const,
+    },
+  },
+  exit: (dir: number) => ({
+    opacity: 0,
+    y: dir >= 0 ? -4 : 4,
+    transition: {
+      duration: 0.09,
+      ease: [0.4, 0, 1, 1] as const,
+    },
+  }),
+};
+
 export function DashboardShell() {
   const router = useRouter();
   const tCommon = useTranslations('Common');
@@ -260,6 +309,9 @@ export function DashboardShell() {
   } = useCoopSession();
 
   const [activeSection, setActiveSection] = useState<DashboardSectionId>('fund-overview');
+  const [navDirection, setNavDirection] = useState(0);
+  const activeSectionRef = useRef<DashboardSectionId>('fund-overview');
+  activeSectionRef.current = activeSection;
   const [notificationModalOpen, setNotificationModalOpen] = useState(false);
   const [viewingMemberId, setViewingMemberId] = useState<string | null>(null);
   const [profileReturnSection, setProfileReturnSection] =
@@ -771,6 +823,34 @@ export function DashboardShell() {
     return MEMBER_NAV_ITEMS;
   }, [isAdmin, isManager]);
 
+  const resolveNavDirection = useCallback(
+    (fromId: DashboardSectionId, toId: DashboardSectionId): number => {
+      if (fromId === toId) return 0;
+      if (toId === 'member-profile') return 1;
+      if (fromId === 'member-profile') return -1;
+
+      const mobileOrder: DashboardSectionId[] = [
+        'fund-overview',
+        user?.role === 'member' ? 'my-amanah' : 'transaction-history',
+        'community',
+        'notification',
+      ];
+      const fromMobileIdx = mobileOrder.indexOf(fromId);
+      const toMobileIdx = mobileOrder.indexOf(toId);
+      if (isMobileViewport() && fromMobileIdx !== -1 && toMobileIdx !== -1) {
+        return toMobileIdx > fromMobileIdx ? 1 : -1;
+      }
+
+      const fromIdx = visibleNav.findIndex((item) => item.id === fromId);
+      const toIdx = visibleNav.findIndex((item) => item.id === toId);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        return toIdx > fromIdx ? 1 : -1;
+      }
+      return 0;
+    },
+    [user?.role, visibleNav]
+  );
+
   const navigateToPage = useCallback(
     (
       sectionId: DashboardSectionId,
@@ -783,6 +863,7 @@ export function DashboardShell() {
         : 'fund-overview';
 
       triggerHaptic('nav');
+      setNavDirection(resolveNavDirection(activeSectionRef.current, targetId));
       setActiveSection(targetId);
       if (!preserveBillingMonth && targetId !== 'monthly-contribution') {
         setPreselectedBillingMonth(null);
@@ -821,7 +902,7 @@ export function DashboardShell() {
         mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
-    [visibleNav]
+    [visibleNav, resolveNavDirection]
   );
 
   /** Gate the loan application modal on eligibility BEFORE open.
@@ -906,6 +987,11 @@ export function DashboardShell() {
       setProfileReturnSection((prev) =>
         activeSection !== 'member-profile' ? activeSection : prev
       );
+      setNavDirection(
+        activeSectionRef.current === 'member-profile' && viewingMemberId !== memberId
+          ? 1
+          : resolveNavDirection(activeSectionRef.current, 'member-profile')
+      );
       setViewingMemberId(memberId);
       setActiveSection('member-profile');
       setMobileNavOpen(false);
@@ -928,7 +1014,7 @@ export function DashboardShell() {
         mainScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       }
     },
-    [activeSection]
+    [activeSection, viewingMemberId, resolveNavDirection]
   );
 
   useEffect(() => {
@@ -962,6 +1048,7 @@ export function DashboardShell() {
       }
 
       if (requested === 'member-profile' && requestedMemberId) {
+        setNavDirection(resolveNavDirection(activeSectionRef.current, 'member-profile'));
         setViewingMemberId(requestedMemberId);
         setActiveSection('member-profile');
         setPreselectedBillingMonth(null);
@@ -973,6 +1060,7 @@ export function DashboardShell() {
         requested && visibleNav.some((item) => item.id === requested)
           ? requested
           : 'fund-overview';
+      setNavDirection(resolveNavDirection(activeSectionRef.current, valid));
       setActiveSection(valid);
       if (rawRequested === 'email-queue' && valid === 'site-settings') {
         setSettingsTabRequest({ tab: 'email', key: Date.now() });
@@ -1010,7 +1098,7 @@ export function DashboardShell() {
       window.removeEventListener('popstate', syncFromUrl);
       window.removeEventListener('amanah:push-navigate', handlePushNavigate);
     };
-  }, [visibleNav]);
+  }, [visibleNav, resolveNavDirection]);
 
   async function handleSignOut() {
     if (signingOutRef.current) return;
@@ -1388,13 +1476,21 @@ export function DashboardShell() {
                 type="button"
                 onClick={item.onClick}
                 aria-current={item.active ? 'page' : undefined}
-                className={`w-full min-h-[40px] px-2.5 py-2 text-[14px] leading-snug rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer text-left ${
+                className={`relative w-full min-h-[40px] px-2.5 py-2 text-[14px] leading-snug rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer text-left ${
                   item.active
-                    ? `${toneStyle.pillBg} ${toneStyle.activeText}`
+                    ? toneStyle.activeText
                     : 'text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100/70 dark:hover:bg-slate-800/70'
                 }`}
               >
-                <span className="flex items-center gap-2.5 min-w-0">
+                {item.active && (
+                  <motion.span
+                    layoutId="mobile-drawer-active-pill"
+                    transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    className={`absolute inset-0 rounded-xl ${toneStyle.pillBg}`}
+                    aria-hidden="true"
+                  />
+                )}
+                <span className="relative z-10 flex items-center gap-2.5 min-w-0">
                   <span
                     className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
                       item.active
@@ -1414,7 +1510,7 @@ export function DashboardShell() {
                 </span>
                 {typeof item.badge === 'number' && item.badge > 0 && (
                   item.blink ? (
-                    <span className="inline-flex items-center gap-1.5 shrink-0">
+                    <span className="relative z-10 inline-flex items-center gap-1.5 shrink-0">
                       <NotificationBlinkMarker variant={item.blink} size="sm" />
                       <span
                         className={`font-mono text-xs tabular-nums font-semibold ${
@@ -1427,7 +1523,7 @@ export function DashboardShell() {
                       </span>
                     </span>
                   ) : (
-                    <span className="font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
+                    <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0">
                       {item.badge}
                     </span>
                   )
@@ -1730,9 +1826,21 @@ export function DashboardShell() {
               {tCommon('brandName')}
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden lg:inline">/</span>
-            <h1 className="font-display font-bold lg:font-semibold text-slate-900 dark:text-white truncate text-[15px] sm:text-base lg:text-sm tracking-tight">
-              {getDashboardSectionLabel(activeSection, user.role, locale)}
-            </h1>
+            <div className="relative overflow-hidden min-w-0">
+              <AnimatePresence mode="wait" initial={false} custom={navDirection}>
+                <motion.h1
+                  key={activeSection}
+                  custom={navDirection}
+                  variants={DASHBOARD_HEADER_TITLE_VARIANTS}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  className="font-display font-bold lg:font-semibold text-slate-900 dark:text-white truncate text-[15px] sm:text-base lg:text-sm tracking-tight"
+                >
+                  {getDashboardSectionLabel(activeSection, user.role, locale)}
+                </motion.h1>
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 
@@ -2110,7 +2218,7 @@ export function DashboardShell() {
           className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain scrollbar-subtle pl-2 pr-1 pt-3 pb-6 sm:pl-2.5 sm:pr-1.5 sm:pt-4 sm:pb-6 lg:pl-0 lg:pr-1 lg:pt-4 lg:pb-5"
         >
           <PullToRefreshIndicator {...pullToRefresh} />
-          <div className="w-full space-y-3 sm:space-y-4">
+          <div className="w-full space-y-3 sm:space-y-4 overflow-x-clip">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
             const loanDecisionAlerts = notifications.filter(
@@ -2314,13 +2422,18 @@ export function DashboardShell() {
             );
           })()}
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false} custom={navDirection}>
             <motion.div
-              key={activeSection}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+              key={
+                activeSection === 'member-profile' && viewingMemberId
+                  ? `member-profile:${viewingMemberId}`
+                  : activeSection
+              }
+              custom={navDirection}
+              variants={DASHBOARD_VIEW_VARIANTS}
+              initial="enter"
+              animate="center"
+              exit="exit"
               className="w-full"
             >
               {activeSection === 'fund-overview' && (

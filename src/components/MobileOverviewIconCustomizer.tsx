@@ -11,6 +11,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import type {
   MobileMemberOverviewIconsConfig,
@@ -569,15 +570,23 @@ export function MobileOverviewIconEditor({
                     triggerHaptic('selection');
                     setActiveTab(tab.key);
                   }}
-                  className={`min-h-[36px] px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  className={`relative min-h-[36px] px-2 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                     selected
-                      ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-300 shadow-xs'
+                      ? 'text-emerald-700 dark:text-emerald-300'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
-                  <span className="truncate">{tab.label}</span>
+                  {selected && (
+                    <motion.span
+                      layoutId="customizer-tab-pill"
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span className="relative z-10 truncate">{tab.label}</span>
                   <span
-                    className={`font-mono text-[10px] tabular-nums px-1.5 py-0.5 rounded-full ${
+                    className={`relative z-10 font-mono text-[10px] tabular-nums px-1.5 py-0.5 rounded-full ${
                       selected
                         ? 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300'
                         : 'bg-slate-200/80 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
@@ -591,6 +600,14 @@ export function MobileOverviewIconEditor({
           </div>
 
           {/* Active Tab Content */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+            >
           {activeTab === 'services' && (
             <div className="space-y-1.5">
               <p className="text-[11px] text-slate-500 dark:text-slate-400 px-0.5">
@@ -659,6 +676,8 @@ export function MobileOverviewIconEditor({
               )}
             </div>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       )}
     </div>

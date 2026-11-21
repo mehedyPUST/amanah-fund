@@ -2042,14 +2042,25 @@ export function BalanceSheetView({
         </div>
       )}
 
+        {/* 4. ACTIVE WORKBOOK CONTENT (WITH SUBTLE MODE/TAB TRANSITION) */}
+        {!isInitialLoading && sheet && (
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={`${activeTab}-${displayMode}-${mobileViewMode}`}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -3 }}
+              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+              className={isFullScreen ? 'flex-1 min-h-0 flex flex-col' : undefined}
+            >
         {/* 4A. TAB 1: SUMMARY CARDS OR GOOGLE SHEETS BALANCE SHEET GRID */}
-        {!isInitialLoading && sheet && activeTab === 'balance-sheet' && displayMode === 'summary' && (
+        {activeTab === 'balance-sheet' && displayMode === 'summary' && (
           <div className={isFullScreen ? 'flex-1 min-h-0 overflow-y-auto p-3.5 sm:p-5' : 'p-3.5 sm:p-5'}>
             {kpiSummaryStrip}
           </div>
         )}
 
-        {!isInitialLoading && sheet && activeTab === 'balance-sheet' && displayMode === 'sheet' && (
+        {activeTab === 'balance-sheet' && displayMode === 'sheet' && (
           <>
             {/* Mobile Cards Fallback (Only when mobile user explicitly toggles Cards) */}
             {mobileViewMode === 'cards' && (
@@ -3071,7 +3082,7 @@ export function BalanceSheetView({
         )}
 
         {/* 4B. TAB 2: CURRENT MONTH ALL VARIABLES SUMMARY */}
-        {!isInitialLoading && sheet && activeTab === 'variables-summary' && (
+        {activeTab === 'variables-summary' && (
           <div
             ref={gridContainerRef}
             tabIndex={0}
@@ -3240,6 +3251,9 @@ export function BalanceSheetView({
             </table>
           </div>
         )}
+            </motion.div>
+          </AnimatePresence>
+        )}
 
         {/* 5. Bottom Sheet Tabs & Status Bar */}
         <div className="shrink-0 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-2.5 sm:px-3 py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 print-hidden">
@@ -3257,14 +3271,22 @@ export function BalanceSheetView({
                 setDisplayMode('sheet');
                 setSelectedCell(null);
               }}
-              className={`h-8 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`relative h-8 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'balance-sheet'
-                  ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-semibold shadow-xs'
+                  ? 'text-white font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
               }`}
             >
-              <Table2 className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Balance Sheet ({shortMonthLabel})</span>
+              {activeTab === 'balance-sheet' && (
+                <motion.span
+                  layoutId="balance-sheet-tab-pill"
+                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                  className="absolute inset-0 rounded-xl bg-emerald-700 dark:bg-emerald-600 shadow-xs"
+                  aria-hidden="true"
+                />
+              )}
+              <Table2 className="w-3.5 h-3.5 relative z-10" aria-hidden="true" />
+              <span className="relative z-10">Balance Sheet ({shortMonthLabel})</span>
             </button>
 
             <button
@@ -3276,14 +3298,22 @@ export function BalanceSheetView({
                 setDisplayMode('sheet');
                 setSelectedCell(null);
               }}
-              className={`h-8 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`relative h-8 px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'variables-summary'
-                  ? 'bg-emerald-700 dark:bg-emerald-600 text-white font-semibold shadow-xs'
+                  ? 'text-white font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium'
               }`}
             >
-              <Sigma className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>All Variables Summary</span>
+              {activeTab === 'variables-summary' && (
+                <motion.span
+                  layoutId="balance-sheet-tab-pill"
+                  transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                  className="absolute inset-0 rounded-xl bg-emerald-700 dark:bg-emerald-600 shadow-xs"
+                  aria-hidden="true"
+                />
+              )}
+              <Sigma className="w-3.5 h-3.5 relative z-10" aria-hidden="true" />
+              <span className="relative z-10">All Variables Summary</span>
             </button>
           </div>
 

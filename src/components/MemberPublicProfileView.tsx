@@ -28,7 +28,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useLocale, useTranslations } from 'next-intl';
 import Skeleton from 'react-loading-skeleton';
 import type { AppLocale } from '../i18n/config.ts';
@@ -481,6 +481,15 @@ export function MemberPublicProfileView({
         </div>
       </section>
 
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -3 }}
+          transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="space-y-6"
+        >
       {/* FUND SUMMARY & ABOUT GRID */}
       {(showFund || showAbout) && (
         <div
@@ -1099,6 +1108,8 @@ export function MemberPublicProfileView({
           )}
         </section>
       )}
+        </motion.div>
+      </AnimatePresence>
 
       <ActionModal
         open={Boolean(actionError)}
