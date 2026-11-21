@@ -77,14 +77,15 @@ export function Hero({
       <MotionCard
         as="section"
         hue="emerald"
-        className="backdrop-blur-md border rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xs hover:shadow-md transition-all duration-200"
+        className="backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 lg:p-10 transition-all duration-200"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
-                  {tHero('kickerTreasury')}
+                <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+                  <span>{tHero('kickerTreasury')}</span>
                 </span>
                 <span aria-hidden="true">·</span>
                 <span className="font-mono tabular-nums">{tHero('kickerCharter')}</span>
@@ -104,7 +105,7 @@ export function Hero({
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-sm font-semibold shadow-md shadow-emerald-600/25 transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap shrink-0"
+                className="group px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-sm font-semibold shadow-md shadow-emerald-600/25 active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap shrink-0"
               >
                 {user ? (
                   <>
@@ -125,7 +126,7 @@ export function Hero({
               {!user && (
                 <Link
                   href="/login"
-                  className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium transition-colors duration-150 whitespace-nowrap shrink-0"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium shadow-2xs active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
                 >
                   {tNav('signIn')}
                 </Link>
@@ -135,7 +136,7 @@ export function Hero({
                 <button
                   type="button"
                   onClick={() => scrollToSection('notice-board')}
-                  className="px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-2xs active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {tHero('noticeBoard')}
                 </button>
@@ -150,7 +151,7 @@ export function Hero({
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }}
-                className="px-2.5 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors whitespace-nowrap shrink-0"
+                className="px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors whitespace-nowrap shrink-0"
               >
                 {tNav('howItWorks')}
               </Link>
@@ -158,7 +159,7 @@ export function Hero({
           </div>
 
           <div className="lg:col-span-5 flex">
-            <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-xl overflow-hidden border border-slate-200/85 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-950 shadow-sm">
+            <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-2xl overflow-hidden border border-slate-200/85 dark:border-slate-800/80 ring-1 ring-inset ring-white/25 dark:ring-white/10 bg-slate-100 dark:bg-slate-950 shadow-[0_12px_32px_-16px_rgba(15,23,42,0.22)]">
               {heroImgFailed ? (
                 <div className="w-full h-full p-8 bg-gradient-to-br from-emerald-950/15 via-slate-100 to-teal-950/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center text-center gap-3">
                   <AmanahLogo size="lg" decorative className="shadow-md" />
@@ -178,8 +179,8 @@ export function Hero({
                     onError={() => setHeroImgFailed(true)}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950/80 via-slate-950/35 to-transparent flex items-end justify-between gap-3">
-                    <div className="text-xs text-white/95 font-medium">
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-transparent flex items-end justify-between gap-3">
+                    <div className="text-xs text-white/95 font-medium leading-snug">
                       {tHero('bannerCaption')}
                     </div>
                   </div>
@@ -197,7 +198,7 @@ export function Hero({
             key={metric.key}
             hue={metric.hue}
             delay={0.03 * idx}
-            className="backdrop-blur-md border rounded-xl p-5 shadow-xs hover:shadow-md flex flex-col justify-between gap-3 transition-all duration-200"
+            className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-5 flex flex-col justify-between gap-3 transition-all duration-200"
           >
             <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
@@ -208,7 +209,7 @@ export function Hero({
               </span>
             </div>
             <div className="space-y-1">
-              <div className="font-display font-mono text-2xl font-bold tracking-tight tabular-nums text-slate-900 dark:text-white">
+              <div className="font-display font-mono text-2xl sm:text-[26px] font-bold tracking-tight tabular-nums text-slate-900 dark:text-white">
                 {metric.value}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
@@ -234,13 +235,13 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
       id="lifecycle"
       hue="teal"
       inView
-      className={`scroll-mt-2 backdrop-blur-md border rounded-2xl shadow-xs hover:shadow-md transition-all duration-200 ${
+      className={`scroll-mt-2 backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl transition-all duration-200 ${
         embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
       }`}
     >
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-stretch">
         <div className="lg:col-span-5 flex">
-          <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[220px] rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 bg-slate-100 dark:bg-slate-950">
+          <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[220px] rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/25 dark:ring-white/10 bg-slate-100 dark:bg-slate-950 shadow-sm">
             {lifecycleImgFailed ? (
               <div className="w-full h-full p-6 bg-gradient-to-br from-emerald-500/15 via-slate-100 to-transparent dark:via-slate-900 flex flex-col items-center justify-center text-center gap-2">
                 <HandCoins className="w-9 h-9 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />

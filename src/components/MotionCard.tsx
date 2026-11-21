@@ -13,30 +13,30 @@ export type CardHue =
   | 'deep-emerald';
 
 const HUE_DEEP_OVERLAY: Record<CardHue, string> = {
-  emerald: 'bg-emerald-500/[0.08] dark:bg-emerald-400/[0.11]',
-  teal: 'bg-teal-500/[0.08] dark:bg-teal-400/[0.11]',
-  amber: 'bg-amber-500/[0.08] dark:bg-amber-400/[0.11]',
-  sky: 'bg-sky-500/[0.08] dark:bg-sky-400/[0.11]',
-  rose: 'bg-rose-500/[0.08] dark:bg-rose-400/[0.11]',
-  violet: 'bg-violet-500/[0.08] dark:bg-violet-400/[0.11]',
-  'deep-emerald': 'bg-emerald-500/[0.095] dark:bg-emerald-400/[0.13]',
+  emerald: 'bg-gradient-to-br from-emerald-500/[0.06] via-transparent to-teal-500/[0.06] dark:from-emerald-400/[0.09] dark:to-teal-400/[0.08]',
+  teal: 'bg-gradient-to-br from-teal-500/[0.06] via-transparent to-cyan-500/[0.06] dark:from-teal-400/[0.09] dark:to-cyan-400/[0.08]',
+  amber: 'bg-gradient-to-br from-amber-500/[0.06] via-transparent to-orange-500/[0.05] dark:from-amber-400/[0.09] dark:to-orange-400/[0.07]',
+  sky: 'bg-gradient-to-br from-sky-500/[0.06] via-transparent to-cyan-500/[0.06] dark:from-sky-400/[0.09] dark:to-cyan-400/[0.08]',
+  rose: 'bg-gradient-to-br from-rose-500/[0.06] via-transparent to-pink-500/[0.05] dark:from-rose-400/[0.09] dark:to-pink-400/[0.07]',
+  violet: 'bg-gradient-to-br from-violet-500/[0.06] via-transparent to-indigo-500/[0.06] dark:from-violet-400/[0.09] dark:to-indigo-400/[0.08]',
+  'deep-emerald': 'bg-gradient-to-br from-emerald-500/[0.08] via-transparent to-teal-500/[0.07] dark:from-emerald-400/[0.11] dark:to-teal-400/[0.09]',
 };
 
 const HUE_SURFACE_CLASS: Record<CardHue, string> = {
   emerald:
-    'amanah-card-emerald border-emerald-500/35 dark:border-emerald-400/28 hover:border-emerald-600/60 dark:hover:border-emerald-300/50',
+    'amanah-card-emerald border-emerald-500/32 dark:border-emerald-400/26 hover:border-emerald-600/58 dark:hover:border-emerald-300/48',
   'deep-emerald':
-    'amanah-card-emerald border-emerald-500/42 dark:border-emerald-400/32 hover:border-emerald-600/65 dark:hover:border-emerald-300/55',
+    'amanah-card-emerald border-emerald-500/38 dark:border-emerald-400/30 hover:border-emerald-600/62 dark:hover:border-emerald-300/52',
   teal:
-    'amanah-card-teal border-teal-500/35 dark:border-teal-400/28 hover:border-teal-600/60 dark:hover:border-teal-300/50',
+    'amanah-card-teal border-teal-500/32 dark:border-teal-400/26 hover:border-teal-600/58 dark:hover:border-teal-300/48',
   violet:
-    'amanah-card-violet border-violet-500/35 dark:border-violet-400/28 hover:border-violet-600/60 dark:hover:border-violet-300/50',
+    'amanah-card-violet border-violet-500/32 dark:border-violet-400/26 hover:border-violet-600/58 dark:hover:border-violet-300/48',
   amber:
-    'amanah-card-amber border-amber-500/35 dark:border-amber-400/28 hover:border-amber-600/60 dark:hover:border-amber-300/50',
+    'amanah-card-amber border-amber-500/32 dark:border-amber-400/26 hover:border-amber-600/58 dark:hover:border-amber-300/48',
   sky:
-    'amanah-card-sky border-sky-500/35 dark:border-sky-400/28 hover:border-sky-600/60 dark:hover:border-sky-300/50',
+    'amanah-card-sky border-sky-500/32 dark:border-sky-400/26 hover:border-sky-600/58 dark:hover:border-sky-300/48',
   rose:
-    'amanah-card-rose border-rose-500/35 dark:border-rose-400/28 hover:border-rose-600/60 dark:hover:border-rose-300/50',
+    'amanah-card-rose border-rose-500/32 dark:border-rose-400/26 hover:border-rose-600/58 dark:hover:border-rose-300/48',
 };
 
 const DEPTH_VARIANTS = {
@@ -84,7 +84,7 @@ export function MotionCard({
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.2, delay, ease: EASE_OUT_EXPO },
+      transition: { duration: 0.22, delay, ease: EASE_OUT_EXPO },
     },
     hover: {
       opacity: 1,
@@ -103,7 +103,7 @@ export function MotionCard({
         ? { whileInView: 'visible', viewport: { once: true, amount: 0.1 } }
         : { animate: 'visible' })}
       whileHover="hover"
-      whileTap={interactive ? { scale: 0.996 } : undefined}
+      whileTap={interactive ? { scale: 0.994 } : undefined}
       variants={containerVariants}
       className={`relative isolate ${className} ${HUE_SURFACE_CLASS[hue]}`}
     >

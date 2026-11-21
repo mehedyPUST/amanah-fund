@@ -861,7 +861,7 @@ export function SignUpForm() {
   if (authChecking || (user && !successModalOpen)) {
     return (
       <div className="px-2 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <div className="max-w-3xl w-full mx-auto bg-white/75 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8">
+        <div className="max-w-3xl w-full mx-auto bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-10 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.14)] space-y-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
             <div className="space-y-2 flex-1">
               <Skeleton width={240} height={14} />
@@ -878,7 +878,7 @@ export function SignUpForm() {
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div key={idx} className="space-y-1.5">
                   <Skeleton width={110} height={12} />
-                  <Skeleton height={42} borderRadius={8} />
+                  <Skeleton height={42} borderRadius={10} />
                 </div>
               ))}
             </div>
@@ -898,7 +898,7 @@ export function SignUpForm() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-4xl w-full mx-auto bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-10 shadow-sm space-y-8"
+        className="max-w-4xl w-full mx-auto bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-10 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-6">
           <div className="flex items-start sm:items-center gap-3.5">
@@ -2494,7 +2494,7 @@ export function SignUpForm() {
                   signatureUploading ||
                   anyNomineePhotoUploading
                 }
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 transition-all cursor-pointer shrink-0 whitespace-nowrap"
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-emerald-600/25 active:scale-[0.99] transition-all cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" aria-hidden="true" />
                 <span>{submitting ? t('submittingApp') : t('submitApp')}</span>

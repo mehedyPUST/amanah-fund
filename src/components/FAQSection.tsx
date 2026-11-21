@@ -274,7 +274,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       aria-labelledby="faq-section-heading"
       className={`scroll-mt-4 w-full space-y-6 sm:space-y-7 text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs p-6 sm:p-8'
+          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-8'
           : ''
       }`}
     >
@@ -305,7 +305,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={openCreateComposer}
-              className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap shrink-0 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{tFaq('addFaq')}</span>
@@ -315,7 +315,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             type="button"
             onClick={toggleExpandAll}
             disabled={loading || filteredItems.length === 0}
-            className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
           >
             {allVisibleExpanded ? tFaq('collapseAll') : tFaq('expandAll')}
           </button>
@@ -506,7 +506,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={tFaq('searchPlaceholder')}
             aria-label={tFaq('searchAria')}
-            className="w-full pl-8 pr-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-500"
+            className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/75 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-500"
           />
         </div>
       </div>
@@ -585,7 +585,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                 hue={hue}
                 delay={Math.min(idx * 0.025, 0.16)}
                 inView
-                className="backdrop-blur-md border rounded-xl shadow-xs hover:shadow-md transition-all duration-200"
+                className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl transition-all duration-200"
               >
                 <div className="p-5 flex items-start justify-between gap-2.5">
                   <button
@@ -685,13 +685,13 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <Link
             href="/rules"
-            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap shrink-0"
+            className="px-4 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] transition-all whitespace-nowrap shrink-0"
           >
             {tFaq('readFullCharter')}
           </Link>
           <Link
             href={user ? '/dashboard' : '/signup'}
-            className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap shrink-0"
+            className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap shrink-0"
           >
             <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
             <ArrowRight

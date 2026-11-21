@@ -1264,18 +1264,18 @@ export function DashboardShell() {
         aria-current={active ? 'page' : undefined}
         title={collapsed ? label : undefined}
         aria-label={collapsed ? label : undefined}
-        className={`relative group w-full rounded-lg flex items-center transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+        className={`relative group w-full rounded-xl flex items-center transition-colors duration-150 cursor-pointer whitespace-nowrap ${
           collapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2 justify-between gap-3 text-left'
         } text-sm ${active
           ? toneStyle.activeText
-          : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/40'
+          : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/75 dark:hover:bg-slate-800/45'
           }`}
       >
         {active && (
           <motion.span
             layoutId={isMobile ? 'sidebar-active-mobile' : 'sidebar-active-desktop'}
             transition={{ type: 'spring', stiffness: 420, damping: 32 }}
-            className={`absolute inset-0 rounded-lg ${toneStyle.pillBg}`}
+            className={`absolute inset-0 rounded-xl ${toneStyle.pillBg}`}
             aria-hidden="true"
           />
         )}
@@ -1345,9 +1345,9 @@ export function DashboardShell() {
         </div>
 
         {isManager && (
-          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-1">
+          <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800/80 space-y-1">
             {!collapsed && (
-              <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {tNav('groups.manager')}
               </div>
             )}
@@ -1358,9 +1358,9 @@ export function DashboardShell() {
         )}
 
         {isAdmin && (
-          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-1">
+          <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800/80 space-y-1">
             {!collapsed && (
-              <div className="px-3 pb-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {tNav('groups.admin')}
               </div>
             )}
@@ -1658,7 +1658,7 @@ export function DashboardShell() {
     >
       {/* GRID 1 */}
       <div
-        className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs z-30 ${
+        className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] z-30 ${
           sidebarCollapsed ? 'px-2 justify-center' : 'px-4 justify-start gap-2.5'
         }`}
       >
@@ -1676,7 +1676,7 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[52px] sm:h-[54px] lg:h-[60px] shrink-0 bg-white/92 dark:bg-slate-900/86 backdrop-blur-md lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 shadow-xs px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[52px] sm:h-[54px] lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/84 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
             <button
@@ -1729,7 +1729,7 @@ export function DashboardShell() {
             onClick={() => (mobileNavOpen ? closeMobileDrawer() : openMobileDrawer())}
             aria-label={mobileNavOpen ? tCommon('closeNavigationMenu') : tCommon('openNavigationMenu')}
             aria-expanded={mobileNavOpen}
-            className="lg:hidden w-9 h-9 rounded-lg border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="lg:hidden w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             {mobileNavOpen ? (
               <X className="w-4 h-4" aria-hidden="true" />
@@ -1755,7 +1755,7 @@ export function DashboardShell() {
               if (isMobileViewport()) setMobileBrowseMode(true);
             }}
             title={tNav('publicWebsite')}
-            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap shrink-0"
+            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white shadow-2xs transition-colors whitespace-nowrap shrink-0"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{tNav('home')}</span>
@@ -1794,7 +1794,7 @@ export function DashboardShell() {
             disabled={dataLoading}
             title={tCommon('refreshDashboardTitle')}
             aria-label={tCommon('refreshDashboard')}
-            className="w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
+            className="w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 shadow-2xs transition-colors flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
           >
             <RefreshCw
               className={`w-4 h-4 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
@@ -1809,7 +1809,7 @@ export function DashboardShell() {
             onClick={toggleDarkMode}
             title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="hidden lg:flex w-9 h-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-colors items-center justify-center cursor-pointer shrink-0"
+            className="hidden lg:flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 shadow-2xs transition-colors items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-500" />
@@ -1825,7 +1825,7 @@ export function DashboardShell() {
       {/* GRID 3 */}
       <aside
         id="dashboard-desktop-sidebar"
-        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/90 dark:bg-slate-900/85 backdrop-blur-md rounded-2xl border border-slate-200/85 dark:border-slate-800/85 shadow-xs"
+        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)]"
       >
         <nav
           className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
@@ -1837,8 +1837,8 @@ export function DashboardShell() {
         </nav>
 
         <div
-          className={`border-t border-slate-200/80 dark:border-slate-800/80 ${
-            sidebarCollapsed ? 'p-2.5 flex flex-col items-center gap-2' : 'p-4 space-y-3'
+          className={`border-t border-slate-200/75 dark:border-slate-800/80 ${
+            sidebarCollapsed ? 'p-2.5 flex flex-col items-center gap-2' : 'p-3 space-y-2.5'
           }`}
         >
           {sidebarCollapsed ? (
@@ -1848,7 +1848,7 @@ export function DashboardShell() {
                 onClick={() => navigateToPage('my-profile', false)}
                 title={`${user.name} · ${user.memberCode}`}
                 aria-label={user.name}
-                className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs hover:brightness-105 transition-all cursor-pointer shrink-0"
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs hover:brightness-105 transition-all cursor-pointer shrink-0"
               >
                 {(user.name || 'AM')
                   .split(/\s+/)
@@ -1862,7 +1862,7 @@ export function DashboardShell() {
                 onClick={() => void handleSignOut()}
                 title={tNav('signOut')}
                 aria-label={tNav('signOut')}
-                className="w-full h-9 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer"
+                className="w-full h-9 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/75 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer"
               >
                 <LogOut className="w-4 h-4" aria-hidden="true" />
               </button>
@@ -1872,22 +1872,37 @@ export function DashboardShell() {
               <button
                 type="button"
                 onClick={() => navigateToPage('my-profile', false)}
-                className="w-full text-left min-w-0 rounded-lg p-1.5 -m-1.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                className="w-full text-left min-w-0 rounded-xl border border-slate-200/75 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/45 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 p-2.5 flex items-center gap-2.5 transition-colors cursor-pointer"
               >
-                <div className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                  {user.name}
-                </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                  {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span> ·{' '}
-                  <span className="text-emerald-700 dark:text-emerald-400">
-                    {user.status === 'active' ? tCommon('verified') : tCommon('pending')}
-                  </span>
+                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-[11px] font-bold flex items-center justify-center shadow-2xs shrink-0">
+                  {(user.name || 'AM')
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((p) => p[0]?.toUpperCase() || '')
+                    .join('')}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
+                      {user.name}
+                    </span>
+                    {user.status === 'active' && (
+                      <BadgeCheck
+                        className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                        aria-label={tCommon('verified')}
+                      />
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span>
+                  </div>
                 </div>
               </button>
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
-                className="w-full py-2 px-3 rounded-lg border border-red-200 dark:border-red-900/70 bg-red-50/70 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-2 px-3 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/75 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tNav('signOut')}</span>
@@ -1906,7 +1921,7 @@ export function DashboardShell() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.16 }}
-              className="fixed inset-0 bg-slate-950/15 dark:bg-slate-950/35 backdrop-blur-[1px]"
+              className="fixed inset-0 bg-slate-950/25 dark:bg-slate-950/45 backdrop-blur-xs"
               onClick={closeMobileDrawer}
               aria-hidden="true"
             />
@@ -1916,7 +1931,7 @@ export function DashboardShell() {
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               aria-label={tCommon('dashboardMenuAria')}
-              className="fixed left-2 top-[58px] sm:top-[62px] w-[65vw] max-h-[calc(100dvh-68px)] sm:max-h-[calc(100dvh-74px)] z-10 amanah-card-emerald backdrop-blur-md rounded-2xl border p-2.5 flex flex-col gap-1.5 shadow-xl"
+              className="fixed left-2 top-[58px] sm:top-[62px] w-[72vw] max-w-[300px] max-h-[calc(100dvh-68px)] sm:max-h-[calc(100dvh-74px)] z-10 amanah-card-emerald backdrop-blur-xl rounded-2xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 p-2.5 flex flex-col gap-1.5 shadow-2xl"
             >
               {/* Compact User Profile Header */}
               <button
@@ -2031,7 +2046,7 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1 lg:bg-white/88 lg:dark:bg-slate-900/82 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-slate-800/85 lg:shadow-xs overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1 lg:bg-white/88 lg:dark:bg-slate-900/82 lg:backdrop-blur-xl lg:rounded-2xl lg:border lg:border-slate-200/80 lg:dark:border-slate-800/80 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 lg:shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:lg:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] overflow-hidden"
       >
         <div
           ref={mainScrollRef}
@@ -2538,7 +2553,7 @@ export function DashboardShell() {
       {/* bKash-Style Sticky Mobile Footer Navigation Bar */}
       <nav
         aria-label={tNav('primaryNav')}
-        className="lg:hidden shrink-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800/90 pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden shrink-0 z-30 bg-white/92 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/85 dark:border-slate-800/85 shadow-[0_-6px_24px_-12px_rgba(15,23,42,0.12)] pb-[env(safe-area-inset-bottom)]"
       >
         <div className="grid grid-cols-4 h-[58px] items-stretch">
           {(

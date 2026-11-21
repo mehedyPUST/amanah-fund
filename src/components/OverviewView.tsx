@@ -147,12 +147,13 @@ export function OverviewView({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs transition-all duration-200"
+        className="amanah-card-emerald border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 transition-all duration-200"
       >
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-              {phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}
+            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+              <span>{phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}</span>
             </span>
             <span aria-hidden="true">·</span>
             <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
@@ -163,7 +164,7 @@ export function OverviewView({
               {tCommon('daysRemaining', { days: daysUntilMaturity })}
             </span>
           </div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">
             {config.fundName}
           </h2>
         </div>
@@ -369,15 +370,15 @@ export function OverviewView({
         <MotionCard
           hue="deep-emerald"
           delay={0.02}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('amanahHeightTitle')}</span>
-            <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
               <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-emerald-600 dark:text-emerald-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-emerald-600 dark:text-emerald-300">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -391,15 +392,15 @@ export function OverviewView({
         <MotionCard
           hue="violet"
           delay={0.06}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{t('kpi.currentBalance')}</span>
-            <span className="w-8 h-8 rounded-[10px] bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/80 dark:border-violet-500/30 flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-violet-100/85 dark:bg-violet-500/15 border border-violet-200/80 dark:border-violet-500/30 flex items-center justify-center shrink-0">
               <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-violet-700 dark:text-violet-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-violet-700 dark:text-violet-300">
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -410,15 +411,15 @@ export function OverviewView({
         <MotionCard
           hue="amber"
           delay={0.1}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('qardHasanTotalCurrent')}</span>
-            <span className="w-8 h-8 rounded-[10px] bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/30 flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/30 flex items-center justify-center shrink-0">
               <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-amber-700 dark:text-amber-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-amber-700 dark:text-amber-300">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -436,15 +437,15 @@ export function OverviewView({
         <MotionCard
           hue="teal"
           delay={0.14}
-          className="border rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-xs hover:shadow-md transition-all duration-200"
+          className="border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('repaymentsReturnedPlus')}</span>
-            <span className="w-8 h-8 rounded-[10px] bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
+            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl font-bold font-mono tabular-nums text-teal-700 dark:text-teal-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-teal-700 dark:text-teal-300">
             {formatMoney(treasury.totalRepaid, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -458,7 +459,7 @@ export function OverviewView({
       </section>
 
       {/* This Month Treasury Pulse */}
-      <section className="rounded-xl sm:rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/92 dark:bg-slate-900/85 shadow-xs grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/75 dark:divide-slate-800/80 overflow-hidden">
+      <section className="rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/92 dark:bg-slate-900/86 backdrop-blur-xl ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.4)] grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/75 dark:divide-slate-800/80 overflow-hidden">
         <div className="p-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
@@ -492,7 +493,7 @@ export function OverviewView({
                     : 0
                 }%`,
               }}
-              className="h-full bg-emerald-600 rounded-full"
+              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
             />
           </div>
         </div>
@@ -565,7 +566,7 @@ export function OverviewView({
                     : 0
                 }%`,
               }}
-              className="h-full bg-emerald-600 rounded-full"
+              className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
             />
           </div>
         </div>
@@ -576,7 +577,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="amber"
-          className="xl:col-span-6 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+          className="xl:col-span-6 border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3.5 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -590,7 +591,7 @@ export function OverviewView({
           </div>
 
           {treasury.activeBorrowers.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               {t('sheets.noActiveBorrowers')}
             </div>
           ) : (
@@ -653,7 +654,7 @@ export function OverviewView({
         <MotionCard
           as="section"
           hue="emerald"
-          className="xl:col-span-6 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:shadow-md space-y-3.5 transition-all duration-200"
+          className="xl:col-span-6 border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 space-y-3.5 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2">
             <div>
@@ -667,11 +668,11 @@ export function OverviewView({
           </div>
 
           {treasury.thisMonthMemberClearance.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-lg">
+            <div className="py-8 text-center text-xs text-slate-500 dark:text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               {t('sheets.noActiveContributors')}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto pr-1">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-72 overflow-y-auto pr-1 scrollbar-subtle">
               {treasury.thisMonthMemberClearance.map((entry) => (
                 <div
                   key={entry.userId}
@@ -728,7 +729,7 @@ export function OverviewView({
           <MotionCard
             as="section"
             hue="teal"
-            className="xl:col-span-5 border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md transition-all duration-200"
+            className="xl:col-span-5 border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between space-y-4 transition-all duration-200"
           >
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
@@ -764,7 +765,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('member-registry')}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 transition-all"
               >
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tNav('usersAndRoles')}</span>
@@ -772,7 +773,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('site-settings')}
-                className="flex-1 py-2.5 px-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-2xs active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 transition-all"
               >
                 <span>{tNav('siteSettings')}</span>
                 <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
@@ -782,7 +783,7 @@ export function OverviewView({
         )}
 
         <section
-          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} bg-white/92 dark:bg-slate-900/85 border border-slate-200/85 dark:border-slate-800/85 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs flex flex-col justify-between`}
+          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} bg-white/92 dark:bg-slate-900/86 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.4)] flex flex-col justify-between`}
         >
           <div>
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">

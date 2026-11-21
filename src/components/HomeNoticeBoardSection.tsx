@@ -317,7 +317,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
       id="notice-board"
       className={
         embedded
-          ? 'scroll-mt-4 bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs text-slate-900 dark:text-slate-100 space-y-5'
+          ? 'scroll-mt-4 bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] text-slate-900 dark:text-slate-100 space-y-5'
           : 'scroll-mt-4 border-t border-slate-200/70 dark:border-slate-800/80 text-slate-900 dark:text-slate-100'
       }
     >
@@ -334,7 +334,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
 
           <div className="flex flex-wrap items-center gap-2.5">
             <div
-              className="inline-flex items-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1"
+              className="inline-flex items-center rounded-xl border border-slate-200/85 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-950/75 p-1"
               role="tablist"
               aria-label={t('filterAria')}
             >
@@ -352,7 +352,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   role="tab"
                   aria-selected={filter === tab.id}
                   onClick={() => setFilter(tab.id)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
                     filter === tab.id
                       ? 'bg-emerald-600 text-white shadow-2xs'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -367,7 +367,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
               <button
                 type="button"
                 onClick={() => (composerOpen ? closeComposer() : openCreateComposer())}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-500 hover:from-emerald-800 hover:via-emerald-700 hover:to-emerald-600 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all duration-200 active:scale-[0.98] whitespace-nowrap cursor-pointer"
               >
                 {composerOpen ? (
                   <>
@@ -633,13 +633,13 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                   key={notice.id}
                   hue={meta.hue}
                   delay={Math.min(idx * 0.04, 0.2)}
-                  className={`border rounded-xl p-4 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-3 ${meta.cardClass}`}
+                  className={`border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-4 sm:p-5 transition-all duration-200 flex flex-col justify-between gap-3 ${meta.cardClass}`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3 min-w-0">
                         <div
-                          className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${meta.iconBox}`}
+                          className={`w-9 h-9 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 ${meta.iconBox}`}
                         >
                           <PriorityIcon className="w-4 h-4" aria-hidden="true" />
                         </div>

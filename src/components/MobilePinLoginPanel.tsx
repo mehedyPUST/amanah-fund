@@ -174,7 +174,7 @@ export function MobilePinLoginPanel({
           )}
         </div>
 
-        <div className="p-3 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 ring-1 ring-inset ring-white/60 dark:ring-white/5 bg-emerald-50/55 dark:bg-emerald-950/25 shadow-2xs flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {selectedAccount.photoUrl ? (
               <img
@@ -184,7 +184,7 @@ export function MobilePinLoginPanel({
                 className="w-10 h-10 rounded-xl object-cover border border-emerald-200 dark:border-emerald-800 shrink-0"
               />
             ) : (
-              <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white text-xs font-bold flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white text-xs font-bold flex items-center justify-center shrink-0">
                 {initials || 'AM'}
               </div>
             )}
@@ -205,7 +205,7 @@ export function MobilePinLoginPanel({
             onClick={() => handleRemoveLocalAccount(selectedAccount)}
             title={tAuth('pin.forgetDevice')}
             aria-label={tAuth('pin.removeAccountAria', { name: selectedAccount.name })}
-            className="min-w-[36px] min-h-[36px] rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="min-w-[36px] min-h-[36px] rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors cursor-pointer shrink-0"
           >
             <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -292,7 +292,7 @@ export function MobilePinLoginPanel({
                 if (error) setError(null);
               }}
               placeholder="••••"
-              className="w-full min-h-[50px] pl-4 pr-11 py-2.5 text-center font-mono text-2xl tracking-[0.65em] tabular-nums text-slate-900 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+              className="w-full min-h-[50px] pl-4 pr-11 py-2.5 text-center font-mono text-2xl tracking-[0.65em] tabular-nums text-slate-900 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-colors"
             />
             <button
               type="button"
@@ -312,7 +312,7 @@ export function MobilePinLoginPanel({
         <button
           type="submit"
           disabled={submitting || pin.length !== 4}
-          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
+          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
         >
           <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{submitting ? tAuth('pin.verifyingPin') : tAuth('pin.signInWithPin')}</span>

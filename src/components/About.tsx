@@ -74,7 +74,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs p-6 sm:p-7'
+          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
           : ''
       }`}
     >
@@ -115,10 +115,10 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 hue={pillar.hue}
                 delay={idx * 0.03}
                 inView
-                className={`${spanClass} backdrop-blur-md rounded-xl border p-5 space-y-3 shadow-xs hover:shadow-md transition-all duration-200`}
+                className={`${spanClass} backdrop-blur-xl rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 p-5 space-y-3 transition-all duration-200`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${pillar.iconBoxClass}`}>
+                  <div className={`w-9 h-9 rounded-xl shadow-2xs flex items-center justify-center ${pillar.iconBoxClass}`}>
                     <Icon className="w-4 h-4" aria-hidden="true" />
                   </div>
                   <span className="font-mono text-xs font-semibold text-slate-400 dark:text-slate-500">

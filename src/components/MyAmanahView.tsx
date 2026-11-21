@@ -113,15 +113,15 @@ export function MyAmanahView({
       className="space-y-6"
     >
       {/* Identity & Eligibility Status Banner */}
-      <section className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs transition-all duration-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <section className="amanah-card-emerald border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 transition-all duration-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/70 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300 shadow-2xs">
               <Wallet className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
             </span>
             <span>{t('eyebrow')}</span>
           </div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">
             {user.name} · <span className="font-mono text-sm text-emerald-700 dark:text-emerald-300">{user.memberCode}</span>
           </h2>
         </div>
@@ -130,7 +130,7 @@ export function MyAmanahView({
           <button
             type="button"
             onClick={() => onNavigate('monthly-contribution')}
-            className={`min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 text-xs font-medium text-slate-800 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${!(onOpenLoanModal && isEligible) ? 'col-span-2 sm:col-span-1' : ''}`}
+            className={`min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-950/75 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 dark:hover:border-teal-700/70 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer transition-colors ${!(onOpenLoanModal && isEligible) ? 'col-span-2 sm:col-span-1' : ''}`}
           >
             <CreditCard className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
             <span className="truncate">{t('makeContribution')}</span>
@@ -139,7 +139,7 @@ export function MyAmanahView({
             <button
               type="button"
               onClick={onOpenLoanModal}
-              className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-medium shadow-xs hover:shadow-md transition-all active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              className="min-h-[44px] sm:min-h-0 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <HandCoins className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span className="truncate">{t('applyQardHasan')}</span>
@@ -150,7 +150,7 @@ export function MyAmanahView({
 
       {/* Primary KPI Grid */}
       <section className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-4">
-        <div className="amanah-card-emerald border rounded-xl sm:rounded-2xl p-3 sm:p-5 shadow-xs hover:shadow-md transition-all duration-200">
+        <div className="amanah-card-emerald border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-5 transition-all duration-200">
           <div className="text-[11px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-400">
             {t('totalContribution')}
           </div>

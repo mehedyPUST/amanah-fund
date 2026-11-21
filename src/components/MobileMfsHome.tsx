@@ -126,7 +126,7 @@ function MobileBottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-            className="relative z-10 w-full max-h-[88dvh] bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden"
+            className="relative z-10 w-full max-h-[88dvh] bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl rounded-t-3xl border-t border-slate-200/90 dark:border-slate-800/90 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-2xl flex flex-col overflow-hidden"
           >
             <div className="pt-2.5 pb-1 shrink-0">
               <div
@@ -750,12 +750,13 @@ export function MobileMfsHome({
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2 }}
-        className="w-full amanah-card-emerald border rounded-2xl p-3.5 shadow-xs transition-all duration-200 text-left cursor-pointer"
+        className="w-full amanah-card-emerald border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3.5 transition-all duration-200 text-left cursor-pointer"
       >
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-snug text-slate-600 dark:text-slate-400">
-            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-              {phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}
+            <span className="inline-flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+              <span>{phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}</span>
             </span>
             <span aria-hidden="true">·</span>
             <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
@@ -767,7 +768,7 @@ export function MobileMfsHome({
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white leading-snug">
+            <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-white leading-snug">
               {config.fundName}
             </h2>
             <ChevronRight
@@ -944,13 +945,13 @@ export function MobileMfsHome({
             onClick={() => setActiveSheet('pulse')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('fundHeight')}
               </span>
-              <span className="w-8 h-8 rounded-[10px] bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               </span>
             </div>
@@ -972,13 +973,13 @@ export function MobileMfsHome({
             onClick={() => onNavigate('transaction-history')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-8 h-8 rounded-[10px] bg-violet-50 dark:bg-violet-950/50 border border-violet-200/80 dark:border-violet-800/60 flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-violet-50 dark:bg-violet-950/50 border border-violet-200/80 dark:border-violet-800/60 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4 text-violet-700 dark:text-violet-400" />
               </span>
             </div>
@@ -997,13 +998,13 @@ export function MobileMfsHome({
             onClick={() => setActiveSheet('borrowers')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentQardHasan')}
               </span>
-              <span className="w-8 h-8 rounded-[10px] bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0">
                 <HandCoins className="w-4 h-4 text-amber-700 dark:text-amber-400" />
               </span>
             </div>
@@ -1028,13 +1029,13 @@ export function MobileMfsHome({
             onClick={() => (isAdmin ? setActiveSheet('borrowers') : onNavigate('quard-hasan'))}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.repaymentsReturned')}
               </span>
-              <span className="w-8 h-8 rounded-[10px] bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center shrink-0">
+              <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-4 h-4 text-teal-700 dark:text-teal-400" />
               </span>
             </div>
@@ -1094,7 +1095,7 @@ export function MobileMfsHome({
           </button>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
+        <div className="rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_20px_-10px_rgba(0,0,0,0.45)] divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
           {recentActivity.length === 0 ? (
             <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
               {tDash('mobile.noRecentActivity')}
@@ -1183,7 +1184,7 @@ export function MobileMfsHome({
             </div>
             <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
               <div
-                className="h-full bg-emerald-600 rounded-full"
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
                 style={{ width: `${thisMonthContribPct}%` }}
               />
             </div>
@@ -1236,7 +1237,7 @@ export function MobileMfsHome({
             </div>
             <div className="h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
               <div
-                className="h-full bg-emerald-600 rounded-full"
+                className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full"
                 style={{ width: `${thisMonthClearancePct}%` }}
               />
             </div>

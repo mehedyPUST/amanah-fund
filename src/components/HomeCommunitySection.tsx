@@ -55,7 +55,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
     <div
       className={
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs text-slate-900 dark:text-slate-100'
+          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] text-slate-900 dark:text-slate-100'
           : 'text-slate-900 dark:text-slate-100'
       }
     >
@@ -73,7 +73,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
           {!authChecking && user && user.status === 'active' && (
             <Link
               href="/dashboard?page=community"
-              className="group shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 transition-colors whitespace-nowrap self-start md:self-auto"
+              className="group shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/40 shadow-2xs transition-colors whitespace-nowrap self-start md:self-auto"
             >
               <span>{tNav('dashboard')}</span>
               <ArrowRight
@@ -139,7 +139,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <Link
                   href="/login"
-                  className="group px-5 py-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold shadow-sm transition-colors inline-flex items-center gap-2 whitespace-nowrap"
+                  className="group px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all inline-flex items-center gap-2 whitespace-nowrap"
                 >
                   <span>{tNav('signIn')}</span>
                   <ArrowRight
@@ -149,7 +149,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                 </Link>
                 <Link
                   href="/signup"
-                  className="px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium transition-colors whitespace-nowrap"
+                  className="px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/90 dark:bg-slate-950/75 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium shadow-2xs active:scale-[0.98] transition-all whitespace-nowrap"
                 >
                   {tNav('joinAmanah')}
                 </Link>
@@ -174,10 +174,10 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                     hue={cardHue}
                     delay={idx * 0.04}
                     inView
-                    className="backdrop-blur-md p-4 rounded-xl border space-y-2.5 shadow-xs hover:shadow-md transition-all duration-200"
+                    className="backdrop-blur-xl p-4 rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 space-y-2.5 transition-all duration-200"
                   >
                     <div className="flex items-center justify-between">
-                      <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${iconBoxClass}`}>
+                      <div className={`w-9 h-9 rounded-xl border shadow-2xs flex items-center justify-center ${iconBoxClass}`}>
                         <Icon className="w-4 h-4" aria-hidden="true" />
                       </div>
                       <span className="font-mono text-[11px] font-semibold text-slate-400 dark:text-slate-500">

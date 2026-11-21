@@ -271,7 +271,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-xs p-6 sm:p-7'
+          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
           : ''
       }`}
     >
@@ -350,7 +350,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
               <button
                 type="button"
                 onClick={toggleExpandAll}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
+                className="px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs transition-colors whitespace-nowrap cursor-pointer"
               >
                 {allExpanded ? tRules('collapseAll') : tRules('expandAll')}
               </button>
@@ -360,13 +360,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
               <button
                 type="button"
                 onClick={toggleExpandAll}
-                className="px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap cursor-pointer"
+                className="px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 shadow-2xs transition-colors whitespace-nowrap cursor-pointer"
               >
                 {allExpanded ? tRules('collapseAll') : tRules('expandAll')}
               </button>
               <Link
                 href="/rules"
-                className="px-3.5 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/70 dark:bg-emerald-950/30 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors whitespace-nowrap"
+                className="px-3.5 py-2 rounded-xl border border-emerald-200/90 dark:border-emerald-800/70 bg-emerald-50/75 dark:bg-emerald-950/35 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-800 dark:text-emerald-300 transition-colors whitespace-nowrap"
               >
                 {tRules('fullPage')}
               </Link>
@@ -380,7 +380,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.15 }}
           transition={{ duration: 0.2 }}
-          className="rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-950/20 p-4 sm:p-5 space-y-4"
+          className="rounded-2xl border border-emerald-200/75 dark:border-emerald-900/50 bg-emerald-50/45 dark:bg-emerald-950/20 p-4 sm:p-5 space-y-4"
         >
           {constitutionLoading ? (
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -420,7 +420,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   <button
                     type="button"
                     onClick={() => setShowPdfPreview((v) => !v)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors cursor-pointer whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-2xs transition-colors cursor-pointer whitespace-nowrap"
                   >
                     {showPdfPreview ? (
                       <>
@@ -438,7 +438,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                     href={constitutionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-200 shadow-2xs transition-colors whitespace-nowrap"
                   >
                     <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{tRules('openNewTab')}</span>
@@ -446,7 +446,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                   <a
                     href={constitutionUrl}
                     download={constitutionName}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-xs transition-colors whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 transition-all whitespace-nowrap"
                   >
                     <Download className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{tRules('downloadPdf')}</span>
@@ -493,7 +493,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                 hue={ruleHue}
                 delay={idx * 0.03}
                 inView
-                className="backdrop-blur-md border rounded-xl p-5 space-y-3 flex flex-col justify-between shadow-xs hover:shadow-md transition-all duration-200"
+                className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-5 space-y-3 flex flex-col justify-between transition-all duration-200"
               >
                 <div className="space-y-2.5">
                   <div className="flex items-start justify-between gap-3">
@@ -581,13 +581,13 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/login"
-              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+              className="px-4 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               {tNav('signIn')}
             </Link>
             <Link
               href="/signup"
-              className="group px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium inline-flex items-center gap-1.5 shadow-xs transition-colors whitespace-nowrap"
+              className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <span>{tNav('joinAmanah')}</span>
               <ArrowRight

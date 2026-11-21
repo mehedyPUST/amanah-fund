@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Anek_Bangla, Inter, Open_Sans, Space_Mono } from 'next/font/google';
+import { Anek_Bangla, DM_Sans, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import { cookies } from 'next/headers';
 import { getLocale } from 'next-intl/server';
 import type { ReactNode } from 'react';
@@ -8,21 +8,21 @@ import { normalizeLocale } from '../i18n/config.ts';
 import { getServerSessionUser } from '../server/ssrData.ts';
 import './globals.css';
 
-const interHeading = Inter({
+const displayHeading = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
+  weight: ['500', '600', '700', '800'],
   variable: '--font-display',
 });
 
-const openSansBody = Open_Sans({
+const bodySans = DM_Sans({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
 });
 
-const spaceMono = Space_Mono({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  weight: ['400', '700'],
+  weight: ['400', '500', '600', '700'],
   variable: '--font-mono',
 });
 
@@ -85,7 +85,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${interHeading.variable} ${openSansBody.variable} ${spaceMono.variable} ${anekBangla.variable}`}
+      className={`${displayHeading.variable} ${bodySans.variable} ${jetbrainsMono.variable} ${anekBangla.variable}`}
     >
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
         <AppProviders

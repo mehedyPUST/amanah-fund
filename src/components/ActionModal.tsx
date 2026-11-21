@@ -279,7 +279,7 @@ export function ActionModal({
             onClick={() => {
               if (!isBusy) onCloseRef.current();
             }}
-            className="fixed inset-0 bg-slate-950/55 dark:bg-slate-950/70 backdrop-blur-[2px]"
+            className="fixed inset-0 bg-slate-950/55 dark:bg-slate-950/72 backdrop-blur-xs"
             aria-hidden="true"
           />
 
@@ -291,7 +291,7 @@ export function ActionModal({
             onClick={(e) => e.stopPropagation()}
             className={`relative z-10 w-full ${
               maxWidthClass || 'max-w-[26rem]'
-            } bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.55)] overflow-hidden my-auto flex flex-col max-h-[92vh]`}
+            } bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 ring-1 ring-inset ring-white/80 dark:ring-white/5 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.62)] overflow-hidden my-auto flex flex-col max-h-[92vh]`}
           >
             {/* Top accent bar */}
             <div

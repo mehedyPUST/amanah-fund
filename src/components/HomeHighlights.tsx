@@ -99,13 +99,13 @@ export function HomeHighlights() {
                 delay={idx * 0.04}
                 inView
                 interactive
-                className="w-full rounded-xl backdrop-blur-md border p-5 sm:p-6 flex flex-col justify-between gap-5 shadow-xs hover:shadow-md transition-all duration-200"
+                className="w-full rounded-2xl backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 p-5 sm:p-6 flex flex-col justify-between gap-5 transition-all duration-200"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.iconBoxClass}`}
+                        className={`w-9 h-9 rounded-xl shadow-2xs flex items-center justify-center shrink-0 ${item.iconBoxClass}`}
                       >
                         <Icon className="w-4 h-4" aria-hidden="true" />
                       </div>
@@ -119,7 +119,7 @@ export function HomeHighlights() {
                       </div>
                     </div>
                     <span
-                      className={`font-mono text-[11px] font-semibold px-2.5 py-1 rounded-full shrink-0 ${item.badgeClass}`}
+                      className={`font-mono text-[11px] font-semibold px-2.5 py-1 rounded-lg shrink-0 ${item.badgeClass}`}
                     >
                       {item.index}
                     </span>

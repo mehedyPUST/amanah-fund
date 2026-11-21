@@ -281,16 +281,16 @@ export function SignInForm() {
   if (authChecking || (user && !noticeModal?.redirectHomeOnClose)) {
     return (
       <div className="py-4 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.14)]">
           <div className="lg:col-span-6 space-y-4">
             <Skeleton width={200} height={14} />
             <Skeleton width="75%" height={34} />
             <Skeleton width="90%" height={16} count={2} />
           </div>
           <div className="lg:col-span-6 space-y-4">
-            <Skeleton height={44} borderRadius={8} />
-            <Skeleton height={44} borderRadius={8} />
-            <Skeleton height={44} borderRadius={8} />
+            <Skeleton height={44} borderRadius={12} />
+            <Skeleton height={44} borderRadius={12} />
+            <Skeleton height={44} borderRadius={12} />
           </div>
         </div>
       </div>
@@ -303,7 +303,7 @@ export function SignInForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="bg-white/80 dark:bg-slate-900/75 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-6 sm:p-9 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
+        className="bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-9 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.14)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
       >
         {/* Left Institutional Context Column */}
         <div className="lg:col-span-6 space-y-6">
@@ -417,7 +417,7 @@ export function SignInForm() {
                     value={activationMemberId}
                     onChange={(e) => setActivationMemberId(e.target.value.toUpperCase())}
                     placeholder="AC002"
-                    className="w-full px-3.5 py-2.5 text-sm font-mono uppercase tracking-wider text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                    className="w-full px-3.5 py-2.5 text-sm font-mono uppercase tracking-wider text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-colors"
                   />
                 </div>
 
@@ -441,11 +441,11 @@ export function SignInForm() {
                       setActivationOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
                     }
                     placeholder={tAuth('activation.otpPlaceholder')}
-                    className="w-full px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.28em] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                    className="w-full px-3.5 py-2.5 text-base font-mono tabular-nums tracking-[0.28em] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-colors"
                   />
                 </div>
 
-                <label className="flex items-start gap-2.5 p-3.5 rounded-lg border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 cursor-pointer">
+                <label className="flex items-start gap-2.5 p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/25 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={activationAgreed}
@@ -465,7 +465,7 @@ export function SignInForm() {
                 <button
                   type="submit"
                   disabled={activating}
-                  className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   <span>
@@ -562,7 +562,7 @@ export function SignInForm() {
                       if (error) setError(null);
                     }}
                     placeholder={tAuth('emailPlaceholder')}
-                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                    className="w-full px-3.5 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-colors"
                   />
                 </div>
 
@@ -595,7 +595,7 @@ export function SignInForm() {
                         if (error) setError(null);
                       }}
                       placeholder={tAuth('passwordPlaceholder')}
-                      className="w-full pl-3.5 pr-11 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 transition-colors"
+                      className="w-full pl-3.5 pr-11 py-2.5 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-colors"
                     />
                     <button
                       type="button"
@@ -605,7 +605,7 @@ export function SignInForm() {
                           ? tAuth('mobileGate.hidePassword')
                           : tAuth('mobileGate.showPassword')
                       }
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" aria-hidden="true" />
@@ -619,7 +619,7 @@ export function SignInForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
                 >
                   <Lock className="w-4 h-4" aria-hidden="true" />
                   <span>{loading ? tAuth('signingIn') : tAuth('signIn')}</span>
@@ -633,7 +633,7 @@ export function SignInForm() {
                     setError(null);
                     setUsePasswordMode(false);
                   }}
-                  className="w-full py-2 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  className="w-full py-2.5 px-3 rounded-xl border border-emerald-200/90 dark:border-emerald-800/80 bg-emerald-50/55 dark:bg-emerald-950/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/45 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
                 >
                   <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{tAuth('useDevicePin')}</span>

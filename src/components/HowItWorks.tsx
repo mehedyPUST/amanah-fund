@@ -162,7 +162,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/90 dark:bg-slate-900/85 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs p-6 sm:p-7'
+          ? 'bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
           : ''
       }`}
     >
@@ -247,11 +247,11 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                   key={step.number}
                   hue={stepHue}
                   delay={idx * 0.03}
-                  className="backdrop-blur-md rounded-xl border p-5 flex flex-col justify-between gap-4 shadow-xs hover:shadow-md transition-all duration-200"
+                  className="backdrop-blur-xl rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 p-5 flex flex-col justify-between gap-4 transition-all duration-200"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBoxClass}`}>
+                      <div className={`w-9 h-9 rounded-xl shadow-2xs flex items-center justify-center ${iconBoxClass}`}>
                         <Icon className="w-4 h-4" aria-hidden="true" />
                       </div>
                       <span className="font-mono text-xs font-semibold text-slate-400 dark:text-slate-500">
@@ -288,13 +288,13 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
           <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Link
               href="/rules"
-              className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+              className="px-4 py-2 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               {tNav('rules')}
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}
-              className="group px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap"
+              className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/25 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
               <ArrowRight

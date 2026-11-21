@@ -16,23 +16,23 @@ export function Footer() {
   const tFooter = useTranslations('Public.footer');
 
   return (
-    <footer className="w-full bg-white/85 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 rounded-2xl shadow-xs">
-      <div className="px-6 sm:px-8 py-7">
+    <footer className="w-full bg-white/88 dark:bg-slate-900/82 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_24px_-14px_rgba(15,23,42,0.1)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
+      <div className="px-6 sm:px-8 py-7 sm:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               <AmanahLogo size="xs" decorative />
-              <span className="font-display font-bold text-sm text-slate-900 dark:text-white">
+              <span className="font-display font-bold text-[15px] tracking-tight text-slate-900 dark:text-white">
                 {tCommon('brandName')}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               {tFooter('description')}
             </p>
           </div>
 
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+          <div className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {tFooter('cooperativePages')}
             </h3>
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
@@ -64,20 +64,32 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="space-y-2.5">
-            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+          <div className="space-y-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {tFooter('custodyAudit')}
             </h3>
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-              <li>{tFooter('custodyItem1')}</li>
-              <li>{tFooter('custodyItem2')}</li>
-              <li>{tFooter('custodyItem3')}</li>
-              <li>{tFooter('custodyItem4')}</li>
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
+                <span>{tFooter('custodyItem1')}</span>
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
+                <span>{tFooter('custodyItem2')}</span>
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
+                <span>{tFooter('custodyItem3')}</span>
+              </li>
+              <li className="flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
+                <span>{tFooter('custodyItem4')}</span>
+              </li>
             </ul>
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-slate-900 dark:text-white">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               {tNav('dashboard')}
             </h3>
             <div className="flex flex-wrap items-center gap-2">
@@ -86,14 +98,14 @@ export function Footer() {
                 onClick={() => {
                   if (user) setMobileBrowseMode(false);
                 }}
-                className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/25 transition-all whitespace-nowrap"
+                className="inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:from-emerald-500 hover:via-teal-500 hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-600/25 active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 {user ? tNav('dashboard') : tNav('signIn')}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
-                  className="inline-flex items-center px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+                  className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
                 >
                   {tNav('joinAmanah')}
                 </Link>
@@ -103,7 +115,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-7 pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-7 pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
             {tFooter('copyright', { year: new Date().getUTCFullYear() })}
           </span>
@@ -116,7 +128,7 @@ export function Footer() {
               onClick={toggleDarkMode}
               title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
               aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
             >
               {darkMode ? (
                 <>
