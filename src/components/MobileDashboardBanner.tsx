@@ -156,11 +156,13 @@ export function MobileDashboardBanner({
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [isPaused, setIsPaused] = useState(false);
+  const [mouseHovered, setMouseHovered] = useState(false);
+  const [touchInteracting, setTouchInteracting] = useState(false);
   const [bannerImgFailed, setBannerImgFailed] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const resumeTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -170,6 +172,25 @@ export function MobileDashboardBanner({
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (resumeTimerRef.current !== null) {
+        window.clearTimeout(resumeTimerRef.current);
+      }
+    };
+  }, []);
+
+  const scheduleInteractionResume = (delayMs = 2000) => {
+    if (resumeTimerRef.current !== null) {
+      window.clearTimeout(resumeTimerRef.current);
+    }
+    setTouchInteracting(true);
+    resumeTimerRef.current = window.setTimeout(() => {
+      setTouchInteracting(false);
+      resumeTimerRef.current = null;
+    }, delayMs);
+  };
 
   const isAdmin = user.role === 'admin';
   const ccy = config.currency || 'BDT';
@@ -393,15 +414,16 @@ export function MobileDashboardBanner({
 
   const safeIndex = activeIndex < slides.length ? activeIndex : 0;
   const currentSlide = slides[safeIndex];
+  const isPaused = mouseHovered || touchInteracting;
 
   useEffect(() => {
-    if (slides.length <= 1 || isPaused || reducedMotion) return;
+    if (slides.length <= 1 || isPaused) return;
     const timer = window.setInterval(() => {
       setDirection(1);
       setActiveIndex((prev) => (prev + 1) % slides.length);
-    }, 5500);
+    }, 4500);
     return () => window.clearInterval(timer);
-  }, [slides.length, isPaused, reducedMotion]);
+  }, [slides.length, isPaused]);
 
   const goToSlide = (nextIdx: number) => {
     if (slides.length <= 1) return;
@@ -409,12 +431,14 @@ export function MobileDashboardBanner({
     if (normalized === safeIndex) return;
     setDirection(nextIdx > safeIndex || (safeIndex === slides.length - 1 && nextIdx === 0) ? 1 : -1);
     setActiveIndex(normalized);
+    scheduleInteractionResume(3000);
   };
 
   const stepSlide = (delta: -1 | 1) => {
     if (slides.length <= 1) return;
     setDirection(delta);
     setActiveIndex((prev) => (prev + delta + slides.length) % slides.length);
+    scheduleInteractionResume(3000);
   };
 
   return (
@@ -424,12 +448,18 @@ export function MobileDashboardBanner({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
-      onBlur={() => setIsPaused(false)}
+      onPointerEnter={(e) => {
+        if (e.pointerType === 'mouse') setMouseHovered(true);
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType === 'mouse') setMouseHovered(false);
+      }}
       onTouchStart={(e) => {
-        setIsPaused(true);
+        if (resumeTimerRef.current !== null) {
+          window.clearTimeout(resumeTimerRef.current);
+          resumeTimerRef.current = null;
+        }
+        setTouchInteracting(true);
         const touch = e.touches[0];
         if (touch) {
           touchStartRef.current = { x: touch.clientX, y: touch.clientY };
@@ -443,10 +473,12 @@ export function MobileDashboardBanner({
           const dy = e.changedTouches[0].clientY - start.y;
           if (Math.abs(dx) >= 36 && Math.abs(dx) > Math.abs(dy) * 1.2) {
             stepSlide(dx < 0 ? 1 : -1);
+            return;
           }
         }
-        window.setTimeout(() => setIsPaused(false), 1200);
+        scheduleInteractionResume(1600);
       }}
+      onTouchCancel={() => scheduleInteractionResume(1200)}
       className={`relative w-full h-[112px] sm:h-[122px] overflow-hidden rounded-2xl border ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_22px_-12px_rgba(15,23,42,0.14)] dark:shadow-[0_10px_26px_-12px_rgba(0,0,0,0.52)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
     >
       {/* Subtle geometric accent shimmer */}
@@ -468,75 +500,107 @@ export function MobileDashboardBanner({
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           whileTap={{ scale: 0.992 }}
           aria-label={`${currentSlide.kicker} · ${currentSlide.title}`}
-          className="relative z-10 w-full h-full px-3.5 pt-2.5 pb-6 sm:px-4 sm:pt-3 sm:pb-6 flex items-center justify-between gap-2.5 text-left cursor-pointer"
+          className={`relative z-10 w-full h-full px-3.5 sm:px-4 text-left cursor-pointer ${
+            currentSlide.visual.kind === 'brand'
+              ? 'pt-2 pb-6 sm:pt-2.5 sm:pb-6 flex flex-col justify-between gap-1'
+              : 'pt-2.5 pb-6 sm:pt-3 sm:pb-6 flex items-center justify-between gap-2.5'
+          }`}
         >
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <div
-              className={`text-[11px] font-semibold leading-snug truncate ${currentSlide.kickerClass}`}
-            >
-              {currentSlide.kicker}
-            </div>
-            <div className="flex items-baseline gap-1.5 min-w-0">
-              <h2
-                className={`text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate ${
-                  currentSlide.isNumericTitle ? 'font-mono tabular-nums' : ''
-                }`}
-              >
+          {currentSlide.visual.kind === 'brand' ? (
+            <>
+              <h2 className="w-full text-[13px] sm:text-[15px] font-bold tracking-tight text-slate-900 dark:text-white leading-[1.22] line-clamp-2">
                 {currentSlide.title}
               </h2>
-              {currentSlide.titleSuffix && (
-                <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 shrink-0">
-                  {currentSlide.titleSuffix}
-                </span>
-              )}
-            </div>
-            <div className="text-[10.5px] font-mono tabular-nums text-slate-600 dark:text-slate-300 leading-snug truncate">
-              {currentSlide.subtitle}
-            </div>
-          </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {currentSlide.visual.kind === 'brand' &&
-              (!bannerImgFailed ? (
-                <div className="w-[96px] sm:w-[122px] h-[56px] sm:h-[64px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
-                  <img
-                    src="/assets/aistudio/image_5fd8619d.png"
-                    alt=""
+              <div className="w-full flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <div
+                    className={`text-[10.5px] sm:text-[11px] font-semibold leading-snug truncate ${currentSlide.kickerClass}`}
+                  >
+                    {currentSlide.kicker}
+                  </div>
+                  <div className="text-[10px] sm:text-[10.5px] font-mono tabular-nums text-slate-600 dark:text-slate-300 leading-snug truncate">
+                    {currentSlide.subtitle}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  {!bannerImgFailed ? (
+                    <div className="w-[68px] sm:w-[88px] h-[32px] sm:h-[38px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
+                      <img
+                        src="/assets/aistudio/image_5fd8619d.png"
+                        alt=""
+                        aria-hidden="true"
+                        onError={() => setBannerImgFailed(true)}
+                        className="w-full h-full object-contain scale-[1.22] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
+                      />
+                    </div>
+                  ) : (
+                    <span className="w-9 h-9 rounded-xl border bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/80 dark:border-emerald-400/40 flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
+                    </span>
+                  )}
+                  <ChevronRight
+                    className={`w-4 h-4 shrink-0 ${CHEVRON_CLASS[currentSlide.hue]}`}
                     aria-hidden="true"
-                    onError={() => setBannerImgFailed(true)}
-                    className="w-full h-full object-contain scale-[1.28] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
                   />
                 </div>
-              ) : (
-                <span className="w-11 h-11 rounded-xl border bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/80 dark:border-emerald-400/40 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-5 h-5 text-emerald-700 dark:text-emerald-300" aria-hidden="true" />
-                </span>
-              ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex-1 min-w-0 space-y-0.5">
+                <div
+                  className={`text-[11px] font-semibold leading-snug truncate ${currentSlide.kickerClass}`}
+                >
+                  {currentSlide.kicker}
+                </div>
+                <div className="flex items-baseline gap-1.5 min-w-0">
+                  <h2
+                    className={`text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate ${
+                      currentSlide.isNumericTitle ? 'font-mono tabular-nums' : ''
+                    }`}
+                  >
+                    {currentSlide.title}
+                  </h2>
+                  {currentSlide.titleSuffix && (
+                    <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 shrink-0">
+                      {currentSlide.titleSuffix}
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10.5px] font-mono tabular-nums text-slate-600 dark:text-slate-300 leading-snug truncate">
+                  {currentSlide.subtitle}
+                </div>
+              </div>
 
-            {currentSlide.visual.kind === 'ring' && (
-              <SlideProgressRing
-                pct={currentSlide.visual.pct}
-                strokeClass={currentSlide.visual.strokeClass}
-                textClass={currentSlide.visual.textClass}
-              />
-            )}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {currentSlide.visual.kind === 'ring' && (
+                  <SlideProgressRing
+                    pct={currentSlide.visual.pct}
+                    strokeClass={currentSlide.visual.strokeClass}
+                    textClass={currentSlide.visual.textClass}
+                  />
+                )}
 
-            {currentSlide.visual.kind === 'icon' && (
-              <span
-                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 ${currentSlide.visual.boxClass}`}
-              >
-                <currentSlide.visual.Icon
-                  className={`w-5 h-5 ${currentSlide.visual.iconClass}`}
+                {currentSlide.visual.kind === 'icon' && (
+                  <span
+                    className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 ${currentSlide.visual.boxClass}`}
+                  >
+                    <currentSlide.visual.Icon
+                      className={`w-5 h-5 ${currentSlide.visual.iconClass}`}
+                      aria-hidden="true"
+                    />
+                  </span>
+                )}
+
+                <ChevronRight
+                  className={`w-4 h-4 shrink-0 ${CHEVRON_CLASS[currentSlide.hue]}`}
                   aria-hidden="true"
                 />
-              </span>
-            )}
-
-            <ChevronRight
-              className={`w-4 h-4 shrink-0 ${CHEVRON_CLASS[currentSlide.hue]}`}
-              aria-hidden="true"
-            />
-          </div>
+              </div>
+            </>
+          )}
         </motion.button>
       </AnimatePresence>
 
