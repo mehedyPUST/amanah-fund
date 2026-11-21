@@ -354,7 +354,7 @@ export function MobileMfsHome({
     );
   }
 
-  const { config, treasury, personal, phase } = overview;
+  const { config, treasury, personal, phase, daysUntilMaturity } = overview;
 
   const myActiveOrPendingLoan = !isAdmin
     ? loans.find(
@@ -735,7 +735,7 @@ export function MobileMfsHome({
 
   return (
     <div className="space-y-4">
-      {/* Brand Banner (uses Phase 1 Active Qard Hasan slot) */}
+      {/* Brand Banner with Cooperative Context */}
       <motion.button
         type="button"
         onClick={() => setActiveSheet('pulse')}
@@ -744,37 +744,49 @@ export function MobileMfsHome({
         whileTap={{ scale: 0.99 }}
         transition={{ duration: 0.2 }}
         aria-label={`${config.fundName} · ${tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}`}
-        className="w-full overflow-hidden rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_22px_-12px_rgba(15,23,42,0.16)] dark:shadow-[0_10px_28px_-12px_rgba(0,0,0,0.55)] bg-[#f4f4f2] transition-all duration-200 text-left cursor-pointer block"
+        className="w-full overflow-hidden rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_22px_-12px_rgba(15,23,42,0.16)] dark:shadow-[0_10px_28px_-12px_rgba(0,0,0,0.55)] bg-white/95 dark:bg-slate-900/90 transition-all duration-200 text-left cursor-pointer block"
       >
-        {bannerImgFailed ? (
-          <div className="amanah-card-emerald p-3.5 space-y-1.5">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-snug text-slate-600 dark:text-slate-400">
-              <span className="font-semibold text-emerald-700 dark:text-emerald-400">
-                {phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+        {!bannerImgFailed && (
+          <div className="w-full bg-[#f4f4f2] overflow-hidden">
+            <img
+              src="/assets/aistudio/image_5fd8619d.png"
+              alt={config.fundName}
+              onError={() => setBannerImgFailed(true)}
+              className="w-full aspect-[2/1] object-cover object-center block dark:brightness-[0.94] dark:contrast-[1.03]"
+            />
+          </div>
+        )}
+        <div
+          className={`amanah-card-emerald px-3.5 py-2.5 space-y-1 ${
+            !bannerImgFailed
+              ? 'border-t border-emerald-200/70 dark:border-emerald-800/60'
+              : 'p-3.5 space-y-1.5'
+          }`}
+        >
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-snug text-slate-600 dark:text-slate-400">
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              {phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums text-amber-700 dark:text-amber-400 font-medium">
+              {tCommon('daysRemaining', { days: daysUntilMaturity })}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <h2 className="text-[14px] font-semibold tracking-tight text-slate-900 dark:text-white leading-snug truncate">
+                {config.fundName}
+              </h2>
+              <span className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 truncate">
                 {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
               </span>
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-white leading-snug">
-                {config.fundName}
-              </h2>
-              <ChevronRight
-                className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
-                aria-hidden="true"
-              />
-            </div>
+            <ChevronRight
+              className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
+              aria-hidden="true"
+            />
           </div>
-        ) : (
-          <img
-            src="/assets/aistudio/image_5fd8619d.png"
-            alt={config.fundName}
-            onError={() => setBannerImgFailed(true)}
-            className="w-full aspect-[16/9] object-cover object-center block dark:brightness-[0.94] dark:contrast-[1.03]"
-          />
-        )}
+        </div>
       </motion.button>
 
       {/* 1. Actionable Alerts & Active Loan Stage Tracker */}
