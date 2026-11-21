@@ -2639,20 +2639,26 @@ export function DashboardShell() {
                     : 'text-slate-500 dark:text-slate-300/75 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
+                {tab.active && (
+                  <motion.span
+                    layoutId="mobile-footer-active-line"
+                    transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+                    aria-hidden="true"
+                    className="pointer-events-none absolute top-0 left-4 right-4 h-[2.5px] bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 dark:from-[#00ED64] dark:via-[#18E299] dark:to-[#00ED64] shadow-[0_1px_6px_rgba(16,185,129,0.4)] dark:shadow-[0_1px_10px_rgba(0,237,100,0.65)]"
+                  />
+                )}
                 <span
-                  className={`relative inline-flex items-center justify-center px-3.5 py-1 rounded-2xl border transition-all duration-150 ${
-                    tab.active
-                      ? 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border-emerald-200/85 dark:border-[#00ED64]/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_8px_-3px_rgba(5,150,105,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_4px_14px_-4px_rgba(0,237,100,0.28)] mdb-icon-emerald'
-                      : 'border-transparent'
+                  className={`relative inline-flex items-center justify-center p-1 transition-transform duration-150 ${
+                    tab.active ? 'mdb-icon-emerald scale-[1.04]' : ''
                   }`}
                 >
                   <Icon
-                    strokeWidth={tab.active ? 1.85 : 1.65}
-                    className="w-[20px] h-[20px]"
+                    strokeWidth={tab.active ? 1.95 : 1.65}
+                    className="w-[21px] h-[21px]"
                     aria-hidden="true"
                   />
                   {tab.badge > 0 && (
-                    <span className="absolute -top-0.5 right-0.5 flex items-center justify-center">
+                    <span className="absolute -top-0.5 -right-1.5 flex items-center justify-center">
                       {tab.id === 'notification' && (
                         <span
                           aria-hidden="true"
