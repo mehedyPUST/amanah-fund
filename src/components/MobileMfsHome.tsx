@@ -11,6 +11,7 @@ import {
   CalendarCheck,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
@@ -280,6 +281,7 @@ export function MobileMfsHome({
   const tDash = useTranslations('Dashboard');
   const tIconEditor = useTranslations('MobileIconEditor');
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
+  const [moreExpanded, setMoreExpanded] = useState(false);
   const [iconDraft, setIconDraft] = useState<MobileMemberOverviewIconsConfig>(() =>
     resolveMemberMobileOverviewIcons({
       userIcons: user.mobileOverviewIcons,
@@ -367,22 +369,15 @@ export function MobileMfsHome({
             <Skeleton key={idx} height={92} borderRadius={16} />
           ))}
         </div>
-        <div className="mfs-icon-grid-3">
-          {Array.from({ length: 6 }).map((_, idx) => (
+        <div className="mfs-icon-grid-4">
+          {Array.from({ length: 8 }).map((_, idx) => (
             <div key={idx} className="mfs-tile flex flex-col items-center justify-start gap-2">
-              <Skeleton width={60} height={60} borderRadius={14} />
-              <Skeleton width={52} height={10} borderRadius={4} />
+              <Skeleton width={56} height={56} borderRadius={14} />
+              <Skeleton width={46} height={10} borderRadius={4} />
             </div>
           ))}
         </div>
-        <div className="mfs-icon-grid-3">
-          {Array.from({ length: 3 }).map((_, idx) => (
-            <div key={idx} className="mfs-tile-compact flex flex-col items-center justify-start gap-1.5">
-              <Skeleton width={52} height={52} borderRadius={12} />
-              <Skeleton width={44} height={10} borderRadius={4} />
-            </div>
-          ))}
-        </div>
+        <Skeleton height={44} borderRadius={16} />
         <Skeleton height={160} borderRadius={16} />
       </div>
     );
@@ -818,7 +813,7 @@ export function MobileMfsHome({
     },
   };
 
-  // 1. Primary Services (3-col bKash-style primary icons)
+  // 1. Primary Services (4-col bKash-style primary icons)
   const coreActionTiles: MfsIconTile[] = isAdmin
     ? [
         {
@@ -1229,7 +1224,7 @@ export function MobileMfsHome({
             {tDash('mobile.noServicesSelected')}
           </button>
         ) : (
-          <div className="mfs-icon-grid-3">
+          <div className="mfs-icon-grid-4">
             {coreActionTiles.map((tile) => (
               <MfsGridTileButton key={tile.id} tile={tile} labelWeight="semibold" />
             ))}
@@ -1237,20 +1232,73 @@ export function MobileMfsHome({
         )}
       </section>
 
-      {/* 5. More Section (3-col iconic grid) */}
-      {(isAdmin || functionalPageTiles.length > 0) && (
-        <section aria-label={tDash('mobile.more')} className="space-y-2">
-          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-            {isAdmin ? tDash('mobile.governanceLedgerPages') : tDash('mobile.more')}
-          </h2>
+      {/* 5. More Section (4-col iconic grid, primarily collapsed) */}
+      {(isAdmin || functionalPageTiles.length > 0) && (() => {
+        const morePendingCount = functionalPageTiles.reduce(
+          (sum, tile) => sum + (typeof tile.badge === 'number' && tile.badge > 0 ? tile.badge : 0),
+          0
+        );
+        const hasUrgentMoreBadge = functionalPageTiles.some(
+          (tile) => tile.badgeBlink === 'red' && typeof tile.badge === 'number' && tile.badge > 0
+        );
 
-          <div className="mfs-icon-grid-3">
-            {functionalPageTiles.map((tile) => (
-              <MfsGridTileButton key={tile.id} tile={tile} compact singleLine />
-            ))}
-          </div>
-        </section>
-      )}
+        return (
+          <section aria-label={tDash('mobile.more')} className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setMoreExpanded((prev) => !prev)}
+              aria-expanded={moreExpanded}
+              aria-controls="mfs-more-grid"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-white/90 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.4)] hover:bg-slate-50 dark:hover:bg-slate-800/75 active:scale-[0.995] flex items-center justify-between gap-2 transition-all cursor-pointer"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                  {isAdmin ? tDash('mobile.governanceLedgerPages') : tDash('mobile.more')}
+                </span>
+                <span className="font-mono text-[11px] tabular-nums text-slate-400 dark:text-slate-500">
+                  ({functionalPageTiles.length})
+                </span>
+                {morePendingCount > 0 && (
+                  <span
+                    className={`min-w-[18px] h-[18px] px-1.5 rounded-full font-mono text-[10px] font-bold tabular-nums text-white inline-flex items-center justify-center ${
+                      hasUrgentMoreBadge
+                        ? 'bg-red-600 dark:bg-red-500'
+                        : 'bg-amber-600'
+                    }`}
+                  >
+                    {morePendingCount > 99 ? '99+' : morePendingCount}
+                  </span>
+                )}
+              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 shrink-0 ${
+                  moreExpanded ? 'rotate-180' : ''
+                }`}
+                aria-hidden="true"
+              />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {moreExpanded && (
+                <motion.div
+                  id="mfs-more-grid"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="mfs-icon-grid-4 pt-1">
+                    {functionalPageTiles.map((tile) => (
+                      <MfsGridTileButton key={tile.id} tile={tile} compact singleLine />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        );
+      })()}
 
       {/* 6. Recent Activity Tap-List */}
       <section aria-label={tDash('mobile.recentActivity')} className="space-y-2">
