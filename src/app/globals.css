@@ -534,7 +534,7 @@ html.dark .amanah-panel {
 .mfs-icon-grid-4 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.375rem, 1.65vw, 0.65rem);
+  gap: clamp(0.45rem, 1.9vw, 0.7rem);
 }
 
 .mfs-tile,
@@ -546,13 +546,13 @@ html.dark .amanah-panel {
 }
 
 .mfs-tile {
-  min-height: clamp(5.2rem, 22.5vw, 6.5rem);
-  padding: clamp(0.35rem, 1.5vw, 0.5rem) clamp(0.2rem, 1vw, 0.35rem);
+  min-height: clamp(5rem, 21vw, 6rem);
+  padding: clamp(0.5rem, 2vw, 0.7rem) clamp(0.25rem, 1vw, 0.4rem);
 }
 
 .mfs-tile-compact {
-  min-height: clamp(4.65rem, 20vw, 5.65rem);
-  padding: clamp(0.25rem, 1.2vw, 0.4rem) clamp(0.15rem, 0.8vw, 0.3rem);
+  min-height: clamp(4.45rem, 18.5vw, 5.25rem);
+  padding: clamp(0.4rem, 1.6vw, 0.55rem) clamp(0.2rem, 0.8vw, 0.35rem);
 }
 
 .mfs-tile .mfs-tile-icon-box {

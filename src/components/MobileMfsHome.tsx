@@ -196,6 +196,37 @@ const MFS_TAP_SPRING = {
   mass: 0.6,
 };
 
+const TILE_CARD_STYLE_BY_ACCENT: Record<string, string> = {
+  emerald:
+    'border-emerald-200/85 dark:border-emerald-500/30 bg-gradient-to-b from-white/98 via-emerald-50/35 to-emerald-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-emerald-950/45 hover:border-emerald-300 dark:hover:border-emerald-400/50',
+  teal:
+    'border-teal-200/85 dark:border-teal-500/30 bg-gradient-to-b from-white/98 via-teal-50/35 to-teal-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-teal-950/45 hover:border-teal-300 dark:hover:border-teal-400/50',
+  amber:
+    'border-amber-200/85 dark:border-amber-500/30 bg-gradient-to-b from-white/98 via-amber-50/35 to-amber-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-amber-950/40 hover:border-amber-300 dark:hover:border-amber-400/50',
+  sky:
+    'border-sky-200/85 dark:border-sky-500/30 bg-gradient-to-b from-white/98 via-sky-50/35 to-sky-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-sky-950/45 hover:border-sky-300 dark:hover:border-sky-400/50',
+  indigo:
+    'border-indigo-200/85 dark:border-indigo-500/30 bg-gradient-to-b from-white/98 via-indigo-50/35 to-indigo-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-indigo-950/45 hover:border-indigo-300 dark:hover:border-indigo-400/50',
+  cyan:
+    'border-cyan-200/85 dark:border-cyan-500/30 bg-gradient-to-b from-white/98 via-cyan-50/35 to-cyan-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-cyan-950/45 hover:border-cyan-300 dark:hover:border-cyan-400/50',
+  violet:
+    'border-violet-200/85 dark:border-violet-500/30 bg-gradient-to-b from-white/98 via-violet-50/35 to-violet-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-violet-950/45 hover:border-violet-300 dark:hover:border-violet-400/50',
+  rose:
+    'border-rose-200/85 dark:border-rose-500/30 bg-gradient-to-b from-white/98 via-rose-50/35 to-rose-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-rose-950/40 hover:border-rose-300 dark:hover:border-rose-400/50',
+  orange:
+    'border-orange-200/85 dark:border-orange-500/30 bg-gradient-to-b from-white/98 via-orange-50/35 to-orange-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-orange-950/40 hover:border-orange-300 dark:hover:border-orange-400/50',
+  slate:
+    'border-slate-200/90 dark:border-slate-600/35 bg-gradient-to-b from-white/98 via-slate-50/40 to-slate-100/75 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-slate-800/60 hover:border-slate-300 dark:hover:border-slate-500/50',
+};
+
+function getTileCardStyle(iconColorClass: string): string {
+  const match = iconColorClass.match(
+    /text-(emerald|teal|amber|sky|indigo|cyan|violet|rose|orange|slate)-/
+  );
+  const accent = match?.[1] ?? 'emerald';
+  return TILE_CARD_STYLE_BY_ACCENT[accent] ?? TILE_CARD_STYLE_BY_ACCENT.emerald;
+}
+
 function MfsGridTileButton({
   tile,
   compact = false,
@@ -208,52 +239,56 @@ function MfsGridTileButton({
   singleLine?: boolean;
 }) {
   const Icon = tile.Icon;
+  const cardColorClasses = getTileCardStyle(tile.iconColorClass);
+
   return (
     <motion.button
       type="button"
       onClick={tile.onClick}
-      whileTap={{ scale: 0.93, y: 1.5 }}
+      whileTap={{ scale: 0.94, y: 1.5 }}
       transition={MFS_TAP_SPRING}
-      className={`group ${
-        compact ? 'mfs-tile-compact gap-1.5' : 'mfs-tile gap-2'
-      } rounded-xl bg-transparent border-0 hover:bg-slate-900/[0.03] dark:hover:bg-white/[0.04] active:bg-slate-900/[0.06] dark:active:bg-white/[0.07] flex flex-col items-center justify-start transition-colors cursor-pointer`}
+      className={`group relative ${
+        compact ? 'mfs-tile-compact gap-1.5 rounded-xl' : 'mfs-tile gap-2 rounded-2xl'
+      } border ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.09)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.45)] hover:shadow-[0_6px_16px_-8px_rgba(15,23,42,0.14)] flex flex-col items-center justify-center transition-all cursor-pointer ${cardColorClasses}`}
     >
-      <span
-        className={`mfs-tile-icon-box relative ${
-          compact ? 'rounded-xl' : 'rounded-[14px]'
-        } border shadow-xs group-hover:shadow-sm flex items-center justify-center shrink-0 transition-shadow ${tile.iconBgClass}`}
-      >
-        <Icon className={`mfs-tile-icon ${tile.iconColorClass}`} aria-hidden="true" />
-        {typeof tile.badge === 'number' && tile.badge > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center">
-            {tile.badgeBlink && (
-              <span
-                aria-hidden="true"
-                className={`absolute inset-0 rounded-full pointer-events-none ${
-                  tile.badgeBlink === 'red'
-                    ? 'bg-red-500 amanah-blink-ring-urgent'
-                    : 'bg-amber-500 amanah-blink-ring'
-                }`}
-              />
-            )}
+      {typeof tile.badge === 'number' && tile.badge > 0 && (
+        <span className="absolute top-1.5 right-1.5 flex items-center justify-center">
+          {tile.badgeBlink && (
             <span
-              className={`relative min-w-[18px] h-[18px] px-1 rounded-full font-mono text-[10px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
+              aria-hidden="true"
+              className={`absolute inset-0 rounded-full pointer-events-none ${
                 tile.badgeBlink === 'red'
-                  ? 'bg-red-600 dark:bg-red-500 text-white'
-                  : 'bg-amber-600 text-white'
+                  ? 'bg-red-500 amanah-blink-ring-urgent'
+                  : 'bg-amber-500 amanah-blink-ring'
               }`}
-            >
-              {tile.badge > 99 ? '99+' : tile.badge}
-            </span>
+            />
+          )}
+          <span
+            className={`relative min-w-[17px] h-[17px] px-1 rounded-full font-mono text-[9.5px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
+              tile.badgeBlink === 'red'
+                ? 'bg-red-600 dark:bg-red-500 text-white'
+                : 'bg-amber-600 text-white'
+            }`}
+          >
+            {tile.badge > 99 ? '99+' : tile.badge}
           </span>
-        )}
+        </span>
+      )}
+
+      <span className="flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-105">
+        <Icon
+          className={`${compact ? 'w-[22px] h-[22px]' : 'w-6 h-6 sm:w-[26px] sm:h-[26px]'} ${tile.iconColorClass}`}
+          strokeWidth={1.85}
+          aria-hidden="true"
+        />
       </span>
+
       <span
-        className={`mfs-tile-label ${
+        className={`mfs-tile-label w-full px-0.5 ${
           labelWeight === 'semibold'
             ? 'font-semibold text-slate-800 dark:text-slate-100 leading-snug'
             : 'font-medium text-slate-700 dark:text-slate-200 leading-tight'
-        } text-center ${singleLine ? 'line-clamp-1' : ''}`}
+        } text-center ${singleLine ? 'line-clamp-1' : 'line-clamp-2'}`}
       >
         {tile.label}
       </span>
@@ -371,10 +406,7 @@ export function MobileMfsHome({
         </div>
         <div className="mfs-icon-grid-4">
           {Array.from({ length: 8 }).map((_, idx) => (
-            <div key={idx} className="mfs-tile flex flex-col items-center justify-start gap-2">
-              <Skeleton width={56} height={56} borderRadius={14} />
-              <Skeleton width={46} height={10} borderRadius={4} />
-            </div>
+            <Skeleton key={idx} height={84} borderRadius={16} />
           ))}
         </div>
         <Skeleton height={44} borderRadius={16} />
