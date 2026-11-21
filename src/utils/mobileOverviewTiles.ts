@@ -47,27 +47,27 @@ export interface MobileMemberTileMeta {
 }
 
 const MEDALLION_EMERALD_BG =
-  'bg-gradient-to-b from-emerald-50 via-emerald-50/95 to-emerald-100/85 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50';
+  'bg-gradient-to-b from-emerald-50 to-emerald-100/85 dark:from-emerald-950/90 dark:to-emerald-900/50 border-emerald-200/90 dark:border-emerald-700/45';
 const MEDALLION_EMERALD_ICON = 'text-emerald-700 dark:text-emerald-300';
 
 const MEDALLION_TEAL_BG =
-  'bg-gradient-to-b from-teal-50 via-teal-50/95 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-700/50';
+  'bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/90 dark:to-teal-900/50 border-teal-200/90 dark:border-teal-700/45';
 const MEDALLION_TEAL_ICON = 'text-teal-700 dark:text-teal-300';
 
 const MEDALLION_GOLD_BG =
-  'bg-gradient-to-b from-amber-50 via-amber-50/95 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45';
+  'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-700/40';
 const MEDALLION_GOLD_ICON = 'text-amber-700 dark:text-amber-300';
 
 const MEDALLION_SAPPHIRE_BG =
-  'bg-gradient-to-b from-indigo-50/90 via-slate-50 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border-indigo-200/85 dark:border-indigo-700/45';
+  'bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border-indigo-200/85 dark:border-indigo-700/45';
 const MEDALLION_SAPPHIRE_ICON = 'text-indigo-700 dark:text-indigo-300';
 
 const MEDALLION_SLATE_BG =
-  'bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100/95 dark:from-slate-800/90 dark:to-slate-900/85 border-slate-200/95 dark:border-slate-700/60';
+  'bg-gradient-to-b from-slate-50 to-slate-100/95 dark:from-slate-800/95 dark:to-slate-900/95 border-slate-200/95 dark:border-slate-700/60';
 const MEDALLION_SLATE_ICON = 'text-slate-700 dark:text-slate-200';
 
 const MEDALLION_CRIMSON_BG =
-  'bg-gradient-to-b from-rose-50 via-rose-50/95 to-rose-100/75 dark:from-rose-950/75 dark:to-rose-900/40 border-rose-200/90 dark:border-rose-700/45';
+  'bg-gradient-to-b from-rose-50 to-rose-100/80 dark:from-rose-950/85 dark:to-rose-900/45 border-rose-200/90 dark:border-rose-700/40';
 const MEDALLION_CRIMSON_ICON = 'text-rose-700 dark:text-rose-300';
 
 export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [

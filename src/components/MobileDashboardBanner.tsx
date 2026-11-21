@@ -283,7 +283,7 @@ export function MobileDashboardBanner({
           boxClass:
             totalQueueCount > 0
               ? 'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45'
-              : 'bg-gradient-to-b from-indigo-50/90 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border-indigo-200/85 dark:border-indigo-700/45',
+              : 'bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border-indigo-200/85 dark:border-indigo-700/45',
           iconClass:
             totalQueueCount > 0
               ? 'text-amber-700 dark:text-amber-300'
@@ -349,7 +349,7 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: ShieldCheck,
           boxClass:
-            'bg-gradient-to-b from-indigo-50/90 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border-indigo-200/85 dark:border-indigo-700/45',
+            'bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border-indigo-200/85 dark:border-indigo-700/45',
           iconClass: 'text-indigo-700 dark:text-indigo-300',
         },
         onClick: () => onNavigate('my-amanah'),

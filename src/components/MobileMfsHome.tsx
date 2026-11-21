@@ -924,7 +924,7 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-9 h-9 rounded-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-indigo-50/90 via-slate-50 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border border-indigo-200/85 dark:border-indigo-700/45 flex items-center justify-center shrink-0">
+              <span className="w-9 h-9 rounded-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border border-indigo-200/85 dark:border-indigo-700/45 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-[17px] h-[17px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
             </div>
@@ -1323,7 +1323,7 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-[12px] border border-indigo-200/85 dark:border-indigo-700/45 bg-gradient-to-b from-indigo-50 to-indigo-100/75 dark:from-indigo-950/75 dark:to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+              <span className="w-10 h-10 rounded-[12px] border border-indigo-200/85 dark:border-indigo-700/45 bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                 <Vote className="w-[18px] h-[18px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">

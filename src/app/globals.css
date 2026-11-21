@@ -587,8 +587,8 @@ html.dark .amanah-panel {
 html.dark .mfs-tile .mfs-tile-icon-box,
 html.dark .mfs-tile-compact .mfs-tile-icon-box {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.11),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.32),
     0 5px 12px -5px rgba(0, 0, 0, 0.55);
 }
 

@@ -2635,7 +2635,7 @@ export function DashboardShell() {
                 <span
                   className={`relative inline-flex items-center justify-center px-3 py-1 rounded-xl border transition-all duration-150 ${
                     tab.active
-                      ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/75 dark:to-emerald-900/45 border-emerald-200/80 dark:border-emerald-700/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-2px_rgba(5,150,105,0.18)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                      ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/90 dark:to-emerald-900/55 border-emerald-200/80 dark:border-emerald-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-2px_rgba(5,150,105,0.18)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
                       : 'border-transparent'
                   }`}
                 >
