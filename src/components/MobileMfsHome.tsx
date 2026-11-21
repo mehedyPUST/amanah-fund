@@ -3,21 +3,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  AlertTriangle,
   ArrowRight,
-  Banknote,
-  CalendarCheck,
-  CheckCircle2,
   ChevronDown,
   ChevronRight,
-  Clock,
-  HandCoins,
-  Landmark,
-  ShieldCheck,
-  SlidersHorizontal,
-  UserRoundCheck,
-  UsersRound,
-  Vote,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -48,12 +36,27 @@ import {
   MOBILE_MEMBER_TILE_ICONS,
   MobileOverviewIconEditor,
 } from './MobileOverviewIconCustomizer.tsx';
+import {
+  AboutSecurityIcon,
+  ActiveBorrowersIcon,
+  AlertNoticeIcon,
+  ClockQueueIcon,
+  ContributionIcon,
+  MemberRegistryIcon,
+  MembersIcon,
+  MonthlyPulseIcon,
+  QardHasanIcon,
+  SiteSettingsIcon,
+  VerifiedCheckIcon,
+  VotingIcon,
+  type TileIconComponent,
+} from './MobileTileIcons.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export interface MfsIconTile {
   id: string;
   label: string;
-  Icon: typeof Banknote;
+  Icon: TileIconComponent;
   iconBgClass: string;
   iconColorClass: string;
   badge?: number;
@@ -210,8 +213,8 @@ function MfsGridTileButton({
       whileTap={{ scale: 0.94, y: 1.5 }}
       transition={MFS_TAP_SPRING}
       className={`group relative ${
-        compact ? 'mfs-tile-compact gap-1.5 rounded-xl' : 'mfs-tile gap-2 rounded-xl'
-      } border ring-1 ring-inset ring-white/90 dark:ring-white/[0.04] shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_16px_-8px_rgba(0,0,0,0.48)] hover:shadow-[0_6px_16px_-8px_rgba(15,23,42,0.13)] flex flex-col items-center justify-center transition-all cursor-pointer ${TILE_SURFACE_CLASS}`}
+        compact ? 'mfs-tile-compact gap-1.5 rounded-2xl' : 'mfs-tile gap-2 rounded-2xl'
+      } border ring-1 ring-inset ring-white/95 dark:ring-white/[0.05] shadow-[0_3px_12px_-6px_rgba(15,23,42,0.09)] dark:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.52)] hover:shadow-[0_8px_18px_-8px_rgba(15,23,42,0.14)] flex flex-col items-center justify-center transition-all cursor-pointer ${TILE_SURFACE_CLASS}`}
     >
       {typeof tile.badge === 'number' && tile.badge > 0 && (
         <span className="absolute top-1.5 right-1.5 z-10 flex items-center justify-center">
@@ -732,8 +735,8 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-lg border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                  <UserRoundCheck className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
+                <span className="w-9 h-9 rounded-xl border border-amber-200/90 dark:border-amber-600/45 bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/80 dark:to-amber-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                  <MemberRegistryIcon className="w-[18px] h-[18px] text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-200 truncate">
@@ -759,8 +762,8 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-lg border border-red-200/90 dark:border-red-800/50 bg-gradient-to-b from-red-50 to-red-100/85 dark:from-red-950/75 dark:to-red-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" strokeWidth={1.75} />
+                <span className="w-9 h-9 rounded-xl border border-red-200/90 dark:border-red-700/50 bg-gradient-to-br from-rose-50 to-red-100/90 dark:from-red-950/80 dark:to-red-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                  <AlertNoticeIcon className="w-[18px] h-[18px] text-red-600 dark:text-red-400" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-red-900 dark:text-red-200 truncate">
@@ -784,8 +787,8 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-lg border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
+                <span className="w-9 h-9 rounded-xl border border-amber-200/90 dark:border-amber-600/45 bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/80 dark:to-amber-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                  <VerifiedCheckIcon className="w-[18px] h-[18px] text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-200 truncate">
@@ -805,7 +808,7 @@ export function MobileMfsHome({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
-                    <HandCoins className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400 shrink-0" />
+                    <QardHasanIcon className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
                     <span className="font-mono">{loanProgress.loan.id}</span>
                     <span aria-hidden="true">·</span>
                     <span className="font-mono tabular-nums">
@@ -896,8 +899,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('fundHeight')}
               </span>
-              <span className="w-9 h-9 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border border-emerald-200/90 dark:border-emerald-700/50 flex items-center justify-center shrink-0">
-                <Landmark className="w-[17px] h-[17px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_5px_12px_-4px_rgba(0,0,0,0.5)] bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/45 border border-emerald-200/90 dark:border-emerald-600/45 flex items-center justify-center shrink-0">
+                <ActiveBorrowersIcon className="w-[19px] h-[19px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
             </div>
             <div>
@@ -918,14 +921,14 @@ export function MobileMfsHome({
             onClick={() => onNavigate('transaction-history')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-9 h-9 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border border-indigo-200/85 dark:border-indigo-700/45 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-[17px] h-[17px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_5px_12px_-4px_rgba(0,0,0,0.5)] bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:to-slate-900/90 border border-indigo-200/90 dark:border-indigo-600/45 flex items-center justify-center shrink-0">
+                <AboutSecurityIcon className="w-[19px] h-[19px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
             </div>
             <div>
@@ -951,9 +954,9 @@ export function MobileMfsHome({
             onClick={openCustomizeSheet}
             aria-label={tDash('mobile.customizeIconsAria')}
             title={tDash('mobile.customizeIconsAria')}
-            className="w-9 h-9 rounded-lg border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.08)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.4)] shrink-0"
+            className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.08)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.4)] shrink-0"
           >
-            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.8} aria-hidden="true" />
+            <SiteSettingsIcon className="w-[17px] h-[17px]" strokeWidth={1.8} aria-hidden="true" />
           </button>
         </div>
 
@@ -1073,16 +1076,16 @@ export function MobileMfsHome({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`w-10 h-10 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${
+                    className={`w-10 h-10 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_8px_-4px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.48)] flex items-center justify-center shrink-0 ${
                       item.kind === 'contribution'
-                        ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300'
-                        : 'bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45 text-amber-700 dark:text-amber-300'
+                        ? 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/85 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-600/45 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45 text-amber-700 dark:text-amber-300'
                     }`}
                   >
                     {item.kind === 'contribution' ? (
-                      <Banknote className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
+                      <ContributionIcon className="w-[19px] h-[19px]" strokeWidth={1.75} aria-hidden="true" />
                     ) : (
-                      <HandCoins className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
+                      <QardHasanIcon className="w-[19px] h-[19px]" strokeWidth={1.75} aria-hidden="true" />
                     )}
                   </span>
                   <div className="min-w-0">
@@ -1137,7 +1140,7 @@ export function MobileMfsHome({
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
               <span>{tDash('sheets.thisMonthContribution')}</span>
-              <CalendarCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <MonthlyPulseIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {formatMoney(treasury.thisMonthContributionCollected, ccy)}{' '}
@@ -1190,7 +1193,7 @@ export function MobileMfsHome({
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
               <span>{tDash('sheets.thisMonthClearance')}</span>
-              <UsersRound className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.75} />
+              <MembersIcon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" strokeWidth={1.75} />
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.thisMonthClearanceClearedMembers}{' '}
@@ -1288,8 +1291,8 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-lg border border-amber-200/90 dark:border-amber-700/45 bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                <Clock className="w-[18px] h-[18px] text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl border border-amber-200/90 dark:border-amber-600/45 bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                <ClockQueueIcon className="w-[19px] h-[19px] text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1323,8 +1326,8 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-lg border border-indigo-200/85 dark:border-indigo-700/45 bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                <Vote className="w-[18px] h-[18px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl border border-indigo-200/90 dark:border-indigo-600/45 bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                <VotingIcon className="w-[19px] h-[19px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1360,8 +1363,8 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-lg border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                <Banknote className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl border border-emerald-200/90 dark:border-emerald-600/45 bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                <ContributionIcon className="w-[19px] h-[19px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1394,8 +1397,8 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-teal-200/80 dark:border-teal-900/60 bg-teal-50/60 dark:bg-teal-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-lg border border-teal-200/90 dark:border-teal-700/50 bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-[18px] h-[18px] text-teal-700 dark:text-teal-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl border border-teal-200/90 dark:border-teal-600/45 bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/95 dark:from-teal-950/90 dark:to-teal-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                <AboutSecurityIcon className="w-[19px] h-[19px] text-teal-700 dark:text-teal-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1435,8 +1438,8 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-lg border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
+              <span className="w-10 h-10 rounded-xl border border-emerald-200/90 dark:border-emerald-600/45 bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)] flex items-center justify-center shrink-0">
+                <VerifiedCheckIcon className="w-[19px] h-[19px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
@@ -1573,7 +1576,7 @@ export function MobileMfsHome({
             role="alert"
             className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/35 px-3 py-2.5 text-xs text-red-800 dark:text-red-200 flex items-center gap-2"
           >
-            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <AlertNoticeIcon className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>{iconsError}</span>
           </div>
         )}

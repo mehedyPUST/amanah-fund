@@ -47,27 +47,35 @@ export interface MobileMemberTileMeta {
 }
 
 const MEDALLION_EMERALD_BG =
-  'bg-gradient-to-b from-emerald-50 to-emerald-100/85 dark:from-emerald-950/90 dark:to-emerald-900/50 border-emerald-200/90 dark:border-emerald-700/45';
+  'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/95 dark:via-emerald-900/65 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-600/45';
 const MEDALLION_EMERALD_ICON = 'text-emerald-700 dark:text-emerald-300';
 
 const MEDALLION_TEAL_BG =
-  'bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/90 dark:to-teal-900/50 border-teal-200/90 dark:border-teal-700/45';
+  'bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/95 dark:from-teal-950/95 dark:via-teal-900/65 dark:to-cyan-950/55 border-teal-200/90 dark:border-teal-600/45';
 const MEDALLION_TEAL_ICON = 'text-teal-700 dark:text-teal-300';
 
 const MEDALLION_GOLD_BG =
-  'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-700/40';
+  'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/90 dark:via-amber-900/60 dark:to-orange-950/45 border-amber-200/90 dark:border-amber-600/45';
 const MEDALLION_GOLD_ICON = 'text-amber-700 dark:text-amber-300';
 
 const MEDALLION_SAPPHIRE_BG =
-  'bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border-indigo-200/85 dark:border-indigo-700/45';
+  'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:via-indigo-900/60 dark:to-slate-900/90 border-indigo-200/90 dark:border-indigo-600/45';
 const MEDALLION_SAPPHIRE_ICON = 'text-indigo-700 dark:text-indigo-300';
 
+const MEDALLION_VIOLET_BG =
+  'bg-gradient-to-br from-violet-50 via-purple-50/75 to-indigo-100/85 dark:from-violet-950/90 dark:via-violet-900/55 dark:to-slate-900/90 border-violet-200/90 dark:border-violet-600/45';
+const MEDALLION_VIOLET_ICON = 'text-violet-700 dark:text-violet-300';
+
+const MEDALLION_SKY_BG =
+  'bg-gradient-to-br from-sky-50 via-cyan-50/80 to-blue-100/85 dark:from-sky-950/90 dark:via-sky-900/60 dark:to-slate-900/90 border-sky-200/90 dark:border-sky-600/45';
+const MEDALLION_SKY_ICON = 'text-sky-700 dark:text-sky-300';
+
 const MEDALLION_SLATE_BG =
-  'bg-gradient-to-b from-slate-50 to-slate-100/95 dark:from-slate-800/95 dark:to-slate-900/95 border-slate-200/95 dark:border-slate-700/60';
+  'bg-gradient-to-br from-slate-50 via-white to-slate-200/75 dark:from-slate-800/95 dark:via-slate-800/80 dark:to-slate-900/95 border-slate-200/95 dark:border-slate-600/55';
 const MEDALLION_SLATE_ICON = 'text-slate-700 dark:text-slate-200';
 
 const MEDALLION_CRIMSON_BG =
-  'bg-gradient-to-b from-rose-50 to-rose-100/80 dark:from-rose-950/85 dark:to-rose-900/45 border-rose-200/90 dark:border-rose-700/40';
+  'bg-gradient-to-br from-rose-50 via-rose-50/90 to-rose-100/90 dark:from-rose-950/90 dark:via-rose-900/60 dark:to-rose-950/45 border-rose-200/90 dark:border-rose-600/45';
 const MEDALLION_CRIMSON_ICON = 'text-rose-700 dark:text-rose-300';
 
 export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
@@ -108,8 +116,8 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'community',
     navKey: 'community',
-    iconBgClass: MEDALLION_SAPPHIRE_BG,
-    iconColorClass: MEDALLION_SAPPHIRE_ICON,
+    iconBgClass: MEDALLION_SKY_BG,
+    iconColorClass: MEDALLION_SKY_ICON,
   },
   {
     id: 'balance-sheet',
@@ -120,8 +128,8 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'transaction-history',
     navKey: 'transactions',
-    iconBgClass: MEDALLION_SLATE_BG,
-    iconColorClass: MEDALLION_SLATE_ICON,
+    iconBgClass: MEDALLION_VIOLET_BG,
+    iconColorClass: MEDALLION_VIOLET_ICON,
   },
   {
     id: 'statistics',
@@ -162,8 +170,8 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'charter',
     navKey: 'charter',
-    iconBgClass: MEDALLION_SLATE_BG,
-    iconColorClass: MEDALLION_SLATE_ICON,
+    iconBgClass: MEDALLION_VIOLET_BG,
+    iconColorClass: MEDALLION_VIOLET_ICON,
   },
   {
     id: 'how-it-works',
@@ -174,8 +182,8 @@ export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'about',
     navKey: 'about',
-    iconBgClass: MEDALLION_SLATE_BG,
-    iconColorClass: MEDALLION_SLATE_ICON,
+    iconBgClass: MEDALLION_SKY_BG,
+    iconColorClass: MEDALLION_SKY_ICON,
   },
   {
     id: 'faq',

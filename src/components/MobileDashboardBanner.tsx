@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
-  Banknote,
-  BriefcaseBusiness,
-  ChevronLeft,
-  ChevronRight,
-  HandCoins,
-  Landmark,
-  ShieldCheck,
-  Vote,
-} from 'lucide-react';
+  AboutSecurityIcon,
+  ActiveBorrowersIcon,
+  ContributionIcon,
+  ManagerDeskIcon,
+  QardHasanIcon,
+  VotingIcon,
+  type TileIconComponent,
+} from './MobileTileIcons.tsx';
 import { motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import type {
@@ -40,7 +40,7 @@ interface BannerSlide {
     | { kind: 'brand' }
     | { kind: 'investment' }
     | { kind: 'ring'; pct: number; strokeClass: string; textClass: string }
-    | { kind: 'icon'; Icon: typeof Vote; boxClass: string; iconClass: string };
+    | { kind: 'icon'; Icon: TileIconComponent; boxClass: string; iconClass: string };
   onClick: () => void;
 }
 
@@ -279,11 +279,11 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: BriefcaseBusiness,
+          Icon: ManagerDeskIcon,
           boxClass:
             totalQueueCount > 0
-              ? 'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45'
-              : 'bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border-indigo-200/85 dark:border-indigo-700/45',
+              ? 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45'
+              : 'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:to-slate-900/90 border-indigo-200/90 dark:border-indigo-600/45',
           iconClass:
             totalQueueCount > 0
               ? 'text-amber-700 dark:text-amber-300'
@@ -307,9 +307,9 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: Banknote,
+          Icon: ContributionIcon,
           boxClass:
-            'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45',
+            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45',
           iconClass: 'text-amber-700 dark:text-amber-300',
         },
         onClick: () => onNavigate('monthly-contribution'),
@@ -347,9 +347,9 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: ShieldCheck,
+          Icon: AboutSecurityIcon,
           boxClass:
-            'bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border-indigo-200/85 dark:border-indigo-700/45',
+            'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:to-slate-900/90 border-indigo-200/90 dark:border-indigo-600/45',
           iconClass: 'text-indigo-700 dark:text-indigo-300',
         },
         onClick: () => onNavigate('my-amanah'),
@@ -370,9 +370,9 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: Vote,
+          Icon: VotingIcon,
           boxClass:
-            'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45',
+            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45',
           iconClass: 'text-amber-700 dark:text-amber-300',
         },
         onClick: () => onNavigate('ballot'),
@@ -391,9 +391,9 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: Landmark,
+          Icon: ActiveBorrowersIcon,
           boxClass:
-            'bg-gradient-to-b from-emerald-50 to-emerald-100/85 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50',
+            'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-600/45',
           iconClass: 'text-emerald-700 dark:text-emerald-300',
         },
         onClick: () =>
@@ -622,8 +622,8 @@ export function MobileDashboardBanner({
                           />
                         </div>
                       ) : (
-                        <span className="w-12 h-12 rounded-lg border bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0">
-                          <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" strokeWidth={1.75} aria-hidden="true" />
+                        <span className="w-12 h-12 rounded-2xl border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-teal-950/85 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-600/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_5px_12px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                          <QardHasanIcon className="w-5 h-5 text-teal-700 dark:text-teal-300" strokeWidth={1.75} aria-hidden="true" />
                         </span>
                       ))}
 
@@ -637,10 +637,10 @@ export function MobileDashboardBanner({
 
                     {slide.visual.kind === 'icon' && (
                       <span
-                        className={`w-12 h-12 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
+                        className={`w-12 h-12 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_5px_12px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
                       >
                         <slide.visual.Icon
-                          className={`w-5 h-5 ${slide.visual.iconClass}`}
+                          className={`w-[22px] h-[22px] ${slide.visual.iconClass}`}
                           strokeWidth={1.75}
                           aria-hidden="true"
                         />

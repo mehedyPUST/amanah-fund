@@ -54,6 +54,13 @@ import { MemberPublicProfileView } from './MemberPublicProfileView.tsx';
 import { MemberRegistrySection } from './MemberRegistrySection.tsx';
 import { BalanceSheetView } from './BalanceSheetView.tsx';
 import { MobileMfsHome } from './MobileMfsHome.tsx';
+import {
+  CommunityIcon,
+  HomeTabIcon,
+  MyAmanahIcon,
+  NotificationBellIcon,
+  TransactionHistoryIcon,
+} from './MobileTileIcons.tsx';
 import { MyAmanahView } from './MyAmanahView.tsx';
 import {
   NotificationBlinkMarker,
@@ -2573,7 +2580,7 @@ export function DashboardShell() {
               {
                 id: 'overview',
                 label: tNav('overview'),
-                Icon: Home,
+                Icon: HomeTabIcon,
                 target: 'fund-overview' as DashboardSectionId,
                 active: activeSection === 'fund-overview',
                 badge: 0,
@@ -2583,7 +2590,7 @@ export function DashboardShell() {
                 ? {
                     id: 'my-amanah',
                     label: tNav('myAmanah'),
-                    Icon: WalletCards,
+                    Icon: MyAmanahIcon,
                     target: 'my-amanah' as DashboardSectionId,
                     active: activeSection === 'my-amanah',
                     badge: 0,
@@ -2592,7 +2599,7 @@ export function DashboardShell() {
                 : {
                     id: 'transactions',
                     label: tNav('transactions'),
-                    Icon: ReceiptText,
+                    Icon: TransactionHistoryIcon,
                     target: 'transaction-history' as DashboardSectionId,
                     active: activeSection === 'transaction-history',
                     badge: 0,
@@ -2601,7 +2608,7 @@ export function DashboardShell() {
               {
                 id: 'community',
                 label: tNav('community'),
-                Icon: MessagesSquare,
+                Icon: CommunityIcon,
                 target: 'community' as DashboardSectionId,
                 active: activeSection === 'community',
                 badge: pendingBadgeCount('community'),
@@ -2610,7 +2617,7 @@ export function DashboardShell() {
               {
                 id: 'notification',
                 label: tNav('notifications'),
-                Icon: BellRing,
+                Icon: NotificationBellIcon,
                 target: 'notification' as DashboardSectionId,
                 active: activeSection === 'notification',
                 badge: pendingBadgeCount('notification'),
@@ -2633,15 +2640,15 @@ export function DashboardShell() {
                 }`}
               >
                 <span
-                  className={`relative inline-flex items-center justify-center px-3 py-1 rounded-xl border transition-all duration-150 ${
+                  className={`relative inline-flex items-center justify-center px-3.5 py-1 rounded-2xl border transition-all duration-150 ${
                     tab.active
-                      ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/90 dark:to-emerald-900/55 border-emerald-200/80 dark:border-emerald-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-2px_rgba(5,150,105,0.18)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                      ? 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/55 border-emerald-200/85 dark:border-emerald-600/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_8px_-3px_rgba(5,150,105,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
                       : 'border-transparent'
                   }`}
                 >
                   <Icon
-                    strokeWidth={tab.active ? 2 : 1.7}
-                    className="w-[19px] h-[19px]"
+                    strokeWidth={tab.active ? 1.9 : 1.7}
+                    className="w-[20px] h-[20px]"
                     aria-hidden="true"
                   />
                   {tab.badge > 0 && (

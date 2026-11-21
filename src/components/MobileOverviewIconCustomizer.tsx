@@ -2,41 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import {
-  Activity,
   ArrowDownUp,
-  BadgeCheck,
-  Banknote,
-  BellRing,
-  BookOpenCheck,
-  BriefcaseBusiness,
-  CalendarCheck,
-  CalendarClock,
-  CalendarRange,
-  ChartColumn,
   ChevronDown,
   ChevronUp,
-  ClipboardList,
-  Compass,
   EyeOff,
-  FilePlus2,
-  FileSpreadsheet,
-  Globe,
-  HandCoins,
-  Landmark,
-  ListChecks,
-  MessagesSquare,
   Plus,
-  ReceiptText,
   RotateCcw,
-  ScrollText,
   Search,
-  Settings2,
-  ShieldCheck,
-  UserRound,
-  UserRoundCheck,
-  UsersRound,
-  Vote,
-  WalletCards,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -48,36 +20,67 @@ import {
   MOBILE_MEMBER_TILE_CATALOG,
   type MobileMemberTileMeta,
 } from '../utils/mobileOverviewTiles.ts';
+import {
+  AboutSecurityIcon,
+  ActiveBorrowersIcon,
+  ApprovalQueuesIcon,
+  BalanceSheetIcon,
+  CharterIcon,
+  CommunityIcon,
+  ContributionIcon,
+  FaqIcon,
+  HowItWorksIcon,
+  ManagerContributionsIcon,
+  ManagerCycleIcon,
+  ManagerDeskIcon,
+  ManagerInstallmentsIcon,
+  ManagerLoansIcon,
+  MemberRegistryIcon,
+  MembersIcon,
+  MonthlyPulseIcon,
+  MyAmanahIcon,
+  NotificationBellIcon,
+  ProfileIcon,
+  PublicWebsiteIcon,
+  QardHasanIcon,
+  RequestLoanIcon,
+  SiteActivityIcon,
+  SiteSettingsIcon,
+  StatisticsIcon,
+  TransactionHistoryIcon,
+  VotingIcon,
+  type TileIconComponent,
+} from './MobileTileIcons.tsx';
 
-export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, typeof Banknote> = {
-  'pay-monthly-contribution': Banknote,
-  'quard-hasan': HandCoins,
-  'request-loan': FilePlus2,
-  'my-amanah': WalletCards,
-  members: UsersRound,
-  community: MessagesSquare,
-  'balance-sheet': FileSpreadsheet,
-  'transaction-history': ReceiptText,
-  statistics: ChartColumn,
-  'manager-cycle': CalendarRange,
-  voting: Vote,
-  'monthly-pulse': CalendarCheck,
-  'active-borrowers': Landmark,
-  'approval-queues': ListChecks,
-  charter: ScrollText,
-  'how-it-works': Compass,
-  about: ShieldCheck,
-  faq: BookOpenCheck,
-  'public-website': Globe,
-  notification: BellRing,
-  'my-profile': UserRound,
-  'manager-desk': BriefcaseBusiness,
-  'member-registry': UserRoundCheck,
-  'manager-contributions': BadgeCheck,
-  'manager-loans': ClipboardList,
-  'manager-installments': CalendarClock,
-  'site-settings': Settings2,
-  'site-activity': Activity,
+export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, TileIconComponent> = {
+  'pay-monthly-contribution': ContributionIcon,
+  'quard-hasan': QardHasanIcon,
+  'request-loan': RequestLoanIcon,
+  'my-amanah': MyAmanahIcon,
+  members: MembersIcon,
+  community: CommunityIcon,
+  'balance-sheet': BalanceSheetIcon,
+  'transaction-history': TransactionHistoryIcon,
+  statistics: StatisticsIcon,
+  'manager-cycle': ManagerCycleIcon,
+  voting: VotingIcon,
+  'monthly-pulse': MonthlyPulseIcon,
+  'active-borrowers': ActiveBorrowersIcon,
+  'approval-queues': ApprovalQueuesIcon,
+  charter: CharterIcon,
+  'how-it-works': HowItWorksIcon,
+  about: AboutSecurityIcon,
+  faq: FaqIcon,
+  'public-website': PublicWebsiteIcon,
+  notification: NotificationBellIcon,
+  'my-profile': ProfileIcon,
+  'manager-desk': ManagerDeskIcon,
+  'member-registry': MemberRegistryIcon,
+  'manager-contributions': ManagerContributionsIcon,
+  'manager-loans': ManagerLoansIcon,
+  'manager-installments': ManagerInstallmentsIcon,
+  'site-settings': SiteSettingsIcon,
+  'site-activity': SiteActivityIcon,
 };
 
 const PREVIEW_SURFACE_CLASS =
@@ -218,7 +221,7 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-9 h-9 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.48)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
             <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.75} aria-hidden="true" />
           </span>
@@ -294,7 +297,7 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-9 h-9 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.48)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
             <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.75} aria-hidden="true" />
           </span>
@@ -387,7 +390,7 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-9 h-9 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.48)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
             <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.75} aria-hidden="true" />
           </span>
@@ -482,10 +485,10 @@ export function MobileOverviewIconEditor({
                     className={`aspect-[5/6] rounded-[10px] border px-1 py-1.5 flex flex-col items-center justify-center gap-1.5 text-center shadow-[0_2px_8px_-5px_rgba(15,23,42,0.1)] dark:shadow-[0_4px_12px_-6px_rgba(0,0,0,0.45)] ${PREVIEW_SURFACE_CLASS}`}
                   >
                     <span
-                      className={`w-8 h-8 rounded-[6px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_5px_-3px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_3px_8px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+                      className={`w-8 h-8 rounded-[10px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_2px_6px_-3px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_3px_8px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
                     >
                       <Icon
-                        className={`w-4 h-4 shrink-0 ${meta.iconColorClass}`}
+                        className={`w-[17px] h-[17px] shrink-0 ${meta.iconColorClass}`}
                         strokeWidth={1.75}
                         aria-hidden="true"
                       />
