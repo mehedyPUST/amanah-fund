@@ -32,6 +32,7 @@ import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ProviderSelect } from './ProviderSelect.tsx';
 import { RepaymentSchedule } from './RepaymentSchedule.tsx';
 import { StatusText } from './StatusText.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 interface LoansViewProps {
   loans: LoanRequest[];
@@ -82,6 +83,7 @@ export function LoansView({
 }: LoansViewProps) {
   const t = useTranslations('Loans');
   const tCommon = useTranslations('Common');
+  const toast = useToast();
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
@@ -173,17 +175,12 @@ export function LoansView({
         setRepayProvider(matched);
         if (ext.referenceId) setRepayRef(ext.referenceId);
         if (ext.senderAccount) setRepayAccount(ext.senderAccount);
-        showNotice(
-          'emerald',
+        toast.success(
           t('slipScannedTitle'),
           t('slipScannedDesc', { confidence: ext.confidence, summary: ext.summary })
         );
       } else if (uploadRes.status === 'fulfilled') {
-        showNotice(
-          'slate',
-          t('receiptAttachedTitle'),
-          t('receiptAttachedDesc')
-        );
+        toast.info(t('receiptAttachedTitle'), t('receiptAttachedDesc'));
       } else {
         showNotice(
           'red',
@@ -234,12 +231,9 @@ export function LoansView({
         setRepayAccount('');
         setRepayRef('');
         setRepayReceiptUrl('');
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'emerald',
-          t('repaymentSubmittedTitle'),
-          t('repaymentSubmittedDesc')
-        );
+        toast.success(t('repaymentSubmittedTitle'), t('repaymentSubmittedDesc'));
       },
     });
   }
@@ -264,14 +258,13 @@ export function LoansView({
       confirmLabel: decision === 'accept' ? t('confirmCoSignBtn') : t('confirmDeclineBtn'),
       run: async () => {
         await api.respondAsGuarantor(loan.id, decision);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          decision === 'accept' ? 'emerald' : 'amber',
-          decision === 'accept' ? t('pledgeCoSignedTitle') : t('pledgeDeclinedTitle'),
-          decision === 'accept'
-            ? t('pledgeCoSignedDesc', { id: loan.id })
-            : t('pledgeDeclinedDesc', { id: loan.id })
-        );
+        if (decision === 'accept') {
+          toast.success(t('pledgeCoSignedTitle'), t('pledgeCoSignedDesc', { id: loan.id }));
+        } else {
+          toast.warning(t('pledgeDeclinedTitle'), t('pledgeDeclinedDesc', { id: loan.id }));
+        }
       },
     });
   }
@@ -307,9 +300,9 @@ export function LoansView({
         });
         setRescheduleOpen(false);
         setRescheduleReason('');
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'emerald',
+        toast.success(
           t('rescheduleSubmittedTitle'),
           t('rescheduleSubmittedDesc', { id: loanId })
         );
@@ -332,14 +325,19 @@ export function LoansView({
       confirmLabel: decision === 'approve' ? t('approveRescheduleBtn') : t('declineRescheduleBtn'),
       run: async () => {
         await api.reviewLoanReschedule(loanId, decision);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          decision === 'approve' ? 'emerald' : 'amber',
-          decision === 'approve' ? t('rescheduleApprovedTitle') : t('rescheduleDeclinedTitle'),
-          decision === 'approve'
-            ? t('rescheduleApprovedDesc', { id: loanId })
-            : t('rescheduleDeclinedDesc', { id: loanId })
-        );
+        if (decision === 'approve') {
+          toast.success(
+            t('rescheduleApprovedTitle'),
+            t('rescheduleApprovedDesc', { id: loanId })
+          );
+        } else {
+          toast.warning(
+            t('rescheduleDeclinedTitle'),
+            t('rescheduleDeclinedDesc', { id: loanId })
+          );
+        }
       },
     });
   }
@@ -366,9 +364,9 @@ export function LoansView({
         confirmLabel: t('acceptCreditBtn'),
         run: async () => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'approve');
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             t('instVerifiedTitle', { num: installmentNumber }),
             t('instVerifiedDesc', { num: installmentNumber, txNo })
           );
@@ -391,9 +389,9 @@ export function LoansView({
         confirmLabel: t('denySendNoteBtn'),
         run: async (note) => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'reject', note);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'amber',
+          toast.warning(
             t('instDeniedTitle', { num: installmentNumber }),
             t('instDeniedDesc', { num: installmentNumber, name: loan.borrowerName })
           );
@@ -419,9 +417,9 @@ export function LoansView({
       confirmLabel: decision === 'upvote' ? t('castSecretUpvote') : t('castSecretDownvote'),
       run: async () => {
         await api.voteLoan(loan.id, decision);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'emerald',
+        toast.success(
           t('ballotRecordedTitle'),
           decision === 'upvote'
             ? t('ballotRecordedUpvote', { id: loan.id })
@@ -742,13 +740,12 @@ export function LoansView({
                               if (optimisticLoan?.id === loanId) {
                                 setOptimisticLoan(null);
                               }
+                              setModal(null);
                               await onRefresh();
-                              setModal({
-                                mode: 'notice',
-                                tone: 'emerald',
-                                title: t('withdrawnTitle'),
-                                description: t('withdrawnDesc', { id: loanId }),
-                              });
+                              toast.success(
+                                t('withdrawnTitle'),
+                                t('withdrawnDesc', { id: loanId })
+                              );
                             },
                           });
                         }}

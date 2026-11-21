@@ -78,6 +78,7 @@
     "dashboardMenuAria": "Mobile dashboard menu",
     "closeItem": "Close {title}",
     "loadingAppAria": "Loading Amanah",
+    "notificationsRegionAria": "Notifications",
     "loadingHeroSubtitle": "Qard Hasan & Halal Cooperative Treasury",
     "loadingWorkspace": "Loading encrypted workspace…",
     "autoLogoutNotice": "Signed out automatically after 1 minute in the background.",
@@ -1071,7 +1072,9 @@
       "savingIcons": "Saving…",
       "saveIconsBtn": "Save Layout",
       "resetDefaultIcons": "Use Default Layout",
-      "saveIconsError": "Unable to save mobile dashboard icon layout."
+      "saveIconsError": "Unable to save mobile dashboard icon layout.",
+      "saveIconsSuccess": "Mobile shortcuts updated",
+      "resetIconsSuccess": "Restored default mobile shortcuts"
     },
     "overviewView": {
       "pendingCountBadge": "{count} Pending",

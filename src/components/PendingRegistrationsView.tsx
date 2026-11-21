@@ -30,6 +30,7 @@ import { formatDateTime, isPdfFileUrl } from '../utils/format.ts';
 
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 type RegModalState =
   | {
@@ -63,6 +64,7 @@ interface PendingRegistrationsViewProps {
 export function PendingRegistrationsView({ user, onRefresh }: PendingRegistrationsViewProps) {
   const locale = useLocale() as AppLocale;
   const t = useTranslations('Admin.approving');
+  const toast = useToast();
   const tAdmin = useTranslations('Admin');
   const tCommon = useTranslations('Common');
   const isAdmin = user.role === 'admin';
@@ -284,9 +286,9 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
         try {
           await api.declinePendingMember(member.id);
           setRegistrations((prev) => prev.filter((item) => item.id !== member.id));
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'amber',
+          toast.warning(
             isAwaitingActivation ? t('unactivatedRemovedTitle') : t('regRejectedTitle'),
             t('removedAccountDesc', { name: member.name, code: member.memberCode })
           );

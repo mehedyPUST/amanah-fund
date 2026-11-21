@@ -59,6 +59,7 @@ import {
 } from '../utils/fcmClient.ts';
 import { installGlobalMobileHaptics, triggerHaptic } from '../utils/haptics.ts';
 import { OfflineIndicator } from './OfflineIndicator.tsx';
+import { ToastProvider } from './ToastProvider.tsx';
 
 
 const PWA_LAST_CHECK_KEY = 'amanah_pwa_last_update_check';
@@ -1125,8 +1126,10 @@ export function AppProviders({
               highlightColor={darkMode ? '#1A3C4B' : '#edf4f1'}
               borderRadius={8}
             >
-              {children}
-              <OfflineIndicator />
+              <ToastProvider>
+                {children}
+                <OfflineIndicator />
+              </ToastProvider>
               <AnimatePresence>
                 {pushToast && (
                   <motion.div

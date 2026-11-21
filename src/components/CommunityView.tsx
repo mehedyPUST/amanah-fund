@@ -65,6 +65,7 @@ import {
   CommunityPostLinksList,
   FormattedCommunityText,
 } from './CommunityTextWithLinks.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 interface CommunityViewProps {
   user: PublicUser;
@@ -199,6 +200,7 @@ export function CommunityView({
   const t = useTranslations('Community');
   const tCommon = useTranslations('Common');
   const locale = useLocale() as AppLocale;
+  const toast = useToast();
   const isAdmin = user.role === 'admin';
 
   // Community Feed State
@@ -1002,12 +1004,8 @@ export function CommunityView({
           setNewSpamCheckResult(null);
           setNewRewriteFeedback(null);
           setComposerOpen(false);
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('postPublishedTitle'),
-            description: t('postPublishedDesc'),
-          });
+          setModal(null);
+          toast.success(t('postPublishedTitle'), t('postPublishedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1128,12 +1126,8 @@ export function CommunityView({
           });
           setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
           setEditingPostId(null);
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('postUpdatedTitle'),
-            description: t('postUpdatedDesc'),
-          });
+          setModal(null);
+          toast.success(t('postUpdatedTitle'), t('postUpdatedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1175,12 +1169,8 @@ export function CommunityView({
         try {
           await api.deleteCommunityPost(post.id, reasonInput.trim() || undefined);
           setPosts((prev) => prev.filter((p) => p.id !== post.id));
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('postDeletedTitle'),
-            description: t('postDeletedDesc'),
-          });
+          setModal(null);
+          toast.success(t('postDeletedTitle'), t('postDeletedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1259,12 +1249,8 @@ export function CommunityView({
         try {
           const res = await api.deleteCommunityComment(postId, commentId);
           setPosts((prev) => prev.map((p) => (p.id === postId ? res.post : p)));
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('commentRemovedTitle'),
-            description: t('commentRemovedDesc'),
-          });
+          setModal(null);
+          toast.success(t('commentRemovedTitle'), t('commentRemovedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1305,12 +1291,11 @@ export function CommunityView({
               return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
             });
           });
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('moderationAppliedTitle'),
-            description: t('moderationAppliedDesc', { action: actionVerb }),
-          });
+          setModal(null);
+          toast.success(
+            t('moderationAppliedTitle'),
+            t('moderationAppliedDesc', { action: actionVerb })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1345,14 +1330,13 @@ export function CommunityView({
           await api.toggleCommunityMuteMember(authorId, !currentlyMuted);
           await loadPosts(true);
           await onRefreshWorkspace?.();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: currentlyMuted ? t('memberUnmutedTitle') : t('memberMutedTitle'),
-            description: !currentlyMuted
+          setModal(null);
+          toast.success(
+            currentlyMuted ? t('memberUnmutedTitle') : t('memberMutedTitle'),
+            !currentlyMuted
               ? t('memberMutedDesc', { name: authorName })
-              : t('memberUnmutedDesc', { name: authorName }),
-          });
+              : t('memberUnmutedDesc', { name: authorName })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',

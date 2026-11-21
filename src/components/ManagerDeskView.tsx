@@ -44,6 +44,7 @@ import { ManagerCollectionGoalChart } from './ManagerCollectionGoalChart.tsx';
 import { MemberAuditLogWidget } from './MemberAuditLogWidget.tsx';
 import { ProfileChangeDiffPreview } from './ProfileChangeDiffPreview.tsx';
 import { StatusText } from './StatusText.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 export type ManagerDeskTab =
   | 'contributions'
@@ -123,6 +124,7 @@ export function ManagerDeskView({
   const tCommon = useTranslations('Common');
   const tRoles = useTranslations('Common.roles');
   const tStatuses = useTranslations('Status');
+  const toast = useToast();
   const ccy = config?.currency || 'BDT';
   const roleLabel = (role: string) => (tRoles.has(role) ? tRoles(role) : role);
   const statusLabel = (status: string) =>
@@ -302,9 +304,9 @@ export function ManagerDeskView({
         confirmLabel: t('approveCreditBtn'),
         run: async (note) => {
           await api.reviewContribution(c.id, 'approved', note || undefined);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             t('contribApprovedTitle'),
             t('contribApprovedDesc', {
               amount: formatMoney(c.amount, ccy),
@@ -332,9 +334,9 @@ export function ManagerDeskView({
         confirmLabel: t('denyNotifyBtn'),
         run: async (note) => {
           await api.reviewContribution(c.id, 'rejected', note);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'amber',
+          toast.warning(
             t('contribDeniedTitle'),
             t('contribDeniedDesc', { name: c.memberName, code: c.memberCode })
           );
@@ -366,9 +368,9 @@ export function ManagerDeskView({
       run: async (hoursInput) => {
         const hours = Math.min(720, Math.max(1, Math.round(Number(hoursInput) || 48)));
         await api.initiateLoanVote(loan.id, { durationHours: hours });
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'emerald',
+        toast.success(
           t('votingOpenedTitle'),
           t('votingOpenedDesc', { id: loan.id, hours })
         );
@@ -393,9 +395,9 @@ export function ManagerDeskView({
       confirmLabel: t('declineRequestBtn'),
       run: async (note) => {
         await api.adminReviewLoan(loan.id, 'reject', note);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'amber',
+        toast.warning(
           t('loanDeclinedTitle'),
           t('loanDeclinedDesc', { id: loan.id, name: loan.borrowerName })
         );
@@ -432,9 +434,9 @@ export function ManagerDeskView({
       confirmLabel: t('confirmDisburseBtn'),
       run: async (txNo) => {
         await api.disburseLoan(loan.id, txNo ? { transactionNumber: txNo } : undefined);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'emerald',
+        toast.success(
           t('loanDisbursedTitle'),
           t('loanDisbursedDesc', {
             amount: formatMoney(loan.amount, ccy),
@@ -468,9 +470,9 @@ export function ManagerDeskView({
         confirmLabel: t('acceptRestoreBtn'),
         run: async () => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'approve');
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             t('instAcceptedTitle'),
             t('instAcceptedDesc', { num: installmentNumber, id: loan.id, txNo })
           );
@@ -493,9 +495,9 @@ export function ManagerDeskView({
         confirmLabel: t('denySendNoteBtn'),
         run: async (note) => {
           await api.verifyInstallmentRepayment(loan.id, installmentNumber, 'reject', note);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'amber',
+          toast.warning(
             t('instDeniedTitle'),
             t('instDeniedDesc', { name: loan.borrowerName, num: installmentNumber })
           );
@@ -557,8 +559,9 @@ export function ManagerDeskView({
         } else {
           await api.revealHalalProjectVote(id);
         }
+        setModal(null);
         await onRefresh();
-        showNotice('emerald', t('voteRevealedTitle'), t('voteRevealedDesc', { title }));
+        toast.success(t('voteRevealedTitle'), t('voteRevealedDesc', { title }));
       },
     });
   }
@@ -593,8 +596,9 @@ export function ManagerDeskView({
         setPollDesc('');
         setPollOptions([t('defaultOptionApprove'), t('defaultOptionDecline')]);
         setPollClosesAt('');
+        setModal(null);
         await onRefresh();
-        showNotice('emerald', t('pollOpenedTitle'), t('pollOpenedDesc'));
+        toast.success(t('pollOpenedTitle'), t('pollOpenedDesc'));
       },
     });
   }
@@ -623,8 +627,9 @@ export function ManagerDeskView({
         setMeetingWhen('');
         setMeetingWhere('');
         setMeetingAgenda('');
+        setModal(null);
         await onRefresh();
-        showNotice('emerald', t('meetingScheduledTitle'), t('meetingScheduledDesc'));
+        toast.success(t('meetingScheduledTitle'), t('meetingScheduledDesc'));
       },
     });
   }
@@ -674,12 +679,19 @@ export function ManagerDeskView({
       confirmLabel: status === 'completed' ? t('markCompletedBtn') : t('cancelMeetingBtn'),
       run: async () => {
         await api.updateMeetingStatus(m.id, status);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          status === 'completed' ? 'emerald' : 'amber',
-          t('meetingStatusUpdatedTitle'),
-          t('meetingStatusUpdatedDesc', { title: m.title, status: statusLabel(status) })
-        );
+        if (status === 'completed') {
+          toast.success(
+            t('meetingStatusUpdatedTitle'),
+            t('meetingStatusUpdatedDesc', { title: m.title, status: statusLabel(status) })
+          );
+        } else {
+          toast.warning(
+            t('meetingStatusUpdatedTitle'),
+            t('meetingStatusUpdatedDesc', { title: m.title, status: statusLabel(status) })
+          );
+        }
       },
     });
   }
@@ -696,9 +708,9 @@ export function ManagerDeskView({
         confirmLabel: t('approveProfileBtn'),
         run: async () => {
           await api.reviewProfileChangeRequest(req.id, 'approved');
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             t('profileApprovedTitle'),
             t('profileApprovedDesc', { name: req.memberName })
           );
@@ -719,9 +731,9 @@ export function ManagerDeskView({
         confirmLabel: t('declineRequestBtn'),
         run: async (note) => {
           await api.reviewProfileChangeRequest(req.id, 'rejected', note);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'amber',
+          toast.warning(
             t('profileDeclinedTitle'),
             t('profileDeclinedDesc', { name: req.memberName })
           );
@@ -1950,8 +1962,7 @@ export function ManagerDeskView({
                             await api.publishCommunityDraft(draft.id);
                             setCommunityDrafts((prev) => prev.filter((d) => d.id !== draft.id));
                             await onRefresh();
-                            showNotice(
-                              'emerald',
+                            toast.success(
                               t('draftPublishedTitle'),
                               t('draftPublishedDesc', { title: draft.title })
                             );
@@ -1976,7 +1987,7 @@ export function ManagerDeskView({
                           try {
                             await api.deleteCommunityPost(draft.id, 'Discarded draft');
                             setCommunityDrafts((prev) => prev.filter((d) => d.id !== draft.id));
-                            showNotice('slate', t('draftDiscardedTitle'), t('draftDiscardedDesc'));
+                            toast.info(t('draftDiscardedTitle'), t('draftDiscardedDesc'));
                           } catch (err) {
                             const msg =
                               err instanceof Error ? err.message : t('deleteDraftFailedDesc');
@@ -2057,7 +2068,7 @@ export function ManagerDeskView({
               });
               await onRefresh();
               setModal(null);
-              showNotice('emerald', t('postPublishedTitle'), t('postPublishedDesc'));
+              toast.success(t('postPublishedTitle'), t('postPublishedDesc'));
             } catch (err) {
               const msg = err instanceof Error ? err.message : t('postPublishFailedDesc');
               showNotice('red', t('couldNotPublishTitle'), msg);
@@ -2077,7 +2088,7 @@ export function ManagerDeskView({
               });
               await onRefresh();
               setModal(null);
-              showNotice('emerald', t('draftSavedTitle'), t('draftSavedDesc'));
+              toast.success(t('draftSavedTitle'), t('draftSavedDesc'));
             } catch (err) {
               const msg = err instanceof Error ? err.message : t('saveDraftFailedDesc');
               showNotice('red', t('couldNotSaveDraftTitle'), msg);

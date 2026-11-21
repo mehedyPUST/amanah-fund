@@ -31,6 +31,7 @@ import {
   formatShortDate,
 } from '../utils/format.ts';
 import { ProviderSelect } from './ProviderSelect.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 interface RequestQardHasanLoanFormProps {
   user: PublicUser;
@@ -69,6 +70,7 @@ export function RequestQardHasanLoanForm({
 }: RequestQardHasanLoanFormProps) {
   const t = useTranslations('Loans.form');
   const tLoans = useTranslations('Loans');
+  const toast = useToast();
   const ccy = config?.currency || 'BDT';
   const configMaxLoanAmount = config?.maxLoanAmount || 50000;
   const configMaxInstallmentMonths = config?.maxInstallmentMonths || 10;
@@ -363,6 +365,7 @@ export function RequestQardHasanLoanForm({
         message: t('submittedDesc'),
         loanId: created.id,
       });
+      toast.success(t('submittedTitle', { id: created.id }), t('submittedDesc'));
 
       try {
         await onSubmitted(created);
@@ -371,9 +374,9 @@ export function RequestQardHasanLoanForm({
       }
 
       // In the header modal variant, close the parent after a successful placement
-      // so the member lands on the refreshed Qard Hasan list.
+      // so the member lands on the refreshed Qard Hasan list while the toast remains visible.
       if (variant === 'modal' && onClose) {
-        window.setTimeout(() => onClose(), 1200);
+        window.setTimeout(() => onClose(), 220);
       }
     } catch (err) {
       showError(

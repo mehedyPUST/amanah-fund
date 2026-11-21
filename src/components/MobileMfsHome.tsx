@@ -57,6 +57,7 @@ import {
   type TileIconComponent,
 } from './MobileTileIcons.tsx';
 import { StatusText } from './StatusText.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 export interface MfsIconTile {
   id: string;
@@ -312,6 +313,7 @@ export function MobileMfsHome({
 }: MobileMfsHomeProps) {
   const router = useRouter();
   const { setUser } = useCoopSession();
+  const toast = useToast();
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const tDash = useTranslations('Dashboard');
@@ -542,8 +544,8 @@ export function MobileMfsHome({
     try {
       const res = await api.updatePreferences({ mobileOverviewIcons: iconDraft });
       setUser(res.user);
-      triggerHaptic('success');
       setActiveSheet(null);
+      toast.success(tDash('sheets.saveIconsSuccess'));
     } catch (err) {
       triggerHaptic('error');
       setIconsError(
@@ -566,8 +568,8 @@ export function MobileMfsHome({
       const res = await api.updatePreferences({ mobileOverviewIcons: null });
       setUser(res.user);
       setIconDraft(coopOrBuiltinDefaultIcons);
-      triggerHaptic('success');
       setActiveSheet(null);
+      toast.success(tDash('sheets.resetIconsSuccess'));
     } catch (err) {
       triggerHaptic('error');
       setIconsError(

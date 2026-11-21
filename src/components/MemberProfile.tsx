@@ -84,6 +84,7 @@ import { useCoopSession } from './AppProviders.tsx';
 import { MemberAgreementPaperPreview } from './MemberAgreementPaperPreview.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 import { TeletalkAddressFields } from './TeletalkAddressFields.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 interface MemberProfileProps {
   user: PublicUser;
@@ -97,6 +98,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
   const tCommon = useTranslations('Common');
   const locale = useLocale() as AppLocale;
   const { setUser } = useCoopSession();
+  const toast = useToast();
 
   const [profile, setProfile] = useState<PublicUser>(user);
   const [loading, setLoading] = useState(true);
@@ -1024,25 +1026,19 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         setSaving(true);
         try {
           const res = await api.updateProfile(payload);
+          setModal(null);
           if (res.pendingApproval) {
             await loadProfile();
             await onRefresh();
-            setModal({
-              mode: 'notice',
-              tone: 'emerald',
-              title: t('updateSubmittedTitle'),
-              description: res.message || t('updateSubmittedDesc'),
-            });
+            toast.success(
+              t('updateSubmittedTitle'),
+              res.message || t('updateSubmittedDesc')
+            );
           } else {
             populateForm(res.user);
             setUser(res.user);
             await onRefresh();
-            setModal({
-              mode: 'notice',
-              tone: 'emerald',
-              title: t('profileSavedTitle'),
-              description: t('profileSavedDesc'),
-            });
+            toast.success(t('profileSavedTitle'), t('profileSavedDesc'));
           }
         } catch (err) {
           setModal({
@@ -1093,12 +1089,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setCurrentPassword('');
           setNewPassword('');
           setConfirmPassword('');
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('passwordUpdatedTitle'),
-            description: t('passwordUpdatedDesc'),
-          });
+          setModal(null);
+          toast.success(t('passwordUpdatedTitle'), t('passwordUpdatedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1148,13 +1140,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setProfile(res.user);
           setTotpSetupData(null);
           setTotpCodeInput('');
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('enabled2faTitle'),
-            description: t('enabled2faDesc'),
-          });
+          toast.success(t('enabled2faTitle'), t('enabled2faDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1237,12 +1225,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setProfile(res.user);
           setDevicePin('');
           setDevicePinConfirm('');
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: matchedServerLocal ? t('pinUpdatedTitle') : t('deviceRegisteredTitle'),
-            description: t('deviceRegisteredDesc'),
-          });
+          setModal(null);
+          toast.success(
+            matchedServerLocal ? t('pinUpdatedTitle') : t('deviceRegisteredTitle'),
+            t('deviceRegisteredDesc')
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1276,12 +1263,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           }
           setUser(res.user);
           setProfile(res.user);
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('deviceRemovedTitle'),
-            description: t('deviceRemovedDesc', { deviceName }),
-          });
+          setModal(null);
+          toast.success(
+            t('deviceRemovedTitle'),
+            t('deviceRemovedDesc', { deviceName })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -1312,13 +1298,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
           setUser(res.user);
           setProfile(res.user);
           setTotpCodeInput('');
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('disabled2faTitle'),
-            description: t('disabled2faDesc'),
-          });
+          toast.success(t('disabled2faTitle'), t('disabled2faDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',

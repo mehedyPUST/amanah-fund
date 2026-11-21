@@ -20,6 +20,7 @@ import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, formatShortDate, shortHash } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 type ProjectModalState =
   | {
@@ -56,6 +57,7 @@ export function HalalProjectsView({
 }: HalalProjectsViewProps) {
   const t = useTranslations('HalalProjects');
   const tCommon = useTranslations('Common');
+  const toast = useToast();
   const isStaff = user.role === 'admin' || user.role === 'manager';
   const ccy = overview?.config.currency || 'BDT';
 
@@ -165,12 +167,9 @@ export function HalalProjectsView({
           setTitle('');
           setSector('');
           setShariahScholarNote('');
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
-            t('proposedTitle'),
-            t('proposedDesc')
-          );
+          toast.success(t('proposedTitle'), t('proposedDesc'));
         } finally {
           setSubmitting(false);
         }
@@ -202,9 +201,9 @@ export function HalalProjectsView({
           const res = await api.voteHalalProject(proj.id, decision, comment || undefined);
           const p = res.project;
           const yesCount = p.votes.filter((v) => v.decision === 'yes').length;
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             p.votingStatus === 'approved' ? t('placementApprovedTitle') : t('voteRecordedTitle'),
             p.votingStatus === 'approved'
               ? t('voteRecordedApprovedDesc', {
@@ -265,9 +264,9 @@ export function HalalProjectsView({
           const latestDist = res.project.distributions?.[0];
           setDistFormProjectId(null);
           setDistRealizedProfit('');
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             t('distDoneTitle'),
             latestDist
               ? t('distDoneDesc', {

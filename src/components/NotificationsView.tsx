@@ -51,6 +51,7 @@ import {
   isNotificationForUser,
 } from './NotificationBlinkMarker.tsx';
 import { groupNotificationsForView } from '../utils/notificationGroups.ts';
+import { useToast } from './ToastProvider.tsx';
 
 interface NotificationsViewProps {
   user: PublicUser;
@@ -141,6 +142,7 @@ export function NotificationsView({
   const tNotif = useTranslations('Notifications');
   const t = useTranslations('Notifications.view');
   const { setUser } = useCoopSession();
+  const toast = useToast();
   const isStaff = user.role === 'admin' || user.role === 'manager';
 
   const getTypeLabel = (type: NotificationType) => {
@@ -251,13 +253,12 @@ export function NotificationsView({
         try {
           const res = await api.sendReminders();
           setNotifications(res.notifications);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('remindersGeneratedTitle'),
-            description: t('remindersGeneratedDesc', { count: res.createdCount }),
-          });
+          toast.success(
+            t('remindersGeneratedTitle'),
+            t('remindersGeneratedDesc', { count: res.createdCount })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -375,14 +376,12 @@ export function NotificationsView({
       setPushCaps(getPushClientCapabilities());
       await loadPushStatus();
       if (result.ok) {
-        setModal({
-          mode: 'notice',
-          tone: 'emerald',
-          title: t('push.enabledTitle'),
-          description: result.status?.configuredServer
+        toast.success(
+          t('push.enabledTitle'),
+          result.status?.configuredServer
             ? t('push.enabledDesc')
-            : t('push.enabledClientPendingServerDesc'),
-        });
+            : t('push.enabledClientPendingServerDesc')
+        );
       } else {
         setModal({
           mode: 'notice',
@@ -408,12 +407,7 @@ export function NotificationsView({
     try {
       await unregisterFcmPushSubscription(pushStatus?.firebaseConfig);
       await loadPushStatus();
-      setModal({
-        mode: 'notice',
-        tone: 'slate',
-        title: t('push.deviceRemovedTitle'),
-        description: t('push.deviceRemovedDesc'),
-      });
+      toast.info(t('push.deviceRemovedTitle'), t('push.deviceRemovedDesc'));
     } finally {
       setPushBusy(false);
     }
@@ -424,14 +418,19 @@ export function NotificationsView({
     try {
       const res = await api.sendTestPushNotification();
       await loadPushStatus();
-      setModal({
-        mode: 'notice',
-        tone: res.ok ? 'emerald' : res.configuredServer ? 'red' : 'amber',
-        title: res.ok ? t('push.testSuccessTitle') : t('push.testFailedTitle'),
-        description: res.ok
-          ? t('push.testSuccessDesc', { count: res.deliveredCount })
-          : res.reason || t('push.testFailedDesc'),
-      });
+      if (res.ok) {
+        toast.success(
+          t('push.testSuccessTitle'),
+          t('push.testSuccessDesc', { count: res.deliveredCount })
+        );
+      } else {
+        setModal({
+          mode: 'notice',
+          tone: res.configuredServer ? 'red' : 'amber',
+          title: t('push.testFailedTitle'),
+          description: res.reason || t('push.testFailedDesc'),
+        });
+      }
     } catch (err) {
       setModal({
         mode: 'notice',
@@ -480,20 +479,25 @@ export function NotificationsView({
         try {
           const res = await api.sendViaGmail(token, ids);
           setNotifications(res.notifications);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: res.failedCount > 0 && res.sentCount === 0 ? 'red' : 'emerald',
-            title: res.failedCount > 0 ? t('gmailDispatchErrorsTitle') : t('emailsSentTitle'),
-            description:
-              res.failedCount > 0
-                ? t('gmailDispatchPartialDesc', {
-                    sent: res.sentCount,
-                    failed: res.failedCount,
-                    error: res.errors[0] || '',
-                  })
-                : t('gmailDispatchSuccessDesc', { sent: res.sentCount }),
-          });
+          if (res.failedCount > 0) {
+            setModal({
+              mode: 'notice',
+              tone: res.sentCount === 0 ? 'red' : 'amber',
+              title: t('gmailDispatchErrorsTitle'),
+              description: t('gmailDispatchPartialDesc', {
+                sent: res.sentCount,
+                failed: res.failedCount,
+                error: res.errors[0] || '',
+              }),
+            });
+          } else {
+            toast.success(
+              t('emailsSentTitle'),
+              t('gmailDispatchSuccessDesc', { sent: res.sentCount })
+            );
+          }
         } catch (err) {
           setModal({
             mode: 'notice',

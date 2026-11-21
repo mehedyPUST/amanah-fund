@@ -31,6 +31,7 @@ import { api } from '../utils/api.ts';
 import { formatDateTime, formatMoney, shortHash } from '../utils/format.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { StatusText } from './StatusText.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 interface VotingViewProps {
   loans: LoanRequest[];
@@ -58,6 +59,7 @@ export function VotingView({
   const t = useTranslations('Voting');
   const tCommon = useTranslations('Common');
   const tStatus = useTranslations('Status');
+  const toast = useToast();
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isStaff = user.role === 'admin' || user.role === 'manager';
@@ -202,15 +204,14 @@ export function VotingView({
         setBusyId(loanId);
         try {
           await api.voteLoan(loanId, decision, comments[loanId]);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: isChange ? t('ballotUpdatedTitle') : t('secretBallotRecordedTitle'),
-            description: isChange
+          toast.success(
+            isChange ? t('ballotUpdatedTitle') : t('secretBallotRecordedTitle'),
+            isChange
               ? t('ballotUpdatedDesc', { loanId, choice: choiceLabel })
-              : t('ballotRecordedDesc', { loanId, choice: choiceLabel }),
-          });
+              : t('ballotRecordedDesc', { loanId, choice: choiceLabel })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -241,13 +242,12 @@ export function VotingView({
         setBusyId(`extend-${loanId}`);
         try {
           await api.extendLoanVoteDeadline(loanId, hours);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('deadlineExtendedTitle'),
-            description: t('deadlineExtendedDesc', { loanId, hours }),
-          });
+          toast.success(
+            t('deadlineExtendedTitle'),
+            t('deadlineExtendedDesc', { loanId, hours })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -274,16 +274,15 @@ export function VotingView({
         setBusyId(`reveal-${loanId}`);
         try {
           const res = await api.revealLoanVote(loanId);
+          setModal(null);
           await onRefresh();
           const statusDisplay = tStatus.has(res.loan.status as never)
             ? tStatus(res.loan.status as never)
             : res.loan.status.replace(/_/g, ' ');
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('ballotRevealedTitle'),
-            description: t('ballotRevealedDesc', { loanId, status: statusDisplay }),
-          });
+          toast.success(
+            t('ballotRevealedTitle'),
+            t('ballotRevealedDesc', { loanId, status: statusDisplay })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -324,13 +323,12 @@ export function VotingView({
         setBusyId(projectId);
         try {
           const res = await api.voteHalalProject(projectId, decision, comments[projectId]);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('investmentSealedTitle'),
-            description: t('investmentSealedDesc', { choice: choiceLabel, title: res.project.title }),
-          });
+          toast.success(
+            t('investmentSealedTitle'),
+            t('investmentSealedDesc', { choice: choiceLabel, title: res.project.title })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -358,13 +356,12 @@ export function VotingView({
         setBusyId(`reveal-proj-${projectId}`);
         try {
           const res = await api.revealHalalProjectVote(projectId);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('investmentRevealedTitle'),
-            description: t('investmentRevealedDesc', { title: res.project.title }),
-          });
+          toast.success(
+            t('investmentRevealedTitle'),
+            t('investmentRevealedDesc', { title: res.project.title })
+          );
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -407,13 +404,9 @@ export function VotingView({
         setBusyId(`poll-${pollId}`);
         try {
           await api.votePoll(pollId, optionId, comments[pollId]);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('decisionRecordedTitle'),
-            description: t('decisionRecordedDesc'),
-          });
+          toast.success(t('decisionRecordedTitle'), t('decisionRecordedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -441,13 +434,9 @@ export function VotingView({
         setBusyId(`reveal-poll-${pollId}`);
         try {
           await api.revealPoll(pollId);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('pollRevealedTitle'),
-            description: t('pollRevealedDesc'),
-          });
+          toast.success(t('pollRevealedTitle'), t('pollRevealedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',
@@ -503,13 +492,9 @@ export function VotingView({
           setPollDescription('');
           setPollClosesAt('');
           setShowCreatePoll(false);
+          setModal(null);
           await onRefresh();
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('pollLaunchedTitle'),
-            description: t('pollLaunchedDesc'),
-          });
+          toast.success(t('pollLaunchedTitle'), t('pollLaunchedDesc'));
         } catch (err) {
           setModal({
             mode: 'notice',

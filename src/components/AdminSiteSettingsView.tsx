@@ -60,6 +60,7 @@ import { AdminFaqManager } from './AdminFaqManager.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
 import { MobileOverviewIconEditor } from './MobileOverviewIconCustomizer.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 export type SettingsTabId = 'policy' | 'charter' | 'faqs' | 'email' | 'integrations' | 'ventures';
 
@@ -125,6 +126,7 @@ export function AdminSiteSettingsView({
 }: AdminSiteSettingsViewProps) {
   const t = useTranslations('Admin.siteSettings');
   const tCommon = useTranslations('Common');
+  const toast = useToast();
   const isAdmin = user.role === 'admin';
   const ccy = config?.currency || 'BDT';
 
@@ -443,18 +445,17 @@ export function AdminSiteSettingsView({
           halalInvestmentThesis: halalThesis,
           mobileMemberOverviewIcons,
         });
+        setModal(null);
         await Promise.all([onRefresh(), fetchSystemStatus()]);
-        setModal({
-          mode: 'notice',
-          tone: 'emerald',
-          title: t('policySavedTitle'),
-          description: t('policySavedDesc', {
+        toast.success(
+          t('policySavedTitle'),
+          t('policySavedDesc', {
             name: fundName.trim(),
             num: quorumNum,
             den: quorumDen,
             months: cycleMonthsNum,
-          }),
-        });
+          })
+        );
       },
     });
   }
@@ -524,16 +525,14 @@ export function AdminSiteSettingsView({
       confirmLabel: t('confirmRemindersBtn'),
       run: async () => {
         const res = await api.sendReminders(reportMonth);
+        setModal(null);
         await onRefresh();
-        setModal({
-          mode: 'notice',
-          tone: 'emerald',
-          title: t('remindersDoneTitle'),
-          description:
-            res.createdCount > 0
-              ? t('remindersCreatedDesc', { count: res.createdCount, month: reportMonth })
-              : t('remindersUpToDateDesc', { month: reportMonth }),
-        });
+        toast.success(
+          t('remindersDoneTitle'),
+          res.createdCount > 0
+            ? t('remindersCreatedDesc', { count: res.createdCount, month: reportMonth })
+            : t('remindersUpToDateDesc', { month: reportMonth })
+        );
       },
     });
   }
@@ -589,19 +588,18 @@ export function AdminSiteSettingsView({
             file,
             constitutionTitle.trim() || file.name
           );
+          setModal(null);
           await Promise.all([
             onRefresh(),
             queryClient.invalidateQueries({ queryKey: queryKeys.public.constitution() }),
           ]);
-          setModal({
-            mode: 'notice',
-            tone: 'emerald',
-            title: t('constitutionPublishedTitle'),
-            description: t('constitutionPublishedDesc', {
+          toast.success(
+            t('constitutionPublishedTitle'),
+            t('constitutionPublishedDesc', {
               name: uploaded.constitutionPdfName || '',
               provider: uploaded.provider,
-            }),
-          });
+            })
+          );
         } finally {
           setConstitutionBusy(false);
         }
@@ -625,16 +623,15 @@ export function AdminSiteSettingsView({
         try {
           await api.removeConstitutionPdf();
           setShowConstitutionPreview(false);
+          setModal(null);
           await Promise.all([
             onRefresh(),
             queryClient.invalidateQueries({ queryKey: queryKeys.public.constitution() }),
           ]);
-          setModal({
-            mode: 'notice',
-            tone: 'amber',
-            title: t('constitutionRemovedTitle'),
-            description: t('constitutionRemovedDesc'),
-          });
+          toast.warning(
+            t('constitutionRemovedTitle'),
+            t('constitutionRemovedDesc')
+          );
         } finally {
           setConstitutionBusy(false);
         }

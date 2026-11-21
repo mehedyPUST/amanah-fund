@@ -34,6 +34,7 @@ import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 import { MotionCard } from './MotionCard.tsx';
 import { ProviderSelect } from './ProviderSelect.tsx';
 import { StatusText } from './StatusText.tsx';
+import { useToast } from './ToastProvider.tsx';
 
 function shiftBillingMonth(baseMonth: string, offset: number): string {
   const [yStr, mStr] = baseMonth.split('-');
@@ -96,6 +97,7 @@ export function ContributionsView({
 }: ContributionsViewProps) {
   const t = useTranslations('Contributions');
   const tCommon = useTranslations('Common');
+  const toast = useToast();
   const ccy = config?.currency || 'BDT';
   const isAdmin = user.role === 'admin';
   const isReviewer = user.role === 'admin' || user.role === 'manager';
@@ -253,11 +255,16 @@ export function ContributionsView({
           amountEditedRef.current = true;
           setAmount(String(ext.amount));
         }
-        setReceiptNotice(
-          t('aiExtracted', { confidence: ext.confidence, summary: ext.summary })
-        );
+        const aiSummary = t('aiExtracted', {
+          confidence: ext.confidence,
+          summary: ext.summary,
+        });
+        setReceiptNotice(aiSummary);
+        toast.success(ext.summary || providerName, aiSummary);
       } else if (uploadRes.status === 'fulfilled') {
-        setReceiptNotice(t('receiptAttachedManual'));
+        const attachedMsg = t('receiptAttachedManual');
+        setReceiptNotice(attachedMsg);
+        toast.info(attachedMsg);
       } else {
         showNotice(
           'red',
@@ -336,9 +343,9 @@ export function ContributionsView({
         amountEditedRef.current = false;
         setPrefillBanner(null);
         setDepositModalOpen(false);
+        setModal(null);
         await onRefresh();
-        showNotice(
-          'emerald',
+        toast.success(
           countMonths > 1
             ? t('advanceSubmittedTitle', { count: countMonths })
             : t('submittedTitle'),
@@ -369,9 +376,9 @@ export function ContributionsView({
         confirmLabel: t('approveCreditBtn'),
         run: async (note) => {
           await api.reviewContribution(item.id, 'approved', note || undefined);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'emerald',
+          toast.success(
             t('approvedNoticeTitle'),
             t('approvedNoticeDesc', {
               name: item.memberName,
@@ -400,9 +407,9 @@ export function ContributionsView({
         confirmLabel: t('denySendNoteBtn'),
         run: async (note) => {
           await api.reviewContribution(item.id, 'rejected', note);
+          setModal(null);
           await onRefresh();
-          showNotice(
-            'amber',
+          toast.warning(
             t('deniedNoticeTitle'),
             t('deniedNoticeDesc', { name: item.memberName, code: item.memberCode })
           );

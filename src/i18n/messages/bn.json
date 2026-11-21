@@ -78,6 +78,7 @@
     "dashboardMenuAria": "মোবাইল ড্যাশবোর্ড মেনু",
     "closeItem": "{title} বন্ধ করুন",
     "loadingAppAria": "আমানাহ লোড হচ্ছে",
+    "notificationsRegionAria": "বিজ্ঞপ্তিসমূহ",
     "loadingHeroSubtitle": "কর্জে হাসানা ও হালাল সমবায় তহবিল",
     "loadingWorkspace": "এনক্রিপ্টেড কর্মক্ষেত্র লোড হচ্ছে…",
     "autoLogoutNotice": "১ মিনিট ব্যাকগ্রাউন্ডে থাকার পর স্বয়ংক্রিয়ভাবে সাইন আউট হয়েছে।",
@@ -1071,7 +1072,9 @@
       "savingIcons": "সংরক্ষণ হচ্ছে…",
       "saveIconsBtn": "বিন্যাস সংরক্ষণ করুন",
       "resetDefaultIcons": "ডিফল্ট বিন্যাসে ফিরুন",
-      "saveIconsError": "মোবাইল ড্যাশবোর্ড আইকন বিন্যাস সংরক্ষণ করা যায়নি।"
+      "saveIconsError": "মোবাইল ড্যাশবোর্ড আইকন বিন্যাস সংরক্ষণ করা যায়নি।",
+      "saveIconsSuccess": "মোবাইল শর্টকাট হালনাগাদ হয়েছে",
+      "resetIconsSuccess": "ডিফল্ট মোবাইল শর্টকাট পুনর্বহাল হয়েছে"
     },
     "overviewView": {
       "pendingCountBadge": "{count}টি অপেক্ষমাণ",
