@@ -972,7 +972,29 @@
       "queuedInDesk": "Queued in {desk} to initiate the 2/3 ballot",
       "secretBallotOpen": "Secret 2/3 Voting ballot open ({cast} / {total} ballots)",
       "quorumApprovedPayout": "2/3 quorum approved · Awaiting Manager payout release",
-      "repaidOfTotal": "Repaid {repaid} of {total}"
+      "repaidOfTotal": "Repaid {repaid} of {total}",
+      "banner": {
+        "carouselLabel": "Cooperative highlights",
+        "slideOf": "{current} / {total}",
+        "goToSlide": "Show highlight {index}",
+        "prevSlide": "Previous highlight",
+        "nextSlide": "Next highlight",
+        "clearedShort": "{cleared}/{total} cleared",
+        "dueShort": "Due {amount}",
+        "governanceStatus": "Governance & Approval Desk",
+        "pendingApprovalsCount": "{count} Pending Action Items",
+        "allQueuesCleared": "All Approval Queues Clear",
+        "queuesBreakdown": "{deposits} deposits · {loans} loans/votes · {kyc} KYC",
+        "monthlyDuesReminder": "Monthly Savings Reminder",
+        "dueNowSuffix": "Due",
+        "monthsDeadlineMeta": "{months} mo · Due {date}",
+        "yourStanding": "Member Standing",
+        "depositsVerifiedZeroDue": "{count} verified deposits · Clear",
+        "shuraBallotsOpen": "Shura 2/3 Consensus Open",
+        "activeBallotsCount": "{count} Active Ballot(s)",
+        "ballotsBreakdown": "{loans} Qard Hasan · {polls} polls · 2/3 quorum",
+        "liquidityStatsMeta": "{borrowers} active borrowers · {members} members"
+      }
     },
     "sheets": {
       "pulseTitle": "Monthly Pulse ({month})",

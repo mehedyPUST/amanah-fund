@@ -972,7 +972,29 @@
       "queuedInDesk": "২/৩ ভোট চালুর জন্য {desk}-এ অপেক্ষমাণ",
       "secretBallotOpen": "গোপন ২/৩ ভোটগ্রহণ উন্মুক্ত ({cast} / {total}টি ভোট)",
       "quorumApprovedPayout": "২/৩ কোরামে অনুমোদিত · ম্যানেজার বিতরণের অপেক্ষায়",
-      "repaidOfTotal": "{total}-এর মধ্যে {repaid} পরিশোধিত"
+      "repaidOfTotal": "{total}-এর মধ্যে {repaid} পরিশোধিত",
+      "banner": {
+        "carouselLabel": "সমবায়ের প্রধান তথ্যসমূহ",
+        "slideOf": "{current} / {total}",
+        "goToSlide": "স্লাইড {index} দেখুন",
+        "prevSlide": "আগের তথ্য",
+        "nextSlide": "পরের তথ্য",
+        "clearedShort": "{cleared}/{total} পরিশোধিত",
+        "dueShort": "বকেয়া {amount}",
+        "governanceStatus": "পরিচালনা ও অনুমোদন ডেস্ক",
+        "pendingApprovalsCount": "{count}টি কার্যক্রম অপেক্ষমাণ",
+        "allQueuesCleared": "সব অনুমোদন তালিকা সম্পন্ন",
+        "queuesBreakdown": "{deposits} জমা · {loans} ঋণ/ভোট · {kyc} কেওয়াইসি",
+        "monthlyDuesReminder": "মাসিক সঞ্চয় অনুস্মারক",
+        "dueNowSuffix": "বকেয়া",
+        "monthsDeadlineMeta": "{months} মাস · মেয়াদ {date}",
+        "yourStanding": "সদস্যের অবস্থান",
+        "depositsVerifiedZeroDue": "{count}টি যাচাইকৃত জমা · নিয়মিত",
+        "shuraBallotsOpen": "শূরা ২/৩ গোপন ভোট উন্মুক্ত",
+        "activeBallotsCount": "{count}টি চলমান ভোট",
+        "ballotsBreakdown": "{loans}টি কর্জে হাসানা · {polls}টি সিদ্ধান্ত · ২/৩ কোরাম",
+        "liquidityStatsMeta": "{borrowers} জন ঋণগ্রহীতা · {members} জন সদস্য"
+      }
     },
     "sheets": {
       "pulseTitle": "মাসিক অগ্রগতি ({month})",

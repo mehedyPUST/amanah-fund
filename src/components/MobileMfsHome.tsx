@@ -43,6 +43,7 @@ import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/forma
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
+import { MobileDashboardBanner } from './MobileDashboardBanner.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export interface MfsIconTile {
@@ -255,7 +256,6 @@ export function MobileMfsHome({
   const tNav = useTranslations('Navigation');
   const tDash = useTranslations('Dashboard');
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
-  const [bannerImgFailed, setBannerImgFailed] = useState(false);
 
   const openCharterPage = () => {
     setMobileBrowseMode(true);
@@ -735,55 +735,20 @@ export function MobileMfsHome({
 
   return (
     <div className="space-y-4">
-      {/* Compact Unified Brand Banner with Cooperative Context */}
-      <motion.button
-        type="button"
-        onClick={() => setActiveSheet('pulse')}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileTap={{ scale: 0.99 }}
-        transition={{ duration: 0.2 }}
-        aria-label={`${config.fundName} · ${tDash('sheets.pulseTitle', { month: treasury.thisMonthKey })}`}
-        className="relative w-full overflow-hidden rounded-2xl amanah-card-emerald border ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_20px_-12px_rgba(15,23,42,0.14)] dark:shadow-[0_10px_24px_-12px_rgba(0,0,0,0.5)] px-3.5 py-3 min-h-[108px] sm:min-h-[120px] flex items-center justify-between gap-2 transition-all duration-200 text-left cursor-pointer"
-      >
-        <div className="relative z-10 flex-1 min-w-0 space-y-1">
-          <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 leading-snug line-clamp-1">
-            {phase === 'qard_hasan' ? tDash('phase1Title') : tDash('phase2Title')}
-          </div>
-          <h2 className="text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
-            {config.fundName}
-          </h2>
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] font-mono tabular-nums leading-snug">
-            <span className="text-slate-600 dark:text-slate-300">
-              {tDash('targetMaturity', { date: formatShortDate(config.maturityDate) })}
-            </span>
-            <span aria-hidden="true" className="text-slate-400 dark:text-slate-600">
-              ·
-            </span>
-            <span className="text-amber-700 dark:text-amber-400 font-semibold">
-              {tCommon('daysRemaining', { days: daysUntilMaturity })}
-            </span>
-          </div>
-        </div>
-
-        <div className="relative z-10 flex items-center gap-1 shrink-0">
-          {!bannerImgFailed && (
-            <div className="w-[126px] sm:w-[164px] h-[82px] sm:h-[94px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
-              <img
-                src="/assets/aistudio/image_5fd8619d.png"
-                alt=""
-                aria-hidden="true"
-                onError={() => setBannerImgFailed(true)}
-                className="w-full h-full object-contain scale-[1.55] mix-blend-multiply dark:invert dark:hue-rotate-180 dark:mix-blend-screen dark:opacity-90"
-              />
-            </div>
-          )}
-          <ChevronRight
-            className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0"
-            aria-hidden="true"
-          />
-        </div>
-      </motion.button>
+      {/* Sliding Cooperative Highlights & Intelligence Banner */}
+      <MobileDashboardBanner
+        config={config}
+        treasury={treasury}
+        personal={personal}
+        phase={phase}
+        daysUntilMaturity={daysUntilMaturity}
+        user={user}
+        totalQueueCount={totalQueueCount}
+        thisMonthContribPct={thisMonthContribPct}
+        loanProgress={loanProgress}
+        onOpenSheet={(sheet) => setActiveSheet(sheet)}
+        onNavigate={onNavigate}
+      />
 
       {/* 1. Actionable Alerts & Active Loan Stage Tracker */}
       {(myGuarantorRequests.length > 0 ||
