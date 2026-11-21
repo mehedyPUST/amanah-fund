@@ -47,36 +47,36 @@ export interface MobileMemberTileMeta {
 }
 
 const MEDALLION_EMERALD_BG =
-  'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-400/22 dark:via-emerald-500/12 dark:to-teal-500/18 border-emerald-200/90 dark:border-emerald-400/35';
-const MEDALLION_EMERALD_ICON = 'text-emerald-700 dark:text-emerald-300';
+  'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border-emerald-200/90 dark:border-[#00ED64]/35';
+const MEDALLION_EMERALD_ICON = 'text-emerald-700 mdb-icon-emerald';
 
 const MEDALLION_TEAL_BG =
-  'bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/95 dark:from-teal-400/22 dark:via-cyan-500/12 dark:to-teal-500/18 border-teal-200/90 dark:border-teal-400/35';
-const MEDALLION_TEAL_ICON = 'text-teal-700 dark:text-teal-300';
+  'bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/95 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border-teal-200/90 dark:border-[#18E299]/35';
+const MEDALLION_TEAL_ICON = 'text-teal-700 mdb-icon-teal';
 
 const MEDALLION_GOLD_BG =
-  'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-300/24 dark:via-amber-400/12 dark:to-yellow-500/16 border-amber-200/90 dark:border-amber-300/38';
-const MEDALLION_GOLD_ICON = 'text-amber-700 dark:text-amber-200';
+  'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] border-amber-200/90 dark:border-[#FFC010]/38';
+const MEDALLION_GOLD_ICON = 'text-amber-700 mdb-icon-gold';
 
 const MEDALLION_SAPPHIRE_BG =
-  'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-400/24 dark:via-indigo-500/12 dark:to-blue-500/18 border-indigo-200/90 dark:border-indigo-400/38';
-const MEDALLION_SAPPHIRE_ICON = 'text-indigo-700 dark:text-indigo-200';
+  'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-[#0B2A47] dark:via-[#042230] dark:to-[#001822] border-indigo-200/90 dark:border-[#4DA3FF]/38';
+const MEDALLION_SAPPHIRE_ICON = 'text-indigo-700 mdb-icon-sapphire';
 
 const MEDALLION_VIOLET_BG =
-  'bg-gradient-to-br from-violet-50 via-purple-50/75 to-indigo-100/85 dark:from-violet-400/24 dark:via-purple-500/12 dark:to-fuchsia-500/14 border-violet-200/90 dark:border-violet-400/38';
-const MEDALLION_VIOLET_ICON = 'text-violet-700 dark:text-violet-200';
+  'bg-gradient-to-br from-violet-50 via-purple-50/75 to-indigo-100/85 dark:from-[#221D42] dark:via-[#062130] dark:to-[#001822] border-violet-200/90 dark:border-[#C084FC]/38';
+const MEDALLION_VIOLET_ICON = 'text-violet-700 mdb-icon-violet';
 
 const MEDALLION_SKY_BG =
-  'bg-gradient-to-br from-sky-50 via-cyan-50/80 to-blue-100/85 dark:from-sky-400/24 dark:via-cyan-500/12 dark:to-blue-500/18 border-sky-200/90 dark:border-sky-400/38';
-const MEDALLION_SKY_ICON = 'text-sky-700 dark:text-sky-200';
+  'bg-gradient-to-br from-sky-50 via-cyan-50/80 to-blue-100/85 dark:from-[#063144] dark:via-[#02232E] dark:to-[#001822] border-sky-200/90 dark:border-[#38BDF8]/38';
+const MEDALLION_SKY_ICON = 'text-sky-700 mdb-icon-sky';
 
 const MEDALLION_SLATE_BG =
-  'bg-gradient-to-br from-slate-50 via-white to-slate-200/75 dark:from-slate-300/20 dark:via-slate-400/10 dark:to-slate-500/16 border-slate-200/95 dark:border-slate-300/30';
-const MEDALLION_SLATE_ICON = 'text-slate-700 dark:text-slate-100';
+  'bg-gradient-to-br from-slate-50 via-white to-slate-200/75 dark:from-[#0E2F3D] dark:via-[#04212C] dark:to-[#001822] border-slate-200/95 dark:border-[#2C5566]/65';
+const MEDALLION_SLATE_ICON = 'text-slate-700 mdb-icon-slate';
 
 const MEDALLION_CRIMSON_BG =
-  'bg-gradient-to-br from-rose-50 via-rose-50/90 to-rose-100/90 dark:from-rose-400/24 dark:via-rose-500/12 dark:to-pink-500/16 border-rose-200/90 dark:border-rose-400/38';
-const MEDALLION_CRIMSON_ICON = 'text-rose-700 dark:text-rose-200';
+  'bg-gradient-to-br from-rose-50 via-rose-50/90 to-rose-100/90 dark:from-[#331826] dark:via-[#07222D] dark:to-[#001822] border-rose-200/90 dark:border-[#FB7185]/38';
+const MEDALLION_CRIMSON_ICON = 'text-rose-700 mdb-icon-rose';
 
 export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
