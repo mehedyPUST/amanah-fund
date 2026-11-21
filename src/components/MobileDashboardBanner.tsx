@@ -506,7 +506,7 @@ export function MobileDashboardBanner({
         scheduleInteractionResume(1600);
       }}
       onTouchCancel={() => scheduleInteractionResume(1200)}
-      className={`relative w-full h-[112px] sm:h-[122px] overflow-hidden rounded-2xl border ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_22px_-12px_rgba(15,23,42,0.14)] dark:shadow-[0_10px_26px_-12px_rgba(0,0,0,0.52)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
+      className={`relative w-full h-[112px] sm:h-[122px] overflow-hidden rounded-xl border ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_6px_22px_-12px_rgba(15,23,42,0.14)] dark:shadow-[0_10px_26px_-12px_rgba(0,0,0,0.52)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
     >
       {/* Subtle geometric accent shimmer */}
       <div
@@ -622,7 +622,7 @@ export function MobileDashboardBanner({
                           />
                         </div>
                       ) : (
-                        <span className="w-12 h-12 rounded-[14px] border bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0">
+                        <span className="w-12 h-12 rounded-lg border bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0">
                           <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" strokeWidth={1.75} aria-hidden="true" />
                         </span>
                       ))}
@@ -637,7 +637,7 @@ export function MobileDashboardBanner({
 
                     {slide.visual.kind === 'icon' && (
                       <span
-                        className={`w-12 h-12 rounded-[14px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
+                        className={`w-12 h-12 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
                       >
                         <slide.visual.Icon
                           className={`w-5 h-5 ${slide.visual.iconClass}`}

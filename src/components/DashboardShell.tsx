@@ -14,6 +14,7 @@ import {
   CalendarRange,
   ChartColumn,
   CheckCircle2,
+  FileSpreadsheet,
   HandCoins,
   Home,
   LogOut,
@@ -24,7 +25,6 @@ import {
   PanelLeftOpen,
   ReceiptText,
   RefreshCw,
-  Scale,
   Settings2,
   Sun,
   UserRound,
@@ -115,7 +115,7 @@ const MEMBER_NAV_ITEMS: NavItemConfig[] = [
   { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'member' },
   { id: 'members', label: 'Members', Icon: UsersRound, group: 'member' },
-  { id: 'balance-sheet', label: 'Balance Sheet', Icon: Scale, group: 'member' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarRange, group: 'member' },
   { id: 'my-profile', label: 'Profile', Icon: UserRound, group: 'member' },
 ];
@@ -131,7 +131,7 @@ const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
   { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
   { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'member' },
   { id: 'members', label: 'Members', Icon: UsersRound, group: 'member' },
-  { id: 'balance-sheet', label: 'Balance Sheet', Icon: Scale, group: 'member' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
   { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarRange, group: 'member' },
   { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'member' },
   { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'member' },
@@ -1409,7 +1409,7 @@ export function DashboardShell() {
               >
                 <span className="flex items-center gap-2.5 min-w-0">
                   <span
-                    className={`w-7 h-7 rounded-[9px] border flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
                       item.active
                         ? toneStyle.activeIconBox
                         : 'bg-gradient-to-b from-slate-50 to-slate-100/90 dark:from-slate-800/85 dark:to-slate-900/85 border-slate-200/85 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
@@ -1480,7 +1480,7 @@ export function DashboardShell() {
           {
             id: 'balance-sheet',
             label: tNav('balanceSheet'),
-            Icon: Scale,
+            Icon: FileSpreadsheet,
             active: activeSection === 'balance-sheet',
             onClick: () => navigateToPage('balance-sheet', true),
           },
@@ -1525,7 +1525,7 @@ export function DashboardShell() {
           {
             id: 'balance-sheet',
             label: tNav('balanceSheet'),
-            Icon: Scale,
+            Icon: FileSpreadsheet,
             active: activeSection === 'balance-sheet',
             onClick: () => navigateToPage('balance-sheet', true),
           },

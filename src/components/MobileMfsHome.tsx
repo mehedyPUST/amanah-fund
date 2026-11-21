@@ -210,7 +210,7 @@ function MfsGridTileButton({
       whileTap={{ scale: 0.94, y: 1.5 }}
       transition={MFS_TAP_SPRING}
       className={`group relative ${
-        compact ? 'mfs-tile-compact gap-1.5 rounded-2xl' : 'mfs-tile gap-2 rounded-2xl'
+        compact ? 'mfs-tile-compact gap-1.5 rounded-xl' : 'mfs-tile gap-2 rounded-xl'
       } border ring-1 ring-inset ring-white/90 dark:ring-white/[0.04] shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_16px_-8px_rgba(0,0,0,0.48)] hover:shadow-[0_6px_16px_-8px_rgba(15,23,42,0.13)] flex flex-col items-center justify-center transition-all cursor-pointer ${TILE_SURFACE_CLASS}`}
     >
       {typeof tile.badge === 'number' && tile.badge > 0 && (
@@ -732,7 +732,7 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-[10px] border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-lg border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                   <UserRoundCheck className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
@@ -759,7 +759,7 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-[10px] border border-red-200/90 dark:border-red-800/50 bg-gradient-to-b from-red-50 to-red-100/85 dark:from-red-950/75 dark:to-red-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-lg border border-red-200/90 dark:border-red-800/50 bg-gradient-to-b from-red-50 to-red-100/85 dark:from-red-950/75 dark:to-red-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                   <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
@@ -784,7 +784,7 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <span className="w-8 h-8 rounded-[10px] border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <span className="w-8 h-8 rounded-lg border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                   <CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0">
@@ -890,13 +890,13 @@ export function MobileMfsHome({
             onClick={() => setActiveSheet('pulse')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('fundHeight')}
               </span>
-              <span className="w-9 h-9 rounded-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border border-emerald-200/90 dark:border-emerald-700/50 flex items-center justify-center shrink-0">
+              <span className="w-9 h-9 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border border-emerald-200/90 dark:border-emerald-700/50 flex items-center justify-center shrink-0">
                 <Landmark className="w-[17px] h-[17px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
             </div>
@@ -918,13 +918,13 @@ export function MobileMfsHome({
             onClick={() => onNavigate('transaction-history')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[96px] p-3 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-9 h-9 rounded-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border border-indigo-200/85 dark:border-indigo-700/45 flex items-center justify-center shrink-0">
+              <span className="w-9 h-9 rounded-lg shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 border border-indigo-200/85 dark:border-indigo-700/45 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-[17px] h-[17px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
             </div>
@@ -951,7 +951,7 @@ export function MobileMfsHome({
             onClick={openCustomizeSheet}
             aria-label={tDash('mobile.customizeIconsAria')}
             title={tDash('mobile.customizeIconsAria')}
-            className="w-9 h-9 rounded-[11px] border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.08)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.4)] shrink-0"
+            className="w-9 h-9 rounded-lg border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.08)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.4)] shrink-0"
           >
             <SlidersHorizontal className="w-4 h-4" strokeWidth={1.8} aria-hidden="true" />
           </button>
@@ -991,7 +991,7 @@ export function MobileMfsHome({
               onClick={() => setMoreExpanded((prev) => !prev)}
               aria-expanded={moreExpanded}
               aria-controls="mfs-more-grid"
-              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-2xl bg-white/90 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.4)] hover:bg-slate-50 dark:hover:bg-slate-800/75 active:scale-[0.995] flex items-center justify-between gap-2 transition-all cursor-pointer"
+              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.4)] hover:bg-slate-50 dark:hover:bg-slate-800/75 active:scale-[0.995] flex items-center justify-between gap-2 transition-all cursor-pointer"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
@@ -1058,7 +1058,7 @@ export function MobileMfsHome({
           </button>
         </div>
 
-        <div className="rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_20px_-10px_rgba(0,0,0,0.45)] divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
+        <div className="rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_20px_-10px_rgba(0,0,0,0.45)] divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
           {recentActivity.length === 0 ? (
             <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
               {tDash('mobile.noRecentActivity')}
@@ -1073,7 +1073,7 @@ export function MobileMfsHome({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`w-10 h-10 rounded-[12px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${
+                    className={`w-10 h-10 rounded-lg border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${
                       item.kind === 'contribution'
                         ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300'
                         : 'bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45 text-amber-700 dark:text-amber-300'
@@ -1288,7 +1288,7 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-[12px] border border-amber-200/90 dark:border-amber-700/45 bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+              <span className="w-10 h-10 rounded-lg border border-amber-200/90 dark:border-amber-700/45 bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                 <Clock className="w-[18px] h-[18px] text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -1323,7 +1323,7 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-[12px] border border-indigo-200/85 dark:border-indigo-700/45 bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+              <span className="w-10 h-10 rounded-lg border border-indigo-200/85 dark:border-indigo-700/45 bg-gradient-to-b from-indigo-50/95 to-indigo-100/75 dark:from-indigo-950/85 dark:to-slate-900/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                 <Vote className="w-[18px] h-[18px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -1360,7 +1360,7 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-[12px] border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+              <span className="w-10 h-10 rounded-lg border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                 <Banknote className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -1394,7 +1394,7 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-teal-200/80 dark:border-teal-900/60 bg-teal-50/60 dark:bg-teal-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-[12px] border border-teal-200/90 dark:border-teal-700/50 bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+              <span className="w-10 h-10 rounded-lg border border-teal-200/90 dark:border-teal-700/50 bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-[18px] h-[18px] text-teal-700 dark:text-teal-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
@@ -1435,7 +1435,7 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <span className="w-10 h-10 rounded-[12px] border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+              <span className="w-10 h-10 rounded-lg border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
               <div className="min-w-0">
