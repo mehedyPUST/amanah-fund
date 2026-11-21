@@ -957,6 +957,9 @@
     },
     "mobile": {
       "services": "Services",
+      "customizeIcons": "Customize",
+      "customizeIconsAria": "Customize mobile dashboard icons",
+      "noServicesSelected": "No icons pinned to Services yet. Tap Customize to choose shortcuts.",
       "governanceLedgerPages": "Governance & Ledger Pages",
       "managementLedgerPages": "Management & Ledger Pages",
       "allPagesAccount": "More",
@@ -1053,7 +1056,14 @@
       "usedCount": "{used} / {max} used",
       "eligibleForLoan": "Eligible for Qard Hasan Request",
       "notEligibleForLoan": "Not Eligible for Qard Hasan",
-      "openMyAmanah": "Open My Amanah"
+      "openMyAmanah": "Open My Amanah",
+      "customizeTitle": "Choose Dashboard Icons",
+      "customizeSubtitlePersonal": "Personal layout active · Shown on your mobile overview",
+      "customizeSubtitleDefault": "Using cooperative default · Choose & order icons",
+      "savingIcons": "Saving…",
+      "saveIconsBtn": "Save Layout",
+      "resetDefaultIcons": "Use Default Layout",
+      "saveIconsError": "Unable to save mobile dashboard icon layout."
     },
     "overviewView": {
       "pendingCountBadge": "{count} Pending",
@@ -3477,6 +3487,10 @@
       "labelCycleMonths": "Manager Rotation Cycle (Months)",
       "presetMonthsShort": "{count}m",
       "labelCycleStartDate": "Manager Cycle Anchor Start Date",
+      "group5Title": "5. Member Mobile Overview Icons (Cooperative Default)",
+      "group5Desc": "Choose which shortcuts appear by default in Services (3-col) and More (4-col) on members' mobile overview. Members can still customize their own layout.",
+      "detailMobileIcons": "Member Mobile Icons",
+      "mobileIconsSummary": "{services} Services · {more} More icons",
       "unsavedChangesNotice": "You have unsaved configuration changes",
       "allMatchedNotice": "All settings match the active cooperative policy",
       "discardChanges": "Discard Changes",
@@ -5019,6 +5033,25 @@
       "thisTitle": "Closing Cumulative",
       "fundTitle": "All-Time Fund Position"
     }
+  },
+  "MobileIconEditor": {
+    "summaryCounts": "{services} Services · {more} More · {hidden} Hidden",
+    "sectionServices": "Services (Top 3-Column Grid)",
+    "sectionServicesHint": "Primary action tiles shown immediately below your fund KPIs.",
+    "sectionMore": "More (4-Column Grid)",
+    "sectionMoreHint": "Compact shortcuts displayed underneath Services.",
+    "sectionHidden": "Hidden / Available Icons",
+    "sectionHiddenHint": "Tap Services or More to restore any shortcut to the overview.",
+    "emptyServices": "No icons pinned to Services.",
+    "emptyMore": "No icons placed in More.",
+    "emptyHidden": "All available icons are currently visible on the mobile overview.",
+    "placeServices": "Services",
+    "placeMore": "More",
+    "placeHide": "Hide",
+    "moveUp": "Move {label} up",
+    "moveDown": "Move {label} down",
+    "resetBtn": "Reset to Default",
+    "managerOnlyTag": "Manager"
   }
 }
 

@@ -17,6 +17,7 @@ import type {
   FundConfig,
   HalalProject,
   LoanRequest,
+  MobileMemberOverviewIconsConfig,
   NotificationPreferences,
   PasswordResetRequest,
   ProfileChangeRequest,
@@ -25,6 +26,7 @@ import type {
   UserStatus,
 } from '../types/coop.ts';
 import { createDefaultFaqs, sortFaqItems } from '../utils/faqDefaults.ts';
+import { sanitizeMobileMemberOverviewIcons } from '../utils/mobileOverviewTiles.ts';
 
 export interface StoredRegisteredDevice {
   deviceId: string;
@@ -69,6 +71,7 @@ export interface StoredUser {
   encryptedTotpSecret?: EncryptedEnvelope;
   registeredDevices?: StoredRegisteredDevice[];
   notificationPreferences?: NotificationPreferences;
+  mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
   encryptedRegistrationDetails?: EncryptedEnvelope;
   encryptedActivationOtp?: EncryptedEnvelope;
   activationMeta?: StoredMemberActivationMeta;
@@ -448,6 +451,17 @@ function normalizeVaultState(state: VaultState): VaultState {
     }
     if (state.fundConfig.monthlyReportAutoEmail === undefined) {
       state.fundConfig.monthlyReportAutoEmail = true;
+    }
+    if (state.fundConfig.mobileMemberOverviewIcons !== undefined) {
+      const cleanIcons = sanitizeMobileMemberOverviewIcons(
+        state.fundConfig.mobileMemberOverviewIcons,
+        { allowManagerTiles: false }
+      );
+      if (cleanIcons) {
+        state.fundConfig.mobileMemberOverviewIcons = cleanIcons;
+      } else {
+        delete state.fundConfig.mobileMemberOverviewIcons;
+      }
     }
   }
   const activeVoters = Math.max(1, state.users.filter((u) => u.status === 'active').length);

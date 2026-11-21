@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import type { PublicUser, UserRole } from '../types/coop.ts';
+import { sanitizeMobileMemberOverviewIcons } from '../utils/mobileOverviewTiles.ts';
 import {
   findActiveUserByIds,
   findRevokedTokenIds,
@@ -58,6 +59,13 @@ export function sanitizeUser(user: StoredUser): PublicUser {
       ...DEFAULT_NOTIFICATION_PREFERENCES,
       ...(user.notificationPreferences || {}),
     },
+    ...(user.mobileOverviewIcons
+      ? {
+          mobileOverviewIcons: sanitizeMobileMemberOverviewIcons(user.mobileOverviewIcons, {
+            allowManagerTiles: user.role === 'manager',
+          }),
+        }
+      : {}),
   };
 }
 

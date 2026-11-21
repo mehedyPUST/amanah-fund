@@ -37,6 +37,7 @@ import type {
   MemberPublicProfile,
   MemberSocialMedia,
   MemberSummary,
+  MobileMemberOverviewIconsConfig,
   MonthlySheetData,
   NomineeInfo,
   NoticePriority,
@@ -607,7 +608,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ code }),
     }),
-  updatePreferences: (prefs: Partial<NotificationPreferences>) =>
+  updatePreferences: (
+    prefs: Partial<NotificationPreferences> & {
+      mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+    }
+  ) =>
     apiRequest<{ user: PublicUser }>('/api/profile/preferences', {
       method: 'PATCH',
       body: JSON.stringify(prefs),
@@ -905,11 +910,12 @@ export const api = {
       method: 'DELETE',
     }),
   updateConfig: (
-    payload: Omit<Partial<FundConfig>, 'emailTemplates'> & {
+    payload: Omit<Partial<FundConfig>, 'emailTemplates' | 'mobileMemberOverviewIcons'> & {
       emailTemplates?:
         | EmailTemplateCollection
         | Partial<Record<EmailTemplateKey, Partial<EmailTemplateFormat> | null>>
         | null;
+      mobileMemberOverviewIcons?: MobileMemberOverviewIconsConfig | null;
     }
   ) =>
     apiRequest<{ config: FundConfig }>('/api/admin/config', {

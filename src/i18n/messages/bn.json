@@ -957,6 +957,9 @@
     },
     "mobile": {
       "services": "মূল সেবাসমূহ",
+      "customizeIcons": "কাস্টমাইজ",
+      "customizeIconsAria": "মোবাইল ড্যাশবোর্ড আইকন পরিবর্তন করুন",
+      "noServicesSelected": "মূল সেবাসমূহে কোনো আইকন পিন করা হয়নি। শর্টকাট বাছতে কাস্টমাইজ চাপুন।",
       "governanceLedgerPages": "পরিচালনা ও খতিয়ান পাতা",
       "managementLedgerPages": "ব্যবস্থাপনা ও খতিয়ান পাতা",
       "allPagesAccount": "আরও",
@@ -1053,7 +1056,14 @@
       "usedCount": "{used} / {max} ব্যবহৃত",
       "eligibleForLoan": "কর্জে হাসানা আবেদনের যোগ্য",
       "notEligibleForLoan": "বর্তমানে কর্জে হাসানা আবেদনের অযোগ্য",
-      "openMyAmanah": "আমার আমানাহ খুলুন"
+      "openMyAmanah": "আমার আমানাহ খুলুন",
+      "customizeTitle": "ড্যাশবোর্ড আইকন বাছাই করুন",
+      "customizeSubtitlePersonal": "ব্যক্তিগত বিন্যাস সক্রিয় · আপনার মোবাইল ওভারভিউতে প্রদর্শিত",
+      "customizeSubtitleDefault": "সমবায়ের ডিফল্ট বিন্যাস · আইকন বাছুন ও সাজান",
+      "savingIcons": "সংরক্ষণ হচ্ছে…",
+      "saveIconsBtn": "বিন্যাস সংরক্ষণ করুন",
+      "resetDefaultIcons": "ডিফল্ট বিন্যাসে ফিরুন",
+      "saveIconsError": "মোবাইল ড্যাশবোর্ড আইকন বিন্যাস সংরক্ষণ করা যায়নি।"
     },
     "overviewView": {
       "pendingCountBadge": "{count}টি অপেক্ষমাণ",
@@ -3477,6 +3487,10 @@
       "labelCycleMonths": "ম্যানেজার আবর্তন চক্র (মাস)",
       "presetMonthsShort": "{count} মাস",
       "labelCycleStartDate": "ম্যানেজার চক্র শুরুর মূল তারিখ",
+      "group5Title": "৫. সদস্যদের মোবাইল ওভারভিউ আইকন (সমবায় ডিফল্ট)",
+      "group5Desc": "সদস্যদের মোবাইল ওভারভিউতে ডিফল্টভাবে মূল সেবাসমূহ (৩-কলাম) এবং আরও (৪-কলাম) গ্রিডে কোন আইকনগুলো থাকবে তা নির্ধারণ করুন। সদস্যরা চাইলে নিজের মতো পরিবর্তনও করতে পারবেন।",
+      "detailMobileIcons": "সদস্যদের মোবাইল আইকন",
+      "mobileIconsSummary": "{services}টি মূল সেবা · {more}টি আরও আইকন",
       "unsavedChangesNotice": "আপনার অসংরক্ষিত কনফিগারেশন পরিবর্তন রয়েছে",
       "allMatchedNotice": "সকল সেটিংস সক্রিয় সমবায় নীতিমালার সাথে মিল রয়েছে",
       "discardChanges": "পরিবর্তন বাতিল করুন",
@@ -5019,6 +5033,25 @@
       "thisTitle": "Closing Cumulative",
       "fundTitle": "All-Time Fund Position"
     }
+  },
+  "MobileIconEditor": {
+    "summaryCounts": "মূল সেবা {services}টি · আরও {more}টি · লুকানো {hidden}টি",
+    "sectionServices": "মূল সেবাসমূহ (উপরের ৩-কলাম গ্রিড)",
+    "sectionServicesHint": "তহবিলের প্রধান তথ্যের নিচে প্রদর্শিত প্রধান শর্টকাটসমূহ।",
+    "sectionMore": "আরও (৪-কলাম গ্রিড)",
+    "sectionMoreHint": "মূল সেবাসমূহের নিচে থাকা সংক্ষিপ্ত আইকনসমূহ।",
+    "sectionHidden": "লুকানো / উপলব্ধ আইকনসমূহ",
+    "sectionHiddenHint": "ওভারভিউতে ফিরিয়ে আনতে মূল সেবা বা আরও নির্বাচন করুন।",
+    "emptyServices": "মূল সেবাসমূহে কোনো আইকন পিন করা নেই।",
+    "emptyMore": "আরও বিভাগে কোনো আইকন নির্ধারিত নেই।",
+    "emptyHidden": "সব উপলব্ধ আইকন বর্তমানে মোবাইল ওভারভিউতে প্রদর্শিত হচ্ছে।",
+    "placeServices": "মূল সেবা",
+    "placeMore": "আরও",
+    "placeHide": "লুকান",
+    "moveUp": "{label} উপরে নিন",
+    "moveDown": "{label} নিচে নিন",
+    "resetBtn": "ডিফল্টে ফিরুন",
+    "managerOnlyTag": "ম্যানেজার"
   }
 }
 

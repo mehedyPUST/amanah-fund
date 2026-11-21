@@ -1,0 +1,254 @@
+import type {
+  MobileMemberOverviewIconsConfig,
+  MobileMemberTileId,
+} from '../types/coop.ts';
+
+export interface MobileMemberTileMeta {
+  id: MobileMemberTileId;
+  navKey:
+    | 'contributions'
+    | 'qardHasan'
+    | 'myAmanah'
+    | 'members'
+    | 'community'
+    | 'balanceSheet'
+    | 'transactions'
+    | 'statistics'
+    | 'managerCycle'
+    | 'voting'
+    | 'charter'
+    | 'notifications'
+    | 'profile'
+    | 'managerDesk'
+    | 'memberRegistry';
+  managerOnly?: boolean;
+  iconBgClass: string;
+  iconColorClass: string;
+}
+
+export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
+  {
+    id: 'pay-monthly-contribution',
+    navKey: 'contributions',
+    iconBgClass:
+      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+    iconColorClass: 'text-emerald-600 dark:text-emerald-300',
+  },
+  {
+    id: 'quard-hasan',
+    navKey: 'qardHasan',
+    iconBgClass:
+      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+    iconColorClass: 'text-amber-600 dark:text-amber-300',
+  },
+  {
+    id: 'my-amanah',
+    navKey: 'myAmanah',
+    iconBgClass:
+      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+    iconColorClass: 'text-teal-700 dark:text-teal-300',
+  },
+  {
+    id: 'members',
+    navKey: 'members',
+    iconBgClass:
+      'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+    iconColorClass: 'text-sky-600 dark:text-sky-300',
+  },
+  {
+    id: 'community',
+    navKey: 'community',
+    iconBgClass:
+      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+    iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+  },
+  {
+    id: 'balance-sheet',
+    navKey: 'balanceSheet',
+    iconBgClass:
+      'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+    iconColorClass: 'text-teal-600 dark:text-teal-300',
+  },
+  {
+    id: 'transaction-history',
+    navKey: 'transactions',
+    iconBgClass:
+      'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+    iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+  },
+  {
+    id: 'statistics',
+    navKey: 'statistics',
+    iconBgClass:
+      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+    iconColorClass: 'text-emerald-600 dark:text-emerald-300',
+  },
+  {
+    id: 'manager-cycle',
+    navKey: 'managerCycle',
+    iconBgClass:
+      'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+    iconColorClass: 'text-violet-600 dark:text-violet-300',
+  },
+  {
+    id: 'voting',
+    navKey: 'voting',
+    iconBgClass:
+      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+    iconColorClass: 'text-amber-600 dark:text-amber-300',
+  },
+  {
+    id: 'charter',
+    navKey: 'charter',
+    iconBgClass:
+      'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+    iconColorClass: 'text-rose-600 dark:text-rose-300',
+  },
+  {
+    id: 'notification',
+    navKey: 'notifications',
+    iconBgClass:
+      'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+    iconColorClass: 'text-orange-600 dark:text-orange-300',
+  },
+  {
+    id: 'my-profile',
+    navKey: 'profile',
+    iconBgClass:
+      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+    iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+  },
+  {
+    id: 'manager-desk',
+    navKey: 'managerDesk',
+    managerOnly: true,
+    iconBgClass:
+      'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+    iconColorClass: 'text-orange-600 dark:text-orange-300',
+  },
+  {
+    id: 'member-registry',
+    navKey: 'memberRegistry',
+    managerOnly: true,
+    iconBgClass:
+      'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+    iconColorClass: 'text-sky-600 dark:text-sky-300',
+  },
+] as const;
+
+export const MOBILE_MEMBER_TILE_MAP: Record<MobileMemberTileId, MobileMemberTileMeta> =
+  Object.fromEntries(
+    MOBILE_MEMBER_TILE_CATALOG.map((item) => [item.id, item])
+  ) as Record<MobileMemberTileId, MobileMemberTileMeta>;
+
+const ALL_VALID_IDS = new Set<MobileMemberTileId>(
+  MOBILE_MEMBER_TILE_CATALOG.map((item) => item.id)
+);
+
+const NON_MANAGER_VALID_IDS = new Set<MobileMemberTileId>(
+  MOBILE_MEMBER_TILE_CATALOG.filter((item) => !item.managerOnly).map((item) => item.id)
+);
+
+export const DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS: MobileMemberOverviewIconsConfig = {
+  services: [
+    'pay-monthly-contribution',
+    'quard-hasan',
+    'members',
+    'community',
+    'balance-sheet',
+    'transaction-history',
+  ],
+  more: ['statistics', 'manager-cycle', 'voting', 'charter'],
+};
+
+const MANAGER_EXTRA_TILES: readonly MobileMemberTileId[] = [
+  'manager-desk',
+  'member-registry',
+];
+
+export function sanitizeMobileMemberOverviewIcons(
+  raw: unknown,
+  options?: { allowManagerTiles?: boolean }
+): MobileMemberOverviewIconsConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return null;
+  }
+  const obj = raw as { services?: unknown; more?: unknown };
+  if (!Array.isArray(obj.services) || !Array.isArray(obj.more)) {
+    return null;
+  }
+
+  const allowed = options?.allowManagerTiles ? ALL_VALID_IDS : NON_MANAGER_VALID_IDS;
+  const seen = new Set<MobileMemberTileId>();
+
+  const pickValid = (arr: unknown[]): MobileMemberTileId[] => {
+    const out: MobileMemberTileId[] = [];
+    for (const item of arr) {
+      if (typeof item !== 'string') continue;
+      const id = item.trim() as MobileMemberTileId;
+      if (!allowed.has(id) || seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+    }
+    return out;
+  };
+
+  return {
+    services: pickValid(obj.services),
+    more: pickValid(obj.more),
+  };
+}
+
+export function resolveMemberMobileOverviewIcons(params: {
+  userIcons?: MobileMemberOverviewIconsConfig | null;
+  coopIcons?: MobileMemberOverviewIconsConfig | null;
+  isManager: boolean;
+}): MobileMemberOverviewIconsConfig {
+  const { userIcons, coopIcons, isManager } = params;
+  const sanitizedUser = userIcons
+    ? sanitizeMobileMemberOverviewIcons(userIcons, { allowManagerTiles: isManager })
+    : null;
+  const sanitizedCoop = coopIcons
+    ? sanitizeMobileMemberOverviewIcons(coopIcons, { allowManagerTiles: false })
+    : null;
+
+  const base = sanitizedUser ?? sanitizedCoop ?? DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
+  const services = [...base.services];
+  const more = [...base.more];
+
+  // For managers who haven't customized their personal layout yet, ensure
+  // manager tools are included in More so nothing disappears when coop defaults change.
+  if (isManager && !sanitizedUser) {
+    const present = new Set<MobileMemberTileId>([...services, ...more]);
+    for (const mgrId of MANAGER_EXTRA_TILES) {
+      if (!present.has(mgrId)) {
+        more.push(mgrId);
+      }
+    }
+  }
+
+  return { services, more };
+}
+
+export function areMobileOverviewConfigsEqual(
+  a?: MobileMemberOverviewIconsConfig | null,
+  b?: MobileMemberOverviewIconsConfig | null
+): boolean {
+  const normA =
+    sanitizeMobileMemberOverviewIcons(a, { allowManagerTiles: true }) ??
+    DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
+  const normB =
+    sanitizeMobileMemberOverviewIcons(b, { allowManagerTiles: true }) ??
+    DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS;
+
+  if (normA.services.length !== normB.services.length) return false;
+  if (normA.more.length !== normB.more.length) return false;
+
+  for (let i = 0; i < normA.services.length; i += 1) {
+    if (normA.services[i] !== normB.services[i]) return false;
+  }
+  for (let i = 0; i < normA.more.length; i += 1) {
+    if (normA.more[i] !== normB.more[i]) return false;
+  }
+  return true;
+}

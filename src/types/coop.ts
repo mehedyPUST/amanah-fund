@@ -37,6 +37,28 @@ export interface NotificationPreferences {
   pushAlerts?: boolean;
 }
 
+export type MobileMemberTileId =
+  | 'pay-monthly-contribution'
+  | 'quard-hasan'
+  | 'my-amanah'
+  | 'members'
+  | 'community'
+  | 'balance-sheet'
+  | 'transaction-history'
+  | 'statistics'
+  | 'manager-cycle'
+  | 'voting'
+  | 'charter'
+  | 'notification'
+  | 'my-profile'
+  | 'manager-desk'
+  | 'member-registry';
+
+export interface MobileMemberOverviewIconsConfig {
+  services: MobileMemberTileId[];
+  more: MobileMemberTileId[];
+}
+
 export type NomineeGender = 'male' | 'female' | 'other';
 export type MemberGender = NomineeGender;
 export type MaritalStatus = 'single' | 'married' | 'widowed' | 'divorced';
@@ -131,6 +153,7 @@ export interface PublicUser {
   totpEnabled?: boolean;
   registeredDevices?: RegisteredDeviceSummary[];
   notificationPreferences?: NotificationPreferences;
+  mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
   registrationDetails?: UserRegistrationDetails;
 }
 
@@ -237,6 +260,7 @@ export interface FundConfig {
   lastMonthlyPdfSentMonth?: string;
   monthlyReportAutoEmail?: boolean;
   emailTemplates?: EmailTemplateCollection;
+  mobileMemberOverviewIcons?: MobileMemberOverviewIconsConfig;
   faqsSeeded?: boolean;
   updatedAt: string;
   updatedBy: string;

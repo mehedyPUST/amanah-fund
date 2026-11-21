@@ -22,11 +22,13 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   TrendingUp,
   User,
   UserCheck,
   Users,
   Vote,
+  Wallet,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -37,13 +39,22 @@ import type {
   DashboardOverview,
   DashboardSectionId,
   LoanRequest,
+  MobileMemberOverviewIconsConfig,
+  MobileMemberTileId,
   PublicUser,
 } from '../types/coop.ts';
+import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
+import {
+  areMobileOverviewConfigsEqual,
+  resolveMemberMobileOverviewIcons,
+} from '../utils/mobileOverviewTiles.ts';
 import { useBodyScrollLock } from '../utils/modalLock.ts';
+import { useCoopSession } from './AppProviders.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MobileDashboardBanner } from './MobileDashboardBanner.tsx';
+import { MobileOverviewIconEditor } from './MobileOverviewIconCustomizer.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export interface MfsIconTile {
@@ -61,6 +72,7 @@ type MobileSheetId =
   | 'pulse'
   | 'queues'
   | 'borrowers'
+  | 'customize-icons'
   | null;
 
 interface MobileMfsHomeProps {
@@ -252,10 +264,20 @@ export function MobileMfsHome({
   onViewMemberProfile,
 }: MobileMfsHomeProps) {
   const router = useRouter();
+  const { setUser } = useCoopSession();
   const tCommon = useTranslations('Common');
   const tNav = useTranslations('Navigation');
   const tDash = useTranslations('Dashboard');
   const [activeSheet, setActiveSheet] = useState<MobileSheetId>(null);
+  const [iconDraft, setIconDraft] = useState<MobileMemberOverviewIconsConfig>(() =>
+    resolveMemberMobileOverviewIcons({
+      userIcons: user.mobileOverviewIcons,
+      coopIcons: overview?.config.mobileMemberOverviewIcons,
+      isManager: user.role === 'manager',
+    })
+  );
+  const [iconsSaving, setIconsSaving] = useState(false);
+  const [iconsError, setIconsError] = useState<string | null>(null);
 
   const openCharterPage = () => {
     setMobileBrowseMode(true);
@@ -464,6 +486,213 @@ export function MobileMfsHome({
     return { loan, progressPct, stageCaption, barColor };
   })();
 
+  const resolvedMemberIcons = resolveMemberMobileOverviewIcons({
+    userIcons: user.mobileOverviewIcons,
+    coopIcons: config.mobileMemberOverviewIcons,
+    isManager,
+  });
+
+  const coopOrBuiltinDefaultIcons = resolveMemberMobileOverviewIcons({
+    userIcons: null,
+    coopIcons: config.mobileMemberOverviewIcons,
+    isManager,
+  });
+
+  const openCustomizeSheet = () => {
+    setIconDraft(resolvedMemberIcons);
+    setIconsError(null);
+    setActiveSheet('customize-icons');
+  };
+
+  const handleSaveMemberIcons = async () => {
+    setIconsSaving(true);
+    setIconsError(null);
+    try {
+      const res = await api.updatePreferences({ mobileOverviewIcons: iconDraft });
+      setUser(res.user);
+      setActiveSheet(null);
+    } catch (err) {
+      setIconsError(
+        err instanceof Error ? err.message : tDash('sheets.saveIconsError')
+      );
+    } finally {
+      setIconsSaving(false);
+    }
+  };
+
+  const handleResetMemberIcons = async () => {
+    if (!user.mobileOverviewIcons) {
+      setIconDraft(coopOrBuiltinDefaultIcons);
+      return;
+    }
+    setIconsSaving(true);
+    setIconsError(null);
+    try {
+      const res = await api.updatePreferences({ mobileOverviewIcons: null });
+      setUser(res.user);
+      setIconDraft(coopOrBuiltinDefaultIcons);
+      setActiveSheet(null);
+    } catch (err) {
+      setIconsError(
+        err instanceof Error ? err.message : tDash('sheets.saveIconsError')
+      );
+    } finally {
+      setIconsSaving(false);
+    }
+  };
+
+  const notifBadgeCount = pendingBadgeCount('notification');
+
+  const memberTileById: Record<MobileMemberTileId, MfsIconTile> = {
+    'pay-monthly-contribution': {
+      id: 'pay-monthly-contribution',
+      label: tNav('contributions'),
+      Icon: CreditCard,
+      iconBgClass:
+        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+      iconColorClass: 'text-emerald-600 dark:text-emerald-300',
+      badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
+      onClick: () => onNavigate('monthly-contribution'),
+    },
+    'quard-hasan': {
+      id: 'quard-hasan',
+      label: tNav('qardHasan'),
+      Icon: HandCoins,
+      iconBgClass:
+        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+      iconColorClass: 'text-amber-600 dark:text-amber-300',
+      onClick: () => onNavigate('quard-hasan'),
+    },
+    'my-amanah': {
+      id: 'my-amanah',
+      label: tNav('myAmanah'),
+      Icon: Wallet,
+      iconBgClass:
+        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+      iconColorClass: 'text-teal-700 dark:text-teal-300',
+      onClick: () => onNavigate('my-amanah'),
+    },
+    members: {
+      id: 'members',
+      label: tNav('members'),
+      Icon: Users,
+      iconBgClass:
+        'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+      iconColorClass: 'text-sky-600 dark:text-sky-300',
+      onClick: () => onNavigate('members'),
+    },
+    community: {
+      id: 'community',
+      label: tNav('community'),
+      Icon: MessageSquare,
+      iconBgClass:
+        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+      iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+      badge: pendingBadgeCount('community'),
+      onClick: () => onNavigate('community'),
+    },
+    'balance-sheet': {
+      id: 'balance-sheet',
+      label: tNav('balanceSheet'),
+      Icon: FileSpreadsheet,
+      iconBgClass:
+        'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
+      iconColorClass: 'text-teal-600 dark:text-teal-300',
+      onClick: () => onNavigate('balance-sheet'),
+    },
+    'transaction-history': {
+      id: 'transaction-history',
+      label: tNav('transactions'),
+      Icon: History,
+      iconBgClass:
+        'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
+      iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+      onClick: () => onNavigate('transaction-history'),
+    },
+    statistics: {
+      id: 'statistics',
+      label: tNav('statistics'),
+      Icon: BarChart3,
+      iconBgClass:
+        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
+      iconColorClass: 'text-emerald-600 dark:text-emerald-300',
+      onClick: () => onNavigate('statistics'),
+    },
+    'manager-cycle': {
+      id: 'manager-cycle',
+      label: tNav('managerCycle'),
+      Icon: CalendarClock,
+      iconBgClass:
+        'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
+      iconColorClass: 'text-violet-600 dark:text-violet-300',
+      onClick: () => onNavigate('manager-cycle'),
+    },
+    voting: {
+      id: 'voting',
+      label: tNav('voting'),
+      Icon: Vote,
+      iconBgClass:
+        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
+      iconColorClass: 'text-amber-600 dark:text-amber-300',
+      badge: pendingBadgeCount('ballot'),
+      onClick: () => onNavigate('ballot'),
+    },
+    charter: {
+      id: 'charter',
+      label: tNav('charter'),
+      Icon: ScrollText,
+      iconBgClass:
+        'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
+      iconColorClass: 'text-rose-600 dark:text-rose-300',
+      onClick: openCharterPage,
+    },
+    notification: {
+      id: 'notification',
+      label: tNav('notifications'),
+      Icon: Bell,
+      iconBgClass:
+        'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+      iconColorClass: 'text-orange-600 dark:text-orange-300',
+      badge: notifBadgeCount,
+      badgeBlink:
+        notifBadgeCount > 0
+          ? hasUnreadPriorityNotification
+            ? 'red'
+            : 'amber'
+          : undefined,
+      onClick: () => onNavigate('notification'),
+    },
+    'my-profile': {
+      id: 'my-profile',
+      label: tNav('profile'),
+      Icon: User,
+      iconBgClass:
+        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
+      iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+      onClick: () => onNavigate('my-profile'),
+    },
+    'manager-desk': {
+      id: 'manager-desk',
+      label: tNav('managerDesk'),
+      Icon: ClipboardCheck,
+      iconBgClass:
+        'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
+      iconColorClass: 'text-orange-600 dark:text-orange-300',
+      badge: pendingBadgeCount('manager-desk'),
+      onClick: () => onNavigate('manager-desk'),
+    },
+    'member-registry': {
+      id: 'member-registry',
+      label: tNav('memberRegistry'),
+      Icon: UserCheck,
+      iconBgClass:
+        'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
+      iconColorClass: 'text-sky-600 dark:text-sky-300',
+      badge: pendingBadgeCount('member-registry'),
+      onClick: () => onNavigate('member-registry'),
+    },
+  };
+
   // 1. Primary Services (3-col bKash-style primary icons)
   const coreActionTiles: MfsIconTile[] = isAdmin
     ? [
@@ -527,64 +756,7 @@ export function MobileMfsHome({
           onClick: () => onNavigate('ballot'),
         },
       ]
-    : [
-        {
-          id: 'pay-monthly-contribution',
-          label: tNav('contributions'),
-          Icon: CreditCard,
-          iconBgClass:
-            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
-          badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
-          onClick: () => onNavigate('monthly-contribution'),
-        },
-        {
-          id: 'quard-hasan',
-          label: tNav('qardHasan'),
-          Icon: HandCoins,
-          iconBgClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-          iconColorClass: 'text-amber-600 dark:text-amber-300',
-          onClick: () => onNavigate('quard-hasan'),
-        },
-        {
-          id: 'members',
-          label: tNav('members'),
-          Icon: Users,
-          iconBgClass:
-            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-          iconColorClass: 'text-sky-600 dark:text-sky-300',
-          onClick: () => onNavigate('members'),
-        },
-        {
-          id: 'community',
-          label: tNav('community'),
-          Icon: MessageSquare,
-          iconBgClass:
-            'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-          iconColorClass: 'text-indigo-600 dark:text-indigo-300',
-          badge: pendingBadgeCount('community'),
-          onClick: () => onNavigate('community'),
-        },
-        {
-          id: 'balance-sheet',
-          label: tNav('balanceSheet'),
-          Icon: FileSpreadsheet,
-          iconBgClass:
-            'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-          iconColorClass: 'text-teal-600 dark:text-teal-300',
-          onClick: () => onNavigate('balance-sheet'),
-        },
-        {
-          id: 'transaction-history',
-          label: tNav('transactions'),
-          Icon: History,
-          iconBgClass:
-            'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-          iconColorClass: 'text-cyan-700 dark:text-cyan-300',
-          onClick: () => onNavigate('transaction-history'),
-        },
-      ];
+    : resolvedMemberIcons.services.map((id) => memberTileById[id]).filter(Boolean);
 
   // 2. More Section (4-col iconic grid)
   const functionalPageTiles: MfsIconTile[] = isAdmin
@@ -641,9 +813,9 @@ export function MobileMfsHome({
           iconBgClass:
             'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
           iconColorClass: 'text-orange-600 dark:text-orange-300',
-          badge: pendingBadgeCount('notification'),
+          badge: notifBadgeCount,
           badgeBlink:
-            pendingBadgeCount('notification') > 0
+            notifBadgeCount > 0
               ? hasUnreadPriorityNotification
                 ? 'red'
                 : 'amber'
@@ -669,69 +841,7 @@ export function MobileMfsHome({
           onClick: () => onNavigate('my-profile'),
         },
       ]
-    : [
-        {
-          id: 'statistics',
-          label: tNav('statistics'),
-          Icon: BarChart3,
-          iconBgClass:
-            'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-          iconColorClass: 'text-emerald-600 dark:text-emerald-300',
-          onClick: () => onNavigate('statistics'),
-        },
-        {
-          id: 'manager-cycle',
-          label: tNav('managerCycle'),
-          Icon: CalendarClock,
-          iconBgClass:
-            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-          iconColorClass: 'text-violet-600 dark:text-violet-300',
-          onClick: () => onNavigate('manager-cycle'),
-        },
-        {
-          id: 'voting',
-          label: tNav('voting'),
-          Icon: Vote,
-          iconBgClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-          iconColorClass: 'text-amber-600 dark:text-amber-300',
-          badge: pendingBadgeCount('ballot'),
-          onClick: () => onNavigate('ballot'),
-        },
-        {
-          id: 'charter',
-          label: tNav('charter'),
-          Icon: ScrollText,
-          iconBgClass:
-            'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-          iconColorClass: 'text-rose-600 dark:text-rose-300',
-          onClick: openCharterPage,
-        },
-        ...(isManager
-          ? [
-              {
-                id: 'manager-desk',
-                label: tNav('managerDesk'),
-                Icon: ClipboardCheck,
-                iconBgClass:
-                  'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-                iconColorClass: 'text-orange-600 dark:text-orange-300',
-                badge: pendingBadgeCount('manager-desk'),
-                onClick: () => onNavigate('manager-desk'),
-              },
-              {
-                id: 'member-registry',
-                label: tNav('memberRegistry'),
-                Icon: UserCheck,
-                iconBgClass:
-                  'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-                iconColorClass: 'text-sky-600 dark:text-sky-300',
-                badge: pendingBadgeCount('member-registry'),
-                onClick: () => onNavigate('member-registry'),
-              },
-            ]
-          : []),
-      ];
+    : resolvedMemberIcons.more.map((id) => memberTileById[id]).filter(Boolean);
 
   return (
     <div className="space-y-4">
@@ -968,29 +1078,54 @@ export function MobileMfsHome({
 
       {/* 4. Core Services Grid */}
       <section aria-label={tDash('mobile.services')} className="space-y-2">
-        <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {tDash('mobile.services')}
-        </h2>
-
-        <div className="mfs-icon-grid-3">
-          {coreActionTiles.map((tile) => (
-            <MfsGridTileButton key={tile.id} tile={tile} labelWeight="semibold" />
-          ))}
+        <div className="flex items-center justify-between gap-2 px-0.5">
+          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            {tDash('mobile.services')}
+          </h2>
+          {!isAdmin && (
+            <button
+              type="button"
+              onClick={openCustomizeSheet}
+              aria-label={tDash('mobile.customizeIconsAria')}
+              className="min-h-[34px] px-2.5 py-1 rounded-lg border border-slate-200/90 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/75 hover:bg-slate-100 dark:hover:bg-slate-800 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{tDash('mobile.customizeIcons')}</span>
+            </button>
+          )}
         </div>
+
+        {coreActionTiles.length === 0 ? (
+          <button
+            type="button"
+            onClick={openCustomizeSheet}
+            className="w-full min-h-[56px] p-3.5 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/50 text-xs text-slate-600 dark:text-slate-300 text-center hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer"
+          >
+            {tDash('mobile.noServicesSelected')}
+          </button>
+        ) : (
+          <div className="mfs-icon-grid-3">
+            {coreActionTiles.map((tile) => (
+              <MfsGridTileButton key={tile.id} tile={tile} labelWeight="semibold" />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 5. More Section (4-col iconic grid) */}
-      <section aria-label={tDash('mobile.more')} className="space-y-2">
-        <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
-          {isAdmin ? tDash('mobile.governanceLedgerPages') : tDash('mobile.more')}
-        </h2>
+      {(isAdmin || functionalPageTiles.length > 0) && (
+        <section aria-label={tDash('mobile.more')} className="space-y-2">
+          <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-0.5">
+            {isAdmin ? tDash('mobile.governanceLedgerPages') : tDash('mobile.more')}
+          </h2>
 
-        <div className="mfs-icon-grid-4">
-          {functionalPageTiles.map((tile) => (
-            <MfsGridTileButton key={tile.id} tile={tile} compact singleLine />
-          ))}
-        </div>
-      </section>
+          <div className="mfs-icon-grid-4">
+            {functionalPageTiles.map((tile) => (
+              <MfsGridTileButton key={tile.id} tile={tile} compact singleLine />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 6. Recent Activity Tap-List */}
       <section aria-label={tDash('mobile.recentActivity')} className="space-y-2">
@@ -1473,6 +1608,62 @@ export function MobileMfsHome({
           <span>{isAdmin ? tDash('alerts.openVoting') : tDash('alerts.openQardHasan')}</span>
           <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
+      </MobileBottomSheet>
+
+      {/* Sheet 4: Customize Member Mobile Overview Icons */}
+      <MobileBottomSheet
+        open={!isAdmin && activeSheet === 'customize-icons'}
+        onClose={() => {
+          if (!iconsSaving) setActiveSheet(null);
+        }}
+        title={tDash('sheets.customizeTitle')}
+        subtitle={
+          user.mobileOverviewIcons
+            ? tDash('sheets.customizeSubtitlePersonal')
+            : tDash('sheets.customizeSubtitleDefault')
+        }
+      >
+        {iconsError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/35 px-3 py-2.5 text-xs text-red-800 dark:text-red-200 flex items-center gap-2"
+          >
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{iconsError}</span>
+          </div>
+        )}
+
+        <MobileOverviewIconEditor
+          value={iconDraft}
+          onChange={setIconDraft}
+          allowManagerTiles={isManager}
+          onReset={() => void handleResetMemberIcons()}
+          disableReset={
+            iconsSaving ||
+            (!user.mobileOverviewIcons &&
+              areMobileOverviewConfigsEqual(iconDraft, coopOrBuiltinDefaultIcons))
+          }
+          resetLabel={tDash('sheets.resetDefaultIcons')}
+        />
+
+        <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 flex items-center gap-2">
+          <button
+            type="button"
+            disabled={iconsSaving}
+            onClick={() => setActiveSheet(null)}
+            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 cursor-pointer"
+          >
+            {tCommon('cancel')}
+          </button>
+          <button
+            type="button"
+            disabled={iconsSaving}
+            onClick={() => void handleSaveMemberIcons()}
+            className="flex-1 min-h-[44px] px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-semibold shadow-xs disabled:opacity-50 cursor-pointer"
+          >
+            {iconsSaving ? tDash('sheets.savingIcons') : tDash('sheets.saveIconsBtn')}
+          </button>
+        </div>
       </MobileBottomSheet>
     </div>
   );

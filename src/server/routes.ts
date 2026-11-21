@@ -30,6 +30,7 @@ import type {
   MaritalStatus,
   MemberGender,
   MemberSocialMedia,
+  MobileMemberOverviewIconsConfig,
   NoticePriority,
   NotificationPreferences,
   PasswordResetRequest,
@@ -48,6 +49,7 @@ import type {
 } from '../types/coop.ts';
 import { formatBdAddress } from '../utils/bdLocations.ts';
 import { containsBanglaScript, isValidBanglaName } from '../utils/inputLanguage.ts';
+import { sanitizeMobileMemberOverviewIcons } from '../utils/mobileOverviewTiles.ts';
 import { validateStrongPassword } from '../utils/passwordStrength.ts';
 import {
   buildDigitalAgreementRecord,
@@ -1646,7 +1648,30 @@ apiRouter.post('/auth/pin-login', authRateLimiter, async (req, res) => {
 apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const viewer = req.authUser!;
-    const body = (req.body || {}) as Partial<NotificationPreferences>;
+    const body = (req.body || {}) as Partial<NotificationPreferences> & {
+      mobileOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+    };
+
+    const hasMobileIconsField = Object.prototype.hasOwnProperty.call(
+      body,
+      'mobileOverviewIcons'
+    );
+    let parsedMobileIcons: MobileMemberOverviewIconsConfig | null | undefined;
+    if (hasMobileIconsField) {
+      if (body.mobileOverviewIcons === null) {
+        parsedMobileIcons = null;
+      } else {
+        const cleanIcons = sanitizeMobileMemberOverviewIcons(body.mobileOverviewIcons, {
+          allowManagerTiles: viewer.role === 'manager',
+        });
+        if (!cleanIcons) {
+          res.status(400).json({ error: 'Invalid mobile dashboard icon selection.' });
+          return;
+        }
+        parsedMobileIcons = cleanIcons;
+      }
+    }
+
     let updatedUser: ReturnType<typeof sanitizeUser> | null = null;
 
     await updateVaultState((draft) => {
@@ -1666,6 +1691,13 @@ apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRe
         ...(typeof body.soundEnabled === 'boolean' ? { soundEnabled: body.soundEnabled } : {}),
         ...(typeof body.pushAlerts === 'boolean' ? { pushAlerts: body.pushAlerts } : {}),
       };
+      if (hasMobileIconsField) {
+        if (parsedMobileIcons === null) {
+          delete target.mobileOverviewIcons;
+        } else if (parsedMobileIcons) {
+          target.mobileOverviewIcons = parsedMobileIcons;
+        }
+      }
       updatedUser = sanitizeUser(target);
       return draft;
     });
@@ -1677,7 +1709,7 @@ apiRouter.patch('/profile/preferences', requireAuth, async (req: AuthenticatedRe
     res.json({ user: updatedUser });
   } catch (err) {
     console.error('Update preferences error:', err);
-    res.status(500).json({ error: 'Failed to save notification preferences.' });
+    res.status(500).json({ error: 'Failed to save user preferences.' });
   }
 });
 
@@ -6527,7 +6559,32 @@ apiRouter.patch(
     try {
       if (!(await assertStepUpTotp(req, res))) return;
       const viewer = req.authUser!;
-      const body = req.body as Partial<FundConfig>;
+      const body = req.body as Partial<Omit<FundConfig, 'mobileMemberOverviewIcons'>> & {
+        mobileMemberOverviewIcons?: MobileMemberOverviewIconsConfig | null;
+      };
+
+      const hasMobileMemberIconsField = Object.prototype.hasOwnProperty.call(
+        body,
+        'mobileMemberOverviewIcons'
+      );
+      let validatedMobileMemberIcons: MobileMemberOverviewIconsConfig | null | undefined;
+      if (hasMobileMemberIconsField) {
+        if (body.mobileMemberOverviewIcons === null) {
+          validatedMobileMemberIcons = null;
+        } else {
+          const cleanMemberIcons = sanitizeMobileMemberOverviewIcons(
+            body.mobileMemberOverviewIcons,
+            { allowManagerTiles: false }
+          );
+          if (!cleanMemberIcons) {
+            res
+              .status(400)
+              .json({ error: 'Invalid mobile member overview icon configuration.' });
+            return;
+          }
+          validatedMobileMemberIcons = cleanMemberIcons;
+        }
+      }
 
       const maxLoansPerYear = Number(body.maxLoansPerYear);
       const monthlyContributionAmount = Number(body.monthlyContributionAmount);
@@ -6900,6 +6957,21 @@ apiRouter.patch(
             };
           }
           cfg.emailTemplates = mergedTemplates;
+        }
+        if (hasMobileMemberIconsField) {
+          const prevJson = JSON.stringify(cfg.mobileMemberOverviewIcons || null);
+          const nextJson = JSON.stringify(validatedMobileMemberIcons || null);
+          if (prevJson !== nextJson) {
+            changes.mobileMemberOverviewIcons = {
+              from: cfg.mobileMemberOverviewIcons || null,
+              to: validatedMobileMemberIcons || null,
+            };
+          }
+          if (validatedMobileMemberIcons === null) {
+            delete cfg.mobileMemberOverviewIcons;
+          } else if (validatedMobileMemberIcons) {
+            cfg.mobileMemberOverviewIcons = validatedMobileMemberIcons;
+          }
         }
         cfg.updatedAt = new Date().toISOString();
         cfg.updatedBy = viewer.name;

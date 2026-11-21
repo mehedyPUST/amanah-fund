@@ -42,17 +42,24 @@ import type {
   FundConfig,
   HalalProject,
   LoanRequest,
+  MobileMemberOverviewIconsConfig,
   PublicUser,
 } from '../types/coop.ts';
 import { api } from '../utils/api.ts';
 import { formatDateTime, formatShortDate } from '../utils/format.ts';
 import type { WorkspaceSessionInfo } from '../utils/googleWorkspace.ts';
+import {
+  areMobileOverviewConfigsEqual,
+  DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS,
+  sanitizeMobileMemberOverviewIcons,
+} from '../utils/mobileOverviewTiles.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminEmailQueueView } from './AdminEmailQueueView.tsx';
 import { AdminEmailTemplatesEditor } from './AdminEmailTemplatesEditor.tsx';
 import { AdminFaqManager } from './AdminFaqManager.tsx';
 import { GoogleSheetSyncCard } from './GoogleSheetSyncCard.tsx';
 import { HalalProjectsView } from './HalalProjectsView.tsx';
+import { MobileOverviewIconEditor } from './MobileOverviewIconCustomizer.tsx';
 
 export type SettingsTabId = 'policy' | 'charter' | 'faqs' | 'email' | 'integrations' | 'ventures';
 
@@ -177,6 +184,13 @@ export function AdminSiteSettingsView({
     config?.monthlyReportAutoEmail ?? true
   );
   const [halalThesis, setHalalThesis] = useState(config?.halalInvestmentThesis || '');
+  const [mobileMemberOverviewIcons, setMobileMemberOverviewIcons] =
+    useState<MobileMemberOverviewIconsConfig>(
+      () =>
+        sanitizeMobileMemberOverviewIcons(config?.mobileMemberOverviewIcons, {
+          allowManagerTiles: false,
+        }) ?? DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS
+    );
 
   // Charter & Compliance state
   const [constitutionTitle, setConstitutionTitle] = useState(() => t('defaultConstitutionTitle'));
@@ -226,6 +240,11 @@ export function AdminSiteSettingsView({
     setManagerCycleStartDate(cfg.managerCycleStartDate || '2027-01-01');
     setMonthlyReportAutoEmail(cfg.monthlyReportAutoEmail ?? true);
     setHalalThesis(cfg.halalInvestmentThesis);
+    setMobileMemberOverviewIcons(
+      sanitizeMobileMemberOverviewIcons(cfg.mobileMemberOverviewIcons, {
+        allowManagerTiles: false,
+      }) ?? DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS
+    );
   }, []);
 
   useEffect(() => {
@@ -262,7 +281,11 @@ export function AdminSiteSettingsView({
       Number(managerCycleMonths) !== (config.managerCycleMonths ?? 3) ||
       managerCycleStartDate !== (config.managerCycleStartDate || '2027-01-01') ||
       monthlyReportAutoEmail !== (config.monthlyReportAutoEmail ?? true) ||
-      halalThesis.trim() !== (config.halalInvestmentThesis || '').trim()
+      halalThesis.trim() !== (config.halalInvestmentThesis || '').trim() ||
+      !areMobileOverviewConfigsEqual(
+        mobileMemberOverviewIcons,
+        config.mobileMemberOverviewIcons ?? DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS
+      )
     );
   }, [
     config,
@@ -287,6 +310,7 @@ export function AdminSiteSettingsView({
     managerCycleStartDate,
     monthlyReportAutoEmail,
     halalThesis,
+    mobileMemberOverviewIcons,
   ]);
 
   const activeMembersCount =
@@ -385,6 +409,13 @@ export function AdminSiteSettingsView({
           label: t('detailMonthlyAutoEmail'),
           value: monthlyReportAutoEmail ? t('enabled') : t('disabled'),
         },
+        {
+          label: t('detailMobileIcons'),
+          value: t('mobileIconsSummary', {
+            services: mobileMemberOverviewIcons.services.length,
+            more: mobileMemberOverviewIcons.more.length,
+          }),
+        },
       ],
       confirmLabel: t('confirmSavePolicyBtn'),
       run: async () => {
@@ -410,6 +441,7 @@ export function AdminSiteSettingsView({
           managerCycleStartDate,
           monthlyReportAutoEmail,
           halalInvestmentThesis: halalThesis,
+          mobileMemberOverviewIcons,
         });
         await Promise.all([onRefresh(), fetchSystemStatus()]);
         setModal({
@@ -1183,6 +1215,33 @@ export function AdminSiteSettingsView({
                       className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Group 5: Default Member Mobile Overview Icons */}
+              <div className="space-y-3">
+                <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {t('group5Title')}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t('group5Desc')}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-200/85 dark:border-slate-800 bg-white/55 dark:bg-slate-950/40 p-3.5 sm:p-4">
+                  <MobileOverviewIconEditor
+                    value={mobileMemberOverviewIcons}
+                    onChange={setMobileMemberOverviewIcons}
+                    allowManagerTiles={false}
+                    onReset={() =>
+                      setMobileMemberOverviewIcons(DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS)
+                    }
+                    disableReset={areMobileOverviewConfigsEqual(
+                      mobileMemberOverviewIcons,
+                      DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS
+                    )}
+                  />
                 </div>
               </div>
 
