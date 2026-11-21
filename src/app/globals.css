@@ -44,6 +44,11 @@ html.dark {
 }
 
 @layer base {
+  html,
+  body {
+    overscroll-behavior-y: contain;
+  }
+
   body {
     font-family: var(--font-sans), var(--font-bangla), system-ui, -apple-system, sans-serif;
     text-rendering: optimizeLegibility;

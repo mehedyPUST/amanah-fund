@@ -69,6 +69,7 @@ import {
 } from './NotificationBlinkMarker.tsx';
 import { NotificationsView } from './NotificationsView.tsx';
 import { OverviewView } from './OverviewView.tsx';
+import { PullToRefreshIndicator, usePullToRefresh } from './PullToRefresh.tsx';
 import { ActionModal } from './ActionModal.tsx';
 import { PWAUpdateButton } from './PWAUpdateButton.tsx';
 import { RequestQardHasanModal } from './RequestQardHasanModal.tsx';
@@ -1058,6 +1059,11 @@ export function DashboardShell() {
     }
     await triggerAutoSheetSyncIfEnabled(freshOverview);
   }, [queryClient, refreshUser, refreshWorkspace, triggerAutoSheetSyncIfEnabled]);
+
+  const pullToRefresh = usePullToRefresh({
+    scrollRef: mainScrollRef,
+    onRefresh: handleRefreshWithAutoSync,
+  });
 
   const handleLoanCreatedOptimistic = useCallback(
     (createdLoan: LoanRequest) => {
@@ -2069,8 +2075,9 @@ export function DashboardShell() {
       >
         <div
           ref={mainScrollRef}
-          className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle pl-2 pr-1 pt-3 pb-6 sm:pl-2.5 sm:pr-1.5 sm:pt-4 sm:pb-6 lg:pl-0 lg:pr-1 lg:pt-4 lg:pb-5"
+          className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain scrollbar-subtle pl-2 pr-1 pt-3 pb-6 sm:pl-2.5 sm:pr-1.5 sm:pt-4 sm:pb-6 lg:pl-0 lg:pr-1 lg:pt-4 lg:pb-5"
         >
+          <PullToRefreshIndicator {...pullToRefresh} />
           <div className="w-full space-y-3 sm:space-y-4">
           {/* Top Alerts: Loan Decisions & Live Pending Ballots */}
           {(() => {
