@@ -3,42 +3,21 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Activity,
   AlertTriangle,
   ArrowRight,
-  BarChart3,
-  Bell,
+  Banknote,
   CalendarCheck,
-  CalendarClock,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
-  ClipboardCheck,
-  ClipboardList,
   Clock,
-  Compass,
-  CreditCard,
-  FileCheck,
-  FileSpreadsheet,
-  Globe,
   HandCoins,
-  HelpCircle,
-  History,
-  Info,
   Landmark,
-  ListChecks,
-  MessageSquare,
-  PlusCircle,
-  ScrollText,
-  Settings,
   ShieldCheck,
   SlidersHorizontal,
-  TrendingUp,
-  User,
-  UserCheck,
-  Users,
+  UserRoundCheck,
+  UsersRound,
   Vote,
-  Wallet,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -57,6 +36,7 @@ import { api } from '../utils/api.ts';
 import { formatBillingMonth, formatMoney, formatShortDate } from '../utils/format.ts';
 import { setMobileBrowseMode } from '../utils/mobileSession.ts';
 import {
+  MOBILE_MEMBER_TILE_MAP,
   areMobileOverviewConfigsEqual,
   resolveMemberMobileOverviewIcons,
 } from '../utils/mobileOverviewTiles.ts';
@@ -64,13 +44,16 @@ import { useBodyScrollLock } from '../utils/modalLock.ts';
 import { useCoopSession } from './AppProviders.tsx';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MobileDashboardBanner } from './MobileDashboardBanner.tsx';
-import { MobileOverviewIconEditor } from './MobileOverviewIconCustomizer.tsx';
+import {
+  MOBILE_MEMBER_TILE_ICONS,
+  MobileOverviewIconEditor,
+} from './MobileOverviewIconCustomizer.tsx';
 import { StatusText } from './StatusText.tsx';
 
 export interface MfsIconTile {
   id: string;
   label: string;
-  Icon: typeof CreditCard;
+  Icon: typeof Banknote;
   iconBgClass: string;
   iconColorClass: string;
   badge?: number;
@@ -204,36 +187,8 @@ const MFS_TAP_SPRING = {
   mass: 0.6,
 };
 
-const TILE_CARD_STYLE_BY_ACCENT: Record<string, string> = {
-  emerald:
-    'border-emerald-200/85 dark:border-emerald-500/30 bg-gradient-to-b from-white/98 via-emerald-50/35 to-emerald-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-emerald-950/45 hover:border-emerald-300 dark:hover:border-emerald-400/50',
-  teal:
-    'border-teal-200/85 dark:border-teal-500/30 bg-gradient-to-b from-white/98 via-teal-50/35 to-teal-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-teal-950/45 hover:border-teal-300 dark:hover:border-teal-400/50',
-  amber:
-    'border-amber-200/85 dark:border-amber-500/30 bg-gradient-to-b from-white/98 via-amber-50/35 to-amber-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-amber-950/40 hover:border-amber-300 dark:hover:border-amber-400/50',
-  sky:
-    'border-sky-200/85 dark:border-sky-500/30 bg-gradient-to-b from-white/98 via-sky-50/35 to-sky-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-sky-950/45 hover:border-sky-300 dark:hover:border-sky-400/50',
-  indigo:
-    'border-indigo-200/85 dark:border-indigo-500/30 bg-gradient-to-b from-white/98 via-indigo-50/35 to-indigo-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-indigo-950/45 hover:border-indigo-300 dark:hover:border-indigo-400/50',
-  cyan:
-    'border-cyan-200/85 dark:border-cyan-500/30 bg-gradient-to-b from-white/98 via-cyan-50/35 to-cyan-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-cyan-950/45 hover:border-cyan-300 dark:hover:border-cyan-400/50',
-  violet:
-    'border-violet-200/85 dark:border-violet-500/30 bg-gradient-to-b from-white/98 via-violet-50/35 to-violet-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-violet-950/45 hover:border-violet-300 dark:hover:border-violet-400/50',
-  rose:
-    'border-rose-200/85 dark:border-rose-500/30 bg-gradient-to-b from-white/98 via-rose-50/35 to-rose-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-rose-950/40 hover:border-rose-300 dark:hover:border-rose-400/50',
-  orange:
-    'border-orange-200/85 dark:border-orange-500/30 bg-gradient-to-b from-white/98 via-orange-50/35 to-orange-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-orange-950/40 hover:border-orange-300 dark:hover:border-orange-400/50',
-  slate:
-    'border-slate-200/90 dark:border-slate-600/35 bg-gradient-to-b from-white/98 via-slate-50/40 to-slate-100/75 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-slate-800/60 hover:border-slate-300 dark:hover:border-slate-500/50',
-};
-
-function getTileCardStyle(iconColorClass: string): string {
-  const match = iconColorClass.match(
-    /text-(emerald|teal|amber|sky|indigo|cyan|violet|rose|orange|slate)-/
-  );
-  const accent = match?.[1] ?? 'emerald';
-  return TILE_CARD_STYLE_BY_ACCENT[accent] ?? TILE_CARD_STYLE_BY_ACCENT.emerald;
-}
+const TILE_SURFACE_CLASS =
+  'border-slate-200/85 dark:border-slate-800/90 bg-white/95 dark:bg-slate-900/90 hover:border-emerald-300/80 dark:hover:border-emerald-700/70';
 
 function MfsGridTileButton({
   tile,
@@ -247,7 +202,6 @@ function MfsGridTileButton({
   singleLine?: boolean;
 }) {
   const Icon = tile.Icon;
-  const cardColorClasses = getTileCardStyle(tile.iconColorClass);
 
   return (
     <motion.button
@@ -256,11 +210,11 @@ function MfsGridTileButton({
       whileTap={{ scale: 0.94, y: 1.5 }}
       transition={MFS_TAP_SPRING}
       className={`group relative ${
-        compact ? 'mfs-tile-compact gap-2 rounded-xl' : 'mfs-tile gap-2.5 rounded-2xl'
-      } border ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.09)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.45)] hover:shadow-[0_6px_16px_-8px_rgba(15,23,42,0.14)] flex flex-col items-center justify-center transition-all cursor-pointer ${cardColorClasses}`}
+        compact ? 'mfs-tile-compact gap-1.5 rounded-2xl' : 'mfs-tile gap-2 rounded-2xl'
+      } border ring-1 ring-inset ring-white/90 dark:ring-white/[0.04] shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_16px_-8px_rgba(0,0,0,0.48)] hover:shadow-[0_6px_16px_-8px_rgba(15,23,42,0.13)] flex flex-col items-center justify-center transition-all cursor-pointer ${TILE_SURFACE_CLASS}`}
     >
       {typeof tile.badge === 'number' && tile.badge > 0 && (
-        <span className="absolute top-1.5 right-1.5 flex items-center justify-center">
+        <span className="absolute top-1.5 right-1.5 z-10 flex items-center justify-center">
           {tile.badgeBlink && (
             <span
               aria-hidden="true"
@@ -272,7 +226,7 @@ function MfsGridTileButton({
             />
           )}
           <span
-            className={`relative min-w-[17px] h-[17px] px-1 rounded-full font-mono text-[9.5px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
+            className={`relative min-w-[17px] h-[17px] px-1 rounded-full ring-2 ring-white dark:ring-slate-900 font-mono text-[9.5px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
               tile.badgeBlink === 'red'
                 ? 'bg-red-600 dark:bg-red-500 text-white'
                 : 'bg-amber-600 text-white'
@@ -283,10 +237,12 @@ function MfsGridTileButton({
         </span>
       )}
 
-      <span className="flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-105">
+      <span
+        className={`mfs-tile-icon-box border flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:-translate-y-0.5 ${tile.iconBgClass}`}
+      >
         <Icon
-          className={`${compact ? 'w-[22px] h-[22px]' : 'w-6 h-6 sm:w-[26px] sm:h-[26px]'} ${tile.iconColorClass}`}
-          strokeWidth={1.85}
+          className={`mfs-tile-icon ${tile.iconColorClass}`}
+          strokeWidth={1.75}
           aria-hidden="true"
         />
       </span>
@@ -593,286 +549,146 @@ export function MobileMfsHome({
 
   const notifBadgeCount = pendingBadgeCount('notification');
 
+  const makeTile = (
+    id: MobileMemberTileId,
+    label: string,
+    onClick: () => void,
+    extras?: { badge?: number; badgeBlink?: 'amber' | 'red' }
+  ): MfsIconTile => {
+    const meta = MOBILE_MEMBER_TILE_MAP[id];
+    return {
+      id,
+      label,
+      Icon: MOBILE_MEMBER_TILE_ICONS[id],
+      iconBgClass: meta.iconBgClass,
+      iconColorClass: meta.iconColorClass,
+      badge: extras?.badge,
+      badgeBlink: extras?.badgeBlink,
+      onClick,
+    };
+  };
+
   const memberTileById: Record<MobileMemberTileId, MfsIconTile> = {
-    'pay-monthly-contribution': {
-      id: 'pay-monthly-contribution',
-      label: tNav('contributions'),
-      Icon: CreditCard,
-      iconBgClass:
-        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-      iconColorClass: 'text-emerald-600 dark:text-emerald-300',
-      badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
-      onClick: () => onNavigate('monthly-contribution'),
-    },
-    'quard-hasan': {
-      id: 'quard-hasan',
-      label: tNav('qardHasan'),
-      Icon: HandCoins,
-      iconBgClass:
-        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-      iconColorClass: 'text-amber-600 dark:text-amber-300',
-      onClick: () => onNavigate('quard-hasan'),
-    },
-    'request-loan': {
-      id: 'request-loan',
-      label: tNav('requestLoan'),
-      Icon: PlusCircle,
-      iconBgClass:
-        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-300',
-      onClick: () => (onOpenLoanModal ? onOpenLoanModal() : onNavigate('quard-hasan')),
-    },
-    'my-amanah': {
-      id: 'my-amanah',
-      label: tNav('myAmanah'),
-      Icon: Wallet,
-      iconBgClass:
-        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-      iconColorClass: 'text-teal-700 dark:text-teal-300',
-      onClick: () => onNavigate('my-amanah'),
-    },
-    members: {
-      id: 'members',
-      label: tNav('members'),
-      Icon: Users,
-      iconBgClass:
-        'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-      iconColorClass: 'text-sky-600 dark:text-sky-300',
-      onClick: () => onNavigate('members'),
-    },
-    community: {
-      id: 'community',
-      label: tNav('community'),
-      Icon: MessageSquare,
-      iconBgClass:
-        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-      iconColorClass: 'text-indigo-600 dark:text-indigo-300',
-      badge: pendingBadgeCount('community'),
-      onClick: () => onNavigate('community'),
-    },
-    'balance-sheet': {
-      id: 'balance-sheet',
-      label: tNav('balanceSheet'),
-      Icon: FileSpreadsheet,
-      iconBgClass:
-        'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-      iconColorClass: 'text-teal-600 dark:text-teal-300',
-      onClick: () => onNavigate('balance-sheet'),
-    },
-    'transaction-history': {
-      id: 'transaction-history',
-      label: tNav('transactions'),
-      Icon: History,
-      iconBgClass:
-        'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-      iconColorClass: 'text-cyan-700 dark:text-cyan-300',
-      onClick: () => onNavigate('transaction-history'),
-    },
-    statistics: {
-      id: 'statistics',
-      label: tNav('statistics'),
-      Icon: BarChart3,
-      iconBgClass:
-        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-      iconColorClass: 'text-emerald-600 dark:text-emerald-300',
-      onClick: () => onNavigate('statistics'),
-    },
-    'manager-cycle': {
-      id: 'manager-cycle',
-      label: tNav('managerCycle'),
-      Icon: CalendarClock,
-      iconBgClass:
-        'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-      iconColorClass: 'text-violet-600 dark:text-violet-300',
-      onClick: () => onNavigate('manager-cycle'),
-    },
-    voting: {
-      id: 'voting',
-      label: tNav('voting'),
-      Icon: Vote,
-      iconBgClass:
-        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-      iconColorClass: 'text-amber-600 dark:text-amber-300',
+    'pay-monthly-contribution': makeTile(
+      'pay-monthly-contribution',
+      tNav('contributions'),
+      () => onNavigate('monthly-contribution'),
+      { badge: isManager ? pendingBadgeCount('monthly-contribution') : 0 }
+    ),
+    'quard-hasan': makeTile('quard-hasan', tNav('qardHasan'), () =>
+      onNavigate('quard-hasan')
+    ),
+    'request-loan': makeTile('request-loan', tNav('requestLoan'), () =>
+      onOpenLoanModal ? onOpenLoanModal() : onNavigate('quard-hasan')
+    ),
+    'my-amanah': makeTile('my-amanah', tNav('myAmanah'), () => onNavigate('my-amanah')),
+    members: makeTile('members', tNav('members'), () => onNavigate('members')),
+    community: makeTile(
+      'community',
+      tNav('community'),
+      () => onNavigate('community'),
+      { badge: pendingBadgeCount('community') }
+    ),
+    'balance-sheet': makeTile('balance-sheet', tNav('balanceSheet'), () =>
+      onNavigate('balance-sheet')
+    ),
+    'transaction-history': makeTile('transaction-history', tNav('transactions'), () =>
+      onNavigate('transaction-history')
+    ),
+    statistics: makeTile('statistics', tNav('statistics'), () => onNavigate('statistics')),
+    'manager-cycle': makeTile('manager-cycle', tNav('managerCycle'), () =>
+      onNavigate('manager-cycle')
+    ),
+    voting: makeTile('voting', tNav('voting'), () => onNavigate('ballot'), {
       badge: pendingBadgeCount('ballot'),
-      onClick: () => onNavigate('ballot'),
-    },
-    'monthly-pulse': {
-      id: 'monthly-pulse',
-      label: tIconEditor('tiles.monthlyPulse'),
-      Icon: CalendarCheck,
-      iconBgClass:
-        'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-      iconColorClass: 'text-teal-700 dark:text-teal-300',
-      onClick: () => setActiveSheet('pulse'),
-    },
-    'active-borrowers': {
-      id: 'active-borrowers',
-      label: tIconEditor('tiles.activeBorrowers'),
-      Icon: Landmark,
-      iconBgClass:
-        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-      iconColorClass: 'text-amber-700 dark:text-amber-300',
-      badge: treasury.activeBorrowers.length,
-      onClick: () => setActiveSheet('borrowers'),
-    },
-    'approval-queues': {
-      id: 'approval-queues',
-      label: tIconEditor('tiles.approvalQueues'),
-      Icon: ListChecks,
-      iconBgClass:
-        'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-      iconColorClass: 'text-violet-700 dark:text-violet-300',
-      badge: totalQueueCount,
-      onClick: () => setActiveSheet('queues'),
-    },
-    charter: {
-      id: 'charter',
-      label: tNav('charter'),
-      Icon: ScrollText,
-      iconBgClass:
-        'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-      iconColorClass: 'text-rose-600 dark:text-rose-300',
-      onClick: openCharterPage,
-    },
-    'how-it-works': {
-      id: 'how-it-works',
-      label: tNav('howItWorks'),
-      Icon: Compass,
-      iconBgClass:
-        'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-      iconColorClass: 'text-sky-700 dark:text-sky-300',
-      onClick: () => openPublicRoute('/how-it-works'),
-    },
-    about: {
-      id: 'about',
-      label: tNav('about'),
-      Icon: Info,
-      iconBgClass:
-        'bg-slate-100/90 dark:bg-slate-500/20 border-slate-300/85 dark:border-slate-400/45',
-      iconColorClass: 'text-slate-700 dark:text-slate-300',
-      onClick: () => openPublicRoute('/about'),
-    },
-    faq: {
-      id: 'faq',
-      label: tNav('faq'),
-      Icon: HelpCircle,
-      iconBgClass:
-        'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-      iconColorClass: 'text-cyan-700 dark:text-cyan-300',
-      onClick: () => openPublicRoute('/#faq'),
-    },
-    'public-website': {
-      id: 'public-website',
-      label: tNav('publicWebsite'),
-      Icon: Globe,
-      iconBgClass:
-        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-      iconColorClass: 'text-indigo-700 dark:text-indigo-300',
-      onClick: () => openPublicRoute('/'),
-    },
-    notification: {
-      id: 'notification',
-      label: tNav('notifications'),
-      Icon: Bell,
-      iconBgClass:
-        'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-      iconColorClass: 'text-orange-600 dark:text-orange-300',
-      badge: notifBadgeCount,
-      badgeBlink:
-        notifBadgeCount > 0
-          ? hasUnreadPriorityNotification
-            ? 'red'
-            : 'amber'
-          : undefined,
-      onClick: () => onNavigate('notification'),
-    },
-    'my-profile': {
-      id: 'my-profile',
-      label: tNav('profile'),
-      Icon: User,
-      iconBgClass:
-        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-      iconColorClass: 'text-indigo-600 dark:text-indigo-300',
-      onClick: () => onNavigate('my-profile'),
-    },
-    'manager-desk': {
-      id: 'manager-desk',
-      label: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
-      Icon: ClipboardCheck,
-      iconBgClass:
-        'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-      iconColorClass: 'text-orange-600 dark:text-orange-300',
-      badge: pendingBadgeCount('manager-desk'),
-      onClick: () => onNavigate('manager-desk'),
-    },
-    'member-registry': {
-      id: 'member-registry',
-      label: isAdmin ? tNav('usersAndRoles') : tNav('memberRegistry'),
-      Icon: UserCheck,
-      iconBgClass:
-        'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-      iconColorClass: 'text-sky-600 dark:text-sky-300',
-      badge: pendingBadgeCount('member-registry'),
-      onClick: () => onNavigate('member-registry'),
-    },
-    'manager-contributions': {
-      id: 'manager-contributions',
-      label: tIconEditor('tiles.managerContributions'),
-      Icon: FileCheck,
-      iconBgClass:
-        'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-      iconColorClass: 'text-emerald-700 dark:text-emerald-300',
-      badge: treasury.pendingContributionsCount,
-      onClick: () =>
+    }),
+    'monthly-pulse': makeTile('monthly-pulse', tIconEditor('tiles.monthlyPulse'), () =>
+      setActiveSheet('pulse')
+    ),
+    'active-borrowers': makeTile(
+      'active-borrowers',
+      tIconEditor('tiles.activeBorrowers'),
+      () => setActiveSheet('borrowers'),
+      { badge: treasury.activeBorrowers.length }
+    ),
+    'approval-queues': makeTile(
+      'approval-queues',
+      tIconEditor('tiles.approvalQueues'),
+      () => setActiveSheet('queues'),
+      { badge: totalQueueCount }
+    ),
+    charter: makeTile('charter', tNav('charter'), openCharterPage),
+    'how-it-works': makeTile('how-it-works', tNav('howItWorks'), () =>
+      openPublicRoute('/how-it-works')
+    ),
+    about: makeTile('about', tNav('about'), () => openPublicRoute('/about')),
+    faq: makeTile('faq', tNav('faq'), () => openPublicRoute('/#faq')),
+    'public-website': makeTile('public-website', tNav('publicWebsite'), () =>
+      openPublicRoute('/')
+    ),
+    notification: makeTile(
+      'notification',
+      tNav('notifications'),
+      () => onNavigate('notification'),
+      {
+        badge: notifBadgeCount,
+        badgeBlink:
+          notifBadgeCount > 0
+            ? hasUnreadPriorityNotification
+              ? 'red'
+              : 'amber'
+            : undefined,
+      }
+    ),
+    'my-profile': makeTile('my-profile', tNav('profile'), () =>
+      onNavigate('my-profile')
+    ),
+    'manager-desk': makeTile(
+      'manager-desk',
+      isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
+      () => onNavigate('manager-desk'),
+      { badge: pendingBadgeCount('manager-desk') }
+    ),
+    'member-registry': makeTile(
+      'member-registry',
+      isAdmin ? tNav('usersAndRoles') : tNav('memberRegistry'),
+      () => onNavigate('member-registry'),
+      { badge: pendingBadgeCount('member-registry') }
+    ),
+    'manager-contributions': makeTile(
+      'manager-contributions',
+      tIconEditor('tiles.managerContributions'),
+      () =>
         onOpenManagerDeskTab
           ? onOpenManagerDeskTab('contributions')
           : onNavigate('manager-desk'),
-    },
-    'manager-loans': {
-      id: 'manager-loans',
-      label: tIconEditor('tiles.managerLoans'),
-      Icon: ClipboardList,
-      iconBgClass:
-        'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-      iconColorClass: 'text-amber-700 dark:text-amber-300',
-      badge: treasury.pendingLoansReviewCount + treasury.pendingDisbursementsCount,
-      onClick: () =>
+      { badge: treasury.pendingContributionsCount }
+    ),
+    'manager-loans': makeTile(
+      'manager-loans',
+      tIconEditor('tiles.managerLoans'),
+      () =>
         onOpenManagerDeskTab
           ? onOpenManagerDeskTab('qard-hasan')
           : onNavigate('manager-desk'),
-    },
-    'manager-installments': {
-      id: 'manager-installments',
-      label: tIconEditor('tiles.managerInstallments'),
-      Icon: CalendarCheck,
-      iconBgClass:
-        'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-      iconColorClass: 'text-rose-700 dark:text-rose-300',
-      badge: treasury.pendingRepaymentsCount,
-      onClick: () =>
+      { badge: treasury.pendingLoansReviewCount + treasury.pendingDisbursementsCount }
+    ),
+    'manager-installments': makeTile(
+      'manager-installments',
+      tIconEditor('tiles.managerInstallments'),
+      () =>
         onOpenManagerDeskTab
           ? onOpenManagerDeskTab('installments')
           : onNavigate('manager-desk'),
-    },
-    'site-settings': {
-      id: 'site-settings',
-      label: tNav('siteSettings'),
-      Icon: Settings,
-      iconBgClass:
-        'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-      iconColorClass: 'text-indigo-600 dark:text-indigo-300',
-      badge: pendingBadgeCount('site-settings'),
-      onClick: () => onNavigate('site-settings'),
-    },
-    'site-activity': {
-      id: 'site-activity',
-      label: tNav('siteActivity'),
-      Icon: Activity,
-      iconBgClass:
-        'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-      iconColorClass: 'text-violet-600 dark:text-violet-300',
-      onClick: () => onNavigate('site-activity'),
-    },
+      { badge: treasury.pendingRepaymentsCount }
+    ),
+    'site-settings': makeTile('site-settings', tNav('siteSettings'), () =>
+      onNavigate('site-settings'),
+      { badge: pendingBadgeCount('site-settings') }
+    ),
+    'site-activity': makeTile('site-activity', tNav('siteActivity'), () =>
+      onNavigate('site-activity')
+    ),
   };
 
   // 1. Primary Services (4-col bKash-style primary icons)
@@ -916,7 +732,9 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <UserCheck className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+                <span className="w-8 h-8 rounded-[10px] border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                  <UserRoundCheck className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
+                </span>
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-200 truncate">
                     {tDash('alerts.guarantorPending', { count: myGuarantorRequests.length })}
@@ -941,7 +759,9 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0" />
+                <span className="w-8 h-8 rounded-[10px] border border-red-200/90 dark:border-red-800/50 bg-gradient-to-b from-red-50 to-red-100/85 dark:from-red-950/75 dark:to-red-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" strokeWidth={1.75} />
+                </span>
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-red-900 dark:text-red-200 truncate">
                     {isAdmin
@@ -964,7 +784,9 @@ export function MobileMfsHome({
               className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+                <span className="w-8 h-8 rounded-[10px] border border-amber-200/90 dark:border-amber-700/50 bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
+                </span>
                 <div className="min-w-0">
                   <div className="text-xs font-semibold text-amber-900 dark:text-amber-200 truncate">
                     {tDash('alerts.pendingMemberApprovals', { count: treasury.pendingMembersCount })}
@@ -1074,8 +896,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('fundHeight')}
               </span>
-              <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-center shrink-0">
-                <TrendingUp className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              <span className="w-9 h-9 rounded-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border border-emerald-200/90 dark:border-emerald-700/50 flex items-center justify-center shrink-0">
+                <Landmark className="w-[17px] h-[17px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
               </span>
             </div>
             <div>
@@ -1102,8 +924,8 @@ export function MobileMfsHome({
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-violet-50 dark:bg-violet-950/50 border border-violet-200/80 dark:border-violet-800/60 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-4 h-4 text-violet-700 dark:text-violet-400" />
+              <span className="w-9 h-9 rounded-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] bg-gradient-to-b from-indigo-50/90 via-slate-50 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border border-indigo-200/85 dark:border-indigo-700/45 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-[17px] h-[17px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
               </span>
             </div>
             <div>
@@ -1129,9 +951,9 @@ export function MobileMfsHome({
             onClick={openCustomizeSheet}
             aria-label={tDash('mobile.customizeIconsAria')}
             title={tDash('mobile.customizeIconsAria')}
-            className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-emerald-700 dark:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-2xs shrink-0"
+            className="w-9 h-9 rounded-[11px] border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/90 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700 text-slate-700 dark:text-slate-200 hover:text-emerald-700 dark:hover:text-emerald-300 inline-flex items-center justify-center cursor-pointer transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.08)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_10px_-4px_rgba(0,0,0,0.4)] shrink-0"
           >
-            <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
+            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.8} aria-hidden="true" />
           </button>
         </div>
 
@@ -1251,16 +1073,16 @@ export function MobileMfsHome({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${
+                    className={`w-10 h-10 rounded-[12px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.09),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${
                       item.kind === 'contribution'
-                        ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-amber-50 dark:bg-amber-950/50 border-amber-200/80 dark:border-amber-800/60 text-amber-700 dark:text-amber-400'
+                        ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45 text-amber-700 dark:text-amber-300'
                     }`}
                   >
                     {item.kind === 'contribution' ? (
-                      <CreditCard className="w-[18px] h-[18px]" aria-hidden="true" />
+                      <Banknote className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
                     ) : (
-                      <HandCoins className="w-[18px] h-[18px]" aria-hidden="true" />
+                      <HandCoins className="w-[18px] h-[18px]" strokeWidth={1.75} aria-hidden="true" />
                     )}
                   </span>
                   <div className="min-w-0">
@@ -1368,7 +1190,7 @@ export function MobileMfsHome({
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3.5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
               <span>{tDash('sheets.thisMonthClearance')}</span>
-              <Users className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <UsersRound className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={1.75} />
             </div>
             <div className="text-sm font-bold font-mono tabular-nums text-slate-900 dark:text-white">
               {treasury.thisMonthClearanceClearedMembers}{' '}
@@ -1466,7 +1288,9 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/60 dark:bg-amber-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="w-10 h-10 rounded-[12px] border border-amber-200/90 dark:border-amber-700/45 bg-gradient-to-b from-amber-50 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <Clock className="w-[18px] h-[18px] text-amber-700 dark:text-amber-300" strokeWidth={1.75} />
+              </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
                   {tDash('sheets.pendingLoanReviews')}
@@ -1496,10 +1320,12 @@ export function MobileMfsHome({
               setActiveSheet(null);
               onNavigate('ballot');
             }}
-            className="w-full min-h-[68px] p-3.5 rounded-xl border border-violet-200/80 dark:border-violet-900/60 bg-violet-50/60 dark:bg-violet-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
+            className="w-full min-h-[68px] p-3.5 rounded-xl border border-indigo-200/80 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <Vote className="w-5 h-5 text-violet-600 dark:text-violet-400 shrink-0" />
+              <span className="w-10 h-10 rounded-[12px] border border-indigo-200/85 dark:border-indigo-700/45 bg-gradient-to-b from-indigo-50 to-indigo-100/75 dark:from-indigo-950/75 dark:to-slate-900/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <Vote className="w-[18px] h-[18px] text-indigo-700 dark:text-indigo-300" strokeWidth={1.75} />
+              </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
                   {tDash('sheets.openTwoThirdsBallots')}
@@ -1534,7 +1360,9 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <CreditCard className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="w-10 h-10 rounded-[12px] border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <Banknote className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
+              </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
                   {tDash('sheets.pendingDeposits')}
@@ -1566,7 +1394,9 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-teal-200/80 dark:border-teal-900/60 bg-teal-50/60 dark:bg-teal-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span className="w-10 h-10 rounded-[12px] border border-teal-200/90 dark:border-teal-700/50 bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-[18px] h-[18px] text-teal-700 dark:text-teal-300" strokeWidth={1.75} />
+              </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
                   {tDash('sheets.awaitingDisbursement')}
@@ -1605,7 +1435,9 @@ export function MobileMfsHome({
             className="w-full min-h-[68px] p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/25 flex items-center justify-between gap-3 text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="w-10 h-10 rounded-[12px] border border-emerald-200/90 dark:border-emerald-700/50 bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/80 dark:to-emerald-900/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-[18px] h-[18px] text-emerald-700 dark:text-emerald-300" strokeWidth={1.75} />
+              </span>
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-slate-900 dark:text-white">
                   {tDash('sheets.pendingRepayments')}

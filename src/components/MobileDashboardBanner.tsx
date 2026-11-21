@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Banknote,
+  BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
-  ClipboardCheck,
-  CreditCard,
   HandCoins,
+  Landmark,
   ShieldCheck,
-  TrendingUp,
   Vote,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -279,15 +279,15 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: ClipboardCheck,
+          Icon: BriefcaseBusiness,
           boxClass:
             totalQueueCount > 0
-              ? 'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/80 dark:border-amber-400/40'
-              : 'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/80 dark:border-violet-400/40',
+              ? 'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45'
+              : 'bg-gradient-to-b from-indigo-50/90 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border-indigo-200/85 dark:border-indigo-700/45',
           iconClass:
             totalQueueCount > 0
               ? 'text-amber-700 dark:text-amber-300'
-              : 'text-violet-700 dark:text-violet-300',
+              : 'text-indigo-700 dark:text-indigo-300',
         },
         onClick: () =>
           totalQueueCount > 0 ? onOpenSheet('queues') : onNavigate('manager-desk'),
@@ -307,9 +307,9 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: CreditCard,
+          Icon: Banknote,
           boxClass:
-            'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/80 dark:border-amber-400/40',
+            'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45',
           iconClass: 'text-amber-700 dark:text-amber-300',
         },
         onClick: () => onNavigate('monthly-contribution'),
@@ -349,8 +349,8 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: ShieldCheck,
           boxClass:
-            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/80 dark:border-violet-400/40',
-          iconClass: 'text-violet-700 dark:text-violet-300',
+            'bg-gradient-to-b from-indigo-50/90 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border-indigo-200/85 dark:border-indigo-700/45',
+          iconClass: 'text-indigo-700 dark:text-indigo-300',
         },
         onClick: () => onNavigate('my-amanah'),
       });
@@ -372,8 +372,8 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: Vote,
           boxClass:
-            'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/80 dark:border-violet-400/40',
-          iconClass: 'text-violet-700 dark:text-violet-300',
+            'bg-gradient-to-b from-amber-50 to-amber-100/85 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45',
+          iconClass: 'text-amber-700 dark:text-amber-300',
         },
         onClick: () => onNavigate('ballot'),
       });
@@ -391,10 +391,10 @@ export function MobileDashboardBanner({
         }),
         visual: {
           kind: 'icon',
-          Icon: TrendingUp,
+          Icon: Landmark,
           boxClass:
-            'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/80 dark:border-sky-400/40',
-          iconClass: 'text-sky-700 dark:text-sky-300',
+            'bg-gradient-to-b from-emerald-50 to-emerald-100/85 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50',
+          iconClass: 'text-emerald-700 dark:text-emerald-300',
         },
         onClick: () =>
           treasury.activeBorrowers.length > 0
@@ -622,8 +622,8 @@ export function MobileDashboardBanner({
                           />
                         </div>
                       ) : (
-                        <span className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl border bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/80 dark:border-teal-400/40 flex items-center justify-center shrink-0">
-                          <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" aria-hidden="true" />
+                        <span className="w-12 h-12 rounded-[14px] border bg-gradient-to-b from-teal-50 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0">
+                          <HandCoins className="w-5 h-5 text-teal-700 dark:text-teal-300" strokeWidth={1.75} aria-hidden="true" />
                         </span>
                       ))}
 
@@ -637,10 +637,11 @@ export function MobileDashboardBanner({
 
                     {slide.visual.kind === 'icon' && (
                       <span
-                        className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl border shadow-2xs flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
+                        className={`w-12 h-12 rounded-[14px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
                       >
                         <slide.visual.Icon
                           className={`w-5 h-5 ${slide.visual.iconClass}`}
+                          strokeWidth={1.75}
                           aria-hidden="true"
                         />
                       </span>

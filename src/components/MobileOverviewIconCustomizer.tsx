@@ -4,38 +4,39 @@ import { useMemo, useState } from 'react';
 import {
   Activity,
   ArrowDownUp,
-  BarChart3,
-  Bell,
+  BadgeCheck,
+  Banknote,
+  BellRing,
+  BookOpenCheck,
+  BriefcaseBusiness,
   CalendarCheck,
   CalendarClock,
+  CalendarRange,
+  ChartColumn,
   ChevronDown,
   ChevronUp,
-  ClipboardCheck,
   ClipboardList,
   Compass,
-  CreditCard,
   EyeOff,
-  FileCheck,
-  FileSpreadsheet,
+  FilePlus2,
   Globe,
   HandCoins,
-  HelpCircle,
-  History,
-  Info,
   Landmark,
   ListChecks,
-  MessageSquare,
+  MessagesSquare,
   Plus,
-  PlusCircle,
+  ReceiptText,
   RotateCcw,
+  Scale,
   ScrollText,
   Search,
-  Settings,
-  User,
-  UserCheck,
-  Users,
+  Settings2,
+  ShieldCheck,
+  UserRound,
+  UserRoundCheck,
+  UsersRound,
   Vote,
-  Wallet,
+  WalletCards,
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -48,67 +49,39 @@ import {
   type MobileMemberTileMeta,
 } from '../utils/mobileOverviewTiles.ts';
 
-export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, typeof CreditCard> = {
-  'pay-monthly-contribution': CreditCard,
+export const MOBILE_MEMBER_TILE_ICONS: Record<MobileMemberTileId, typeof Banknote> = {
+  'pay-monthly-contribution': Banknote,
   'quard-hasan': HandCoins,
-  'request-loan': PlusCircle,
-  'my-amanah': Wallet,
-  members: Users,
-  community: MessageSquare,
-  'balance-sheet': FileSpreadsheet,
-  'transaction-history': History,
-  statistics: BarChart3,
-  'manager-cycle': CalendarClock,
+  'request-loan': FilePlus2,
+  'my-amanah': WalletCards,
+  members: UsersRound,
+  community: MessagesSquare,
+  'balance-sheet': Scale,
+  'transaction-history': ReceiptText,
+  statistics: ChartColumn,
+  'manager-cycle': CalendarRange,
   voting: Vote,
   'monthly-pulse': CalendarCheck,
   'active-borrowers': Landmark,
   'approval-queues': ListChecks,
   charter: ScrollText,
   'how-it-works': Compass,
-  about: Info,
-  faq: HelpCircle,
+  about: ShieldCheck,
+  faq: BookOpenCheck,
   'public-website': Globe,
-  notification: Bell,
-  'my-profile': User,
-  'manager-desk': ClipboardCheck,
-  'member-registry': UserCheck,
-  'manager-contributions': FileCheck,
+  notification: BellRing,
+  'my-profile': UserRound,
+  'manager-desk': BriefcaseBusiness,
+  'member-registry': UserRoundCheck,
+  'manager-contributions': BadgeCheck,
   'manager-loans': ClipboardList,
-  'manager-installments': CalendarCheck,
-  'site-settings': Settings,
+  'manager-installments': CalendarClock,
+  'site-settings': Settings2,
   'site-activity': Activity,
 };
 
-const PREVIEW_CARD_STYLE_BY_ACCENT: Record<string, string> = {
-  emerald:
-    'border-emerald-200/85 dark:border-emerald-500/30 bg-gradient-to-b from-white/98 via-emerald-50/35 to-emerald-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-emerald-950/45',
-  teal:
-    'border-teal-200/85 dark:border-teal-500/30 bg-gradient-to-b from-white/98 via-teal-50/35 to-teal-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-teal-950/45',
-  amber:
-    'border-amber-200/85 dark:border-amber-500/30 bg-gradient-to-b from-white/98 via-amber-50/35 to-amber-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-amber-950/40',
-  sky:
-    'border-sky-200/85 dark:border-sky-500/30 bg-gradient-to-b from-white/98 via-sky-50/35 to-sky-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-sky-950/45',
-  indigo:
-    'border-indigo-200/85 dark:border-indigo-500/30 bg-gradient-to-b from-white/98 via-indigo-50/35 to-indigo-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-indigo-950/45',
-  cyan:
-    'border-cyan-200/85 dark:border-cyan-500/30 bg-gradient-to-b from-white/98 via-cyan-50/35 to-cyan-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-cyan-950/45',
-  violet:
-    'border-violet-200/85 dark:border-violet-500/30 bg-gradient-to-b from-white/98 via-violet-50/35 to-violet-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-violet-950/45',
-  rose:
-    'border-rose-200/85 dark:border-rose-500/30 bg-gradient-to-b from-white/98 via-rose-50/35 to-rose-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-rose-950/40',
-  orange:
-    'border-orange-200/85 dark:border-orange-500/30 bg-gradient-to-b from-white/98 via-orange-50/35 to-orange-100/65 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-orange-950/40',
-  slate:
-    'border-slate-200/90 dark:border-slate-600/35 bg-gradient-to-b from-white/98 via-slate-50/40 to-slate-100/75 dark:from-slate-900/95 dark:via-slate-900/85 dark:to-slate-800/60',
-};
-
-function getPreviewCardStyle(iconColorClass: string): string {
-  const match = iconColorClass.match(
-    /text-(emerald|teal|amber|sky|indigo|cyan|violet|rose|orange|slate)-/
-  );
-  const accent = match?.[1] ?? 'emerald';
-  return PREVIEW_CARD_STYLE_BY_ACCENT[accent] ?? PREVIEW_CARD_STYLE_BY_ACCENT.emerald;
-}
+const PREVIEW_SURFACE_CLASS =
+  'border-slate-200/90 dark:border-slate-800/90 bg-white/95 dark:bg-slate-900/90 ring-1 ring-inset ring-white/90 dark:ring-white/[0.04]';
 
 type TilePlacement = 'services' | 'more' | 'hidden';
 
@@ -245,9 +218,9 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-[11px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
-            <Icon className={`w-4 h-4 ${meta.iconColorClass}`} aria-hidden="true" />
+            <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.75} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex items-center gap-1.5">
             <span className="text-xs font-semibold text-slate-900 dark:text-white truncate">
@@ -321,9 +294,9 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-[11px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
-            <Icon className={`w-4 h-4 ${meta.iconColorClass}`} aria-hidden="true" />
+            <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.75} aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
@@ -414,9 +387,9 @@ export function MobileOverviewIconEditor({
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <span
-            className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+            className={`w-9 h-9 rounded-[11px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(15,23,42,0.12)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
           >
-            <Icon className={`w-4 h-4 ${meta.iconColorClass}`} aria-hidden="true" />
+            <Icon className={`w-[17px] h-[17px] ${meta.iconColorClass}`} strokeWidth={1.75} aria-hidden="true" />
           </span>
           <div className="min-w-0">
             <div className="text-xs font-semibold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
@@ -503,17 +476,20 @@ export function MobileOverviewIconEditor({
                 if (!meta) return null;
                 const Icon = MOBILE_MEMBER_TILE_ICONS[id];
                 const label = getTileLabel(meta);
-                const cardStyle = getPreviewCardStyle(meta.iconColorClass);
                 return (
                   <div
                     key={id}
-                    className={`aspect-[5/6] rounded-xl border px-1 py-2 flex flex-col items-center justify-center gap-1.5 text-center shadow-2xs ${cardStyle}`}
+                    className={`aspect-[5/6] rounded-xl border px-1 py-1.5 flex flex-col items-center justify-center gap-1.5 text-center shadow-[0_2px_8px_-5px_rgba(15,23,42,0.1)] dark:shadow-[0_4px_12px_-6px_rgba(0,0,0,0.45)] ${PREVIEW_SURFACE_CLASS}`}
                   >
-                    <Icon
-                      className={`w-4 h-4 shrink-0 ${meta.iconColorClass}`}
-                      strokeWidth={1.9}
-                      aria-hidden="true"
-                    />
+                    <span
+                      className={`w-8 h-8 rounded-[10px] border shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_5px_-3px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_3px_8px_-4px_rgba(0,0,0,0.45)] flex items-center justify-center shrink-0 ${meta.iconBgClass}`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 shrink-0 ${meta.iconColorClass}`}
+                        strokeWidth={1.75}
+                        aria-hidden="true"
+                      />
+                    </span>
                     <span className="text-[9.5px] font-medium text-slate-700 dark:text-slate-200 leading-tight line-clamp-1 w-full">
                       {label}
                     </span>

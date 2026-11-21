@@ -8,29 +8,29 @@ import {
   Activity,
   ArrowRight,
   BadgeCheck,
-  BarChart3,
-  Bell,
-  CalendarClock,
+  Banknote,
+  BellRing,
+  BriefcaseBusiness,
+  CalendarRange,
+  ChartColumn,
   CheckCircle2,
-  ClipboardCheck,
-  CreditCard,
-  FileSpreadsheet,
   HandCoins,
-  History,
   Home,
   LogOut,
   Menu,
-  MessageSquare,
+  MessagesSquare,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  ReceiptText,
   RefreshCw,
-  Settings,
+  Scale,
+  Settings2,
   Sun,
-  User,
-  Users,
+  UserRound,
+  UsersRound,
   Vote,
-  Wallet,
+  WalletCards,
   X,
   XCircle,
 } from 'lucide-react';
@@ -100,48 +100,48 @@ const EMPTY_NOTIFICATIONS: EmailNotification[] = [];
 interface NavItemConfig {
   id: DashboardSectionId;
   label: string;
-  Icon: typeof BarChart3;
+  Icon: typeof ChartColumn;
   group: 'member' | 'manager' | 'admin';
 }
 
 const MEMBER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Overview', Icon: BarChart3, group: 'member' },
-  { id: 'my-amanah', label: 'My Amanah', Icon: Wallet, group: 'member' },
-  { id: 'monthly-contribution', label: 'Contributions', Icon: CreditCard, group: 'member' },
+  { id: 'fund-overview', label: 'Overview', Icon: ChartColumn, group: 'member' },
+  { id: 'my-amanah', label: 'My Amanah', Icon: WalletCards, group: 'member' },
+  { id: 'monthly-contribution', label: 'Contributions', Icon: Banknote, group: 'member' },
   { id: 'quard-hasan', label: 'Qard Hasan', Icon: HandCoins, group: 'member' },
-  { id: 'transaction-history', label: 'Transactions', Icon: History, group: 'member' },
-  { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
+  { id: 'transaction-history', label: 'Transactions', Icon: ReceiptText, group: 'member' },
+  { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'member' },
   { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
-  { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
-  { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
-  { id: 'members', label: 'Members', Icon: Users, group: 'member' },
-  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
-  { id: 'my-profile', label: 'Profile', Icon: User, group: 'member' },
+  { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'member' },
+  { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'member' },
+  { id: 'members', label: 'Members', Icon: UsersRound, group: 'member' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: Scale, group: 'member' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarRange, group: 'member' },
+  { id: 'my-profile', label: 'Profile', Icon: UserRound, group: 'member' },
 ];
 
 const MANAGER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'manager-desk', label: 'Manager Desk', Icon: ClipboardCheck, group: 'manager' },
-  { id: 'member-registry', label: 'Member Registry', Icon: Users, group: 'manager' },
+  { id: 'manager-desk', label: 'Manager Desk', Icon: BriefcaseBusiness, group: 'manager' },
+  { id: 'member-registry', label: 'Member Registry', Icon: UsersRound, group: 'manager' },
 ];
 
 const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Overview', Icon: BarChart3, group: 'member' },
-  { id: 'transaction-history', label: 'Transactions', Icon: History, group: 'member' },
+  { id: 'fund-overview', label: 'Overview', Icon: ChartColumn, group: 'member' },
+  { id: 'transaction-history', label: 'Transactions', Icon: ReceiptText, group: 'member' },
   { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
-  { id: 'statistics', label: 'Statistics', Icon: BarChart3, group: 'member' },
-  { id: 'members', label: 'Members', Icon: Users, group: 'member' },
-  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarClock, group: 'member' },
-  { id: 'notification', label: 'Notifications', Icon: Bell, group: 'member' },
-  { id: 'community', label: 'Community', Icon: MessageSquare, group: 'member' },
-  { id: 'my-profile', label: 'Profile', Icon: User, group: 'member' },
+  { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'member' },
+  { id: 'members', label: 'Members', Icon: UsersRound, group: 'member' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: Scale, group: 'member' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarRange, group: 'member' },
+  { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'member' },
+  { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'member' },
+  { id: 'my-profile', label: 'Profile', Icon: UserRound, group: 'member' },
 ];
 
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'member-registry', label: 'Users & Roles', Icon: Users, group: 'admin' },
-  { id: 'manager-desk', label: 'Governance Desk', Icon: ClipboardCheck, group: 'admin' },
-  { id: 'site-settings', label: 'Site Settings', Icon: Settings, group: 'admin' },
+  { id: 'member-registry', label: 'Users & Roles', Icon: UsersRound, group: 'admin' },
+  { id: 'manager-desk', label: 'Governance Desk', Icon: BriefcaseBusiness, group: 'admin' },
+  { id: 'site-settings', label: 'Site Settings', Icon: Settings2, group: 'admin' },
   { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
 ];
 
@@ -1409,16 +1409,17 @@ export function DashboardShell() {
               >
                 <span className="flex items-center gap-2.5 min-w-0">
                   <span
-                    className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-7 h-7 rounded-[9px] border flex items-center justify-center shrink-0 transition-colors ${
                       item.active
                         ? toneStyle.activeIconBox
-                        : 'bg-slate-100/85 dark:bg-slate-800/75 border-slate-200/70 dark:border-slate-700/60'
+                        : 'bg-gradient-to-b from-slate-50 to-slate-100/90 dark:from-slate-800/85 dark:to-slate-900/85 border-slate-200/85 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
                     }`}
                   >
                     <Icon
-                      className={`w-[17px] h-[17px] shrink-0 ${
-                        item.active ? toneStyle.activeIcon : 'text-slate-500 dark:text-slate-400'
+                      className={`w-[16px] h-[16px] shrink-0 ${
+                        item.active ? toneStyle.activeIcon : 'text-slate-600 dark:text-slate-300'
                       }`}
+                      strokeWidth={1.75}
                       aria-hidden="true"
                     />
                   </span>
@@ -1465,21 +1466,21 @@ export function DashboardShell() {
           {
             id: 'transaction-history',
             label: tNav('transactions'),
-            Icon: History,
+            Icon: ReceiptText,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
           },
           {
             id: 'statistics',
             label: tNav('statistics'),
-            Icon: BarChart3,
+            Icon: ChartColumn,
             active: activeSection === 'statistics',
             onClick: () => navigateToPage('statistics', true),
           },
           {
             id: 'balance-sheet',
             label: tNav('balanceSheet'),
-            Icon: FileSpreadsheet,
+            Icon: Scale,
             active: activeSection === 'balance-sheet',
             onClick: () => navigateToPage('balance-sheet', true),
           },
@@ -1495,7 +1496,7 @@ export function DashboardShell() {
           {
             id: 'monthly-contribution',
             label: tNav('contributions'),
-            Icon: CreditCard,
+            Icon: Banknote,
             badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
             active: activeSection === 'monthly-contribution',
             onClick: () => navigateToPage('monthly-contribution', true),
@@ -1510,21 +1511,21 @@ export function DashboardShell() {
           {
             id: 'my-amanah',
             label: tNav('myAmanah'),
-            Icon: Wallet,
+            Icon: WalletCards,
             active: activeSection === 'my-amanah',
             onClick: () => navigateToPage('my-amanah', true),
           },
           {
             id: 'transaction-history',
             label: tNav('transactions'),
-            Icon: History,
+            Icon: ReceiptText,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
           },
           {
             id: 'balance-sheet',
             label: tNav('balanceSheet'),
-            Icon: FileSpreadsheet,
+            Icon: Scale,
             active: activeSection === 'balance-sheet',
             onClick: () => navigateToPage('balance-sheet', true),
           },
@@ -1543,7 +1544,7 @@ export function DashboardShell() {
       {
         id: 'community',
         label: tNav('community'),
-        Icon: MessageSquare,
+        Icon: MessagesSquare,
         badge: pendingBadgeCount('community'),
         active: activeSection === 'community',
         onClick: () => navigateToPage('community', true),
@@ -1551,14 +1552,14 @@ export function DashboardShell() {
       {
         id: 'members',
         label: tNav('members'),
-        Icon: Users,
+        Icon: UsersRound,
         active: activeSection === 'members',
         onClick: () => navigateToPage('members', true),
       },
       {
         id: 'manager-cycle',
         label: tNav('managerCycle'),
-        Icon: CalendarClock,
+        Icon: CalendarRange,
         active: activeSection === 'manager-cycle',
         accent: 'amber' as const,
         onClick: () => navigateToPage('manager-cycle', true),
@@ -1568,7 +1569,7 @@ export function DashboardShell() {
             {
               id: 'statistics',
               label: tNav('statistics'),
-              Icon: BarChart3,
+              Icon: ChartColumn,
               active: activeSection === 'statistics',
               onClick: () => navigateToPage('statistics', true),
             },
@@ -1602,7 +1603,7 @@ export function DashboardShell() {
       {
         id: 'notification',
         label: tNav('notifications'),
-        Icon: Bell,
+        Icon: BellRing,
         badge: pendingBadgeCount('notification'),
         blink:
           pendingBadgeCount('notification') > 0
@@ -1617,7 +1618,7 @@ export function DashboardShell() {
       {
         id: 'my-profile',
         label: tNav('profile'),
-        Icon: User,
+        Icon: UserRound,
         active: activeSection === 'my-profile',
         onClick: () => navigateToPage('my-profile', true),
       },
@@ -2564,9 +2565,9 @@ export function DashboardShell() {
       {/* Sticky Mobile Footer Navigation Bar */}
       <nav
         aria-label={tNav('primaryNav')}
-        className="lg:hidden shrink-0 z-30 bg-white/92 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/85 dark:border-slate-800/85 shadow-[0_-6px_24px_-12px_rgba(15,23,42,0.12)] pb-[env(safe-area-inset-bottom)]"
+        className="lg:hidden shrink-0 z-30 bg-white/95 dark:bg-slate-900/94 backdrop-blur-xl border-t border-slate-200/85 dark:border-slate-800/85 shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.1)] pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="grid grid-cols-4 h-[58px] items-stretch">
+        <div className="grid grid-cols-4 h-[60px] items-stretch">
           {(
             [
               {
@@ -2582,7 +2583,7 @@ export function DashboardShell() {
                 ? {
                     id: 'my-amanah',
                     label: tNav('myAmanah'),
-                    Icon: Wallet,
+                    Icon: WalletCards,
                     target: 'my-amanah' as DashboardSectionId,
                     active: activeSection === 'my-amanah',
                     badge: 0,
@@ -2591,7 +2592,7 @@ export function DashboardShell() {
                 : {
                     id: 'transactions',
                     label: tNav('transactions'),
-                    Icon: History,
+                    Icon: ReceiptText,
                     target: 'transaction-history' as DashboardSectionId,
                     active: activeSection === 'transaction-history',
                     badge: 0,
@@ -2600,7 +2601,7 @@ export function DashboardShell() {
               {
                 id: 'community',
                 label: tNav('community'),
-                Icon: MessageSquare,
+                Icon: MessagesSquare,
                 target: 'community' as DashboardSectionId,
                 active: activeSection === 'community',
                 badge: pendingBadgeCount('community'),
@@ -2609,7 +2610,7 @@ export function DashboardShell() {
               {
                 id: 'notification',
                 label: tNav('notifications'),
-                Icon: Bell,
+                Icon: BellRing,
                 target: 'notification' as DashboardSectionId,
                 active: activeSection === 'notification',
                 badge: pendingBadgeCount('notification'),
@@ -2627,23 +2628,24 @@ export function DashboardShell() {
                 aria-current={tab.active ? 'page' : undefined}
                 className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-1 transition-colors cursor-pointer active:scale-95 ${
                   tab.active
-                    ? 'text-emerald-700 dark:text-emerald-400'
+                    ? 'text-emerald-700 dark:text-emerald-300'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                {tab.active && (
-                  <span
-                    className="absolute top-0 inset-x-4 h-0.5 rounded-b-full bg-emerald-700 dark:bg-emerald-400"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="relative inline-flex items-center justify-center">
+                <span
+                  className={`relative inline-flex items-center justify-center px-3 py-1 rounded-xl border transition-all duration-150 ${
+                    tab.active
+                      ? 'bg-gradient-to-b from-emerald-50 to-emerald-100/80 dark:from-emerald-950/75 dark:to-emerald-900/45 border-emerald-200/80 dark:border-emerald-700/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-2px_rgba(5,150,105,0.18)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                      : 'border-transparent'
+                  }`}
+                >
                   <Icon
-                    className={`w-[21px] h-[21px] ${tab.active ? 'stroke-[2.2]' : 'stroke-[1.8]'}`}
+                    strokeWidth={tab.active ? 2 : 1.7}
+                    className="w-[19px] h-[19px]"
                     aria-hidden="true"
                   />
                   {tab.badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2.5 flex items-center justify-center">
+                    <span className="absolute -top-0.5 right-0.5 flex items-center justify-center">
                       {tab.id === 'notification' && (
                         <span
                           aria-hidden="true"
@@ -2655,7 +2657,7 @@ export function DashboardShell() {
                         />
                       )}
                       <span
-                        className={`relative min-w-[16px] h-[16px] px-1 rounded-full font-mono text-[9px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
+                        className={`relative min-w-[16px] h-[16px] px-1 rounded-full font-mono text-[9px] font-bold tabular-nums flex items-center justify-center ring-2 ring-white dark:ring-slate-900 shadow-xs ${
                           tab.priorityBlink
                             ? 'bg-red-600 dark:bg-red-500 text-white'
                             : 'bg-amber-600 dark:bg-amber-500 text-white dark:text-slate-950'

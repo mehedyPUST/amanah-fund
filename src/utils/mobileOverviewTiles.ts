@@ -46,213 +46,209 @@ export interface MobileMemberTileMeta {
   iconColorClass: string;
 }
 
+const MEDALLION_EMERALD_BG =
+  'bg-gradient-to-b from-emerald-50 via-emerald-50/95 to-emerald-100/85 dark:from-emerald-950/80 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-700/50';
+const MEDALLION_EMERALD_ICON = 'text-emerald-700 dark:text-emerald-300';
+
+const MEDALLION_TEAL_BG =
+  'bg-gradient-to-b from-teal-50 via-teal-50/95 to-emerald-100/75 dark:from-teal-950/80 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-700/50';
+const MEDALLION_TEAL_ICON = 'text-teal-700 dark:text-teal-300';
+
+const MEDALLION_GOLD_BG =
+  'bg-gradient-to-b from-amber-50 via-amber-50/95 to-amber-100/80 dark:from-amber-950/75 dark:to-amber-900/40 border-amber-200/90 dark:border-amber-700/45';
+const MEDALLION_GOLD_ICON = 'text-amber-700 dark:text-amber-300';
+
+const MEDALLION_SAPPHIRE_BG =
+  'bg-gradient-to-b from-indigo-50/90 via-slate-50 to-indigo-100/70 dark:from-indigo-950/70 dark:to-slate-900/75 border-indigo-200/85 dark:border-indigo-700/45';
+const MEDALLION_SAPPHIRE_ICON = 'text-indigo-700 dark:text-indigo-300';
+
+const MEDALLION_SLATE_BG =
+  'bg-gradient-to-b from-slate-50 via-slate-50 to-slate-100/95 dark:from-slate-800/90 dark:to-slate-900/85 border-slate-200/95 dark:border-slate-700/60';
+const MEDALLION_SLATE_ICON = 'text-slate-700 dark:text-slate-200';
+
+const MEDALLION_CRIMSON_BG =
+  'bg-gradient-to-b from-rose-50 via-rose-50/95 to-rose-100/75 dark:from-rose-950/75 dark:to-rose-900/40 border-rose-200/90 dark:border-rose-700/45';
+const MEDALLION_CRIMSON_ICON = 'text-rose-700 dark:text-rose-300';
+
 export const MOBILE_MEMBER_TILE_CATALOG: readonly MobileMemberTileMeta[] = [
   {
     id: 'pay-monthly-contribution',
     navKey: 'contributions',
     memberOnly: true,
-    iconBgClass:
-      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-    iconColorClass: 'text-emerald-600 dark:text-emerald-300',
+    iconBgClass: MEDALLION_EMERALD_BG,
+    iconColorClass: MEDALLION_EMERALD_ICON,
   },
   {
     id: 'quard-hasan',
     navKey: 'qardHasan',
     memberOnly: true,
-    iconBgClass:
-      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-    iconColorClass: 'text-amber-600 dark:text-amber-300',
+    iconBgClass: MEDALLION_GOLD_BG,
+    iconColorClass: MEDALLION_GOLD_ICON,
   },
   {
     id: 'request-loan',
     navKey: 'requestLoan',
     memberOnly: true,
-    iconBgClass:
-      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-    iconColorClass: 'text-emerald-700 dark:text-emerald-300',
+    iconBgClass: MEDALLION_EMERALD_BG,
+    iconColorClass: MEDALLION_EMERALD_ICON,
   },
   {
     id: 'my-amanah',
     navKey: 'myAmanah',
     memberOnly: true,
-    iconBgClass:
-      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-    iconColorClass: 'text-teal-700 dark:text-teal-300',
+    iconBgClass: MEDALLION_TEAL_BG,
+    iconColorClass: MEDALLION_TEAL_ICON,
   },
   {
     id: 'members',
     navKey: 'members',
-    iconBgClass:
-      'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-    iconColorClass: 'text-sky-600 dark:text-sky-300',
+    iconBgClass: MEDALLION_SAPPHIRE_BG,
+    iconColorClass: MEDALLION_SAPPHIRE_ICON,
   },
   {
     id: 'community',
     navKey: 'community',
-    iconBgClass:
-      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-    iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+    iconBgClass: MEDALLION_SAPPHIRE_BG,
+    iconColorClass: MEDALLION_SAPPHIRE_ICON,
   },
   {
     id: 'balance-sheet',
     navKey: 'balanceSheet',
-    iconBgClass:
-      'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-    iconColorClass: 'text-teal-600 dark:text-teal-300',
+    iconBgClass: MEDALLION_TEAL_BG,
+    iconColorClass: MEDALLION_TEAL_ICON,
   },
   {
     id: 'transaction-history',
     navKey: 'transactions',
-    iconBgClass:
-      'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-    iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+    iconBgClass: MEDALLION_SLATE_BG,
+    iconColorClass: MEDALLION_SLATE_ICON,
   },
   {
     id: 'statistics',
     navKey: 'statistics',
-    iconBgClass:
-      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-    iconColorClass: 'text-emerald-600 dark:text-emerald-300',
+    iconBgClass: MEDALLION_EMERALD_BG,
+    iconColorClass: MEDALLION_EMERALD_ICON,
   },
   {
     id: 'manager-cycle',
     navKey: 'managerCycle',
-    iconBgClass:
-      'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-    iconColorClass: 'text-violet-600 dark:text-violet-300',
+    iconBgClass: MEDALLION_SAPPHIRE_BG,
+    iconColorClass: MEDALLION_SAPPHIRE_ICON,
   },
   {
     id: 'voting',
     navKey: 'voting',
-    iconBgClass:
-      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-    iconColorClass: 'text-amber-600 dark:text-amber-300',
+    iconBgClass: MEDALLION_GOLD_BG,
+    iconColorClass: MEDALLION_GOLD_ICON,
   },
   {
     id: 'monthly-pulse',
     editorKey: 'tiles.monthlyPulse',
-    iconBgClass:
-      'bg-teal-100/90 dark:bg-teal-500/20 border-teal-300/85 dark:border-teal-400/45',
-    iconColorClass: 'text-teal-700 dark:text-teal-300',
+    iconBgClass: MEDALLION_TEAL_BG,
+    iconColorClass: MEDALLION_TEAL_ICON,
   },
   {
     id: 'active-borrowers',
     editorKey: 'tiles.activeBorrowers',
-    iconBgClass:
-      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-    iconColorClass: 'text-amber-700 dark:text-amber-300',
+    iconBgClass: MEDALLION_GOLD_BG,
+    iconColorClass: MEDALLION_GOLD_ICON,
   },
   {
     id: 'approval-queues',
     editorKey: 'tiles.approvalQueues',
-    iconBgClass:
-      'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-    iconColorClass: 'text-violet-700 dark:text-violet-300',
+    iconBgClass: MEDALLION_SAPPHIRE_BG,
+    iconColorClass: MEDALLION_SAPPHIRE_ICON,
   },
   {
     id: 'charter',
     navKey: 'charter',
-    iconBgClass:
-      'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-    iconColorClass: 'text-rose-600 dark:text-rose-300',
+    iconBgClass: MEDALLION_SLATE_BG,
+    iconColorClass: MEDALLION_SLATE_ICON,
   },
   {
     id: 'how-it-works',
     navKey: 'howItWorks',
-    iconBgClass:
-      'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-    iconColorClass: 'text-sky-700 dark:text-sky-300',
+    iconBgClass: MEDALLION_TEAL_BG,
+    iconColorClass: MEDALLION_TEAL_ICON,
   },
   {
     id: 'about',
     navKey: 'about',
-    iconBgClass:
-      'bg-slate-100/90 dark:bg-slate-500/20 border-slate-300/85 dark:border-slate-400/45',
-    iconColorClass: 'text-slate-700 dark:text-slate-300',
+    iconBgClass: MEDALLION_SLATE_BG,
+    iconColorClass: MEDALLION_SLATE_ICON,
   },
   {
     id: 'faq',
     navKey: 'faq',
-    iconBgClass:
-      'bg-cyan-100/90 dark:bg-cyan-500/20 border-cyan-300/85 dark:border-cyan-400/45',
-    iconColorClass: 'text-cyan-700 dark:text-cyan-300',
+    iconBgClass: MEDALLION_SLATE_BG,
+    iconColorClass: MEDALLION_SLATE_ICON,
   },
   {
     id: 'public-website',
     navKey: 'publicWebsite',
-    iconBgClass:
-      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-    iconColorClass: 'text-indigo-700 dark:text-indigo-300',
+    iconBgClass: MEDALLION_SAPPHIRE_BG,
+    iconColorClass: MEDALLION_SAPPHIRE_ICON,
   },
   {
     id: 'notification',
     navKey: 'notifications',
-    iconBgClass:
-      'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-    iconColorClass: 'text-orange-600 dark:text-orange-300',
+    iconBgClass: MEDALLION_GOLD_BG,
+    iconColorClass: MEDALLION_GOLD_ICON,
   },
   {
     id: 'my-profile',
     navKey: 'profile',
-    iconBgClass:
-      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-    iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+    iconBgClass: MEDALLION_SLATE_BG,
+    iconColorClass: MEDALLION_SLATE_ICON,
   },
   {
     id: 'manager-desk',
     navKey: 'managerDesk',
     managerOnly: true,
-    iconBgClass:
-      'bg-orange-100/90 dark:bg-orange-500/20 border-orange-300/85 dark:border-orange-400/45',
-    iconColorClass: 'text-orange-600 dark:text-orange-300',
+    iconBgClass: MEDALLION_GOLD_BG,
+    iconColorClass: MEDALLION_GOLD_ICON,
   },
   {
     id: 'member-registry',
     navKey: 'memberRegistry',
     managerOnly: true,
-    iconBgClass:
-      'bg-sky-100/90 dark:bg-sky-500/20 border-sky-300/85 dark:border-sky-400/45',
-    iconColorClass: 'text-sky-600 dark:text-sky-300',
+    iconBgClass: MEDALLION_SAPPHIRE_BG,
+    iconColorClass: MEDALLION_SAPPHIRE_ICON,
   },
   {
     id: 'manager-contributions',
     editorKey: 'tiles.managerContributions',
     managerOnly: true,
-    iconBgClass:
-      'bg-emerald-100/90 dark:bg-emerald-500/20 border-emerald-300/85 dark:border-emerald-400/45',
-    iconColorClass: 'text-emerald-700 dark:text-emerald-300',
+    iconBgClass: MEDALLION_EMERALD_BG,
+    iconColorClass: MEDALLION_EMERALD_ICON,
   },
   {
     id: 'manager-loans',
     editorKey: 'tiles.managerLoans',
     managerOnly: true,
-    iconBgClass:
-      'bg-amber-100/90 dark:bg-amber-500/20 border-amber-300/85 dark:border-amber-400/45',
-    iconColorClass: 'text-amber-700 dark:text-amber-300',
+    iconBgClass: MEDALLION_GOLD_BG,
+    iconColorClass: MEDALLION_GOLD_ICON,
   },
   {
     id: 'manager-installments',
     editorKey: 'tiles.managerInstallments',
     managerOnly: true,
-    iconBgClass:
-      'bg-rose-100/90 dark:bg-rose-500/20 border-rose-300/85 dark:border-rose-400/45',
-    iconColorClass: 'text-rose-700 dark:text-rose-300',
+    iconBgClass: MEDALLION_CRIMSON_BG,
+    iconColorClass: MEDALLION_CRIMSON_ICON,
   },
   {
     id: 'site-settings',
     navKey: 'siteSettings',
     adminOnly: true,
-    iconBgClass:
-      'bg-indigo-100/90 dark:bg-indigo-500/20 border-indigo-300/85 dark:border-indigo-400/45',
-    iconColorClass: 'text-indigo-600 dark:text-indigo-300',
+    iconBgClass: MEDALLION_SLATE_BG,
+    iconColorClass: MEDALLION_SLATE_ICON,
   },
   {
     id: 'site-activity',
     navKey: 'siteActivity',
     adminOnly: true,
-    iconBgClass:
-      'bg-violet-100/90 dark:bg-violet-500/20 border-violet-300/85 dark:border-violet-400/45',
-    iconColorClass: 'text-violet-600 dark:text-violet-300',
+    iconBgClass: MEDALLION_TEAL_BG,
+    iconColorClass: MEDALLION_TEAL_ICON,
   },
 ] as const;
 
