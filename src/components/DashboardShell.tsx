@@ -1677,7 +1677,7 @@ export function DashboardShell() {
 
       {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-[52px] sm:h-[54px] lg:h-[60px] shrink-0 bg-white/90 dark:bg-slate-900/84 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/80 dark:border-slate-800/80 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
             <button
               type="button"
@@ -1737,12 +1737,13 @@ export function DashboardShell() {
               <Menu className="w-4 h-4" aria-hidden="true" />
             )}
           </button>
+          <AmanahLogo size="xs" className="lg:hidden shrink-0" decorative />
           <div className="flex items-center gap-2 text-sm min-w-0">
             <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
               {tCommon('brandName')}
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden lg:inline">/</span>
-            <h1 className="font-semibold text-slate-900 dark:text-white truncate">
+            <h1 className="font-semibold text-slate-900 dark:text-white truncate text-[13.5px] sm:text-sm">
               {getDashboardSectionLabel(activeSection, user.role, locale)}
             </h1>
           </div>
@@ -1755,7 +1756,7 @@ export function DashboardShell() {
               if (isMobileViewport()) setMobileBrowseMode(true);
             }}
             title={tNav('publicWebsite')}
-            className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white shadow-2xs transition-colors whitespace-nowrap shrink-0"
+            className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white shadow-2xs transition-colors whitespace-nowrap shrink-0"
           >
             <Home className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{tNav('home')}</span>
@@ -1768,25 +1769,43 @@ export function DashboardShell() {
           />
           <LanguageSwitcher variant="compact" className="hidden lg:inline-flex xl:hidden" />
 
-          <HeaderNotificationBell
-            user={user}
-            overview={overview}
-            contributions={contributions}
-            loans={loans}
-            notifications={notifications}
-            notificationsLoading={notificationsLoading}
-            onNavigate={(section) => navigateToPage(section, false)}
-            onOpenManagerDeskTab={openManagerDeskTab}
-            onOpenContributionMonth={(month) => {
-              setPreselectedBillingMonth(month);
-              navigateToPage('monthly-contribution', false, true, true);
-            }}
-            onMarkRead={handleDismissLoanDecisionAlert}
-            onOpenChange={(open) => {
-              setNotificationModalOpen(open);
-              if (open && mobileNavOpen) closeMobileDrawer();
-            }}
-          />
+          <div className="hidden lg:block">
+            <HeaderNotificationBell
+              user={user}
+              overview={overview}
+              contributions={contributions}
+              loans={loans}
+              notifications={notifications}
+              notificationsLoading={notificationsLoading}
+              onNavigate={(section) => navigateToPage(section, false)}
+              onOpenManagerDeskTab={openManagerDeskTab}
+              onOpenContributionMonth={(month) => {
+                setPreselectedBillingMonth(month);
+                navigateToPage('monthly-contribution', false, true, true);
+              }}
+              onMarkRead={handleDismissLoanDecisionAlert}
+              onOpenChange={(open) => {
+                setNotificationModalOpen(open);
+                if (open && mobileNavOpen) closeMobileDrawer();
+              }}
+            />
+          </div>
+
+          <PWAUpdateButton compact className="hidden lg:inline-flex" />
+
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+            aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 shadow-2xs transition-colors items-center justify-center cursor-pointer shrink-0"
+          >
+            {darkMode ? (
+              <Sun className="w-4 h-4 text-amber-500" aria-hidden="true" />
+            ) : (
+              <Moon className="w-4 h-4 text-slate-600" aria-hidden="true" />
+            )}
+          </button>
 
           <button
             type="button"
@@ -1802,23 +1821,51 @@ export function DashboardShell() {
             />
           </button>
 
-          <PWAUpdateButton compact className="hidden lg:inline-flex" />
-
           <button
             type="button"
-            onClick={toggleDarkMode}
-            title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="hidden lg:flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 shadow-2xs transition-colors items-center justify-center cursor-pointer shrink-0"
+            onClick={() => navigateToPage('my-profile', false)}
+            aria-current={activeSection === 'my-profile' ? 'page' : undefined}
+            title={`${user.name} · ${tNav('profile')}`}
+            aria-label={`${user.name} · ${tNav('profile')}`}
+            className={`lg:hidden relative w-9 h-9 rounded-full shrink-0 cursor-pointer transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 ${
+              activeSection === 'my-profile'
+                ? 'ring-2 ring-emerald-600 dark:ring-emerald-400 ring-offset-2 ring-offset-white dark:ring-offset-slate-900'
+                : 'ring-2 ring-emerald-500/30 dark:ring-emerald-400/25 hover:ring-emerald-500/55'
+            }`}
           >
-            {darkMode ? (
-              <Sun className="w-4 h-4 text-amber-500" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-600" />
+            {(() => {
+              const headerPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
+              const showPhoto = Boolean(
+                headerPhotoUrl && failedDrawerPhotoUrl !== headerPhotoUrl
+              );
+              return showPhoto ? (
+                <img
+                  src={headerPhotoUrl}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  onError={() => setFailedDrawerPhotoUrl(headerPhotoUrl || null)}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <span className="w-full h-full rounded-full bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 text-white text-xs font-semibold flex items-center justify-center">
+                  {(user.name || 'AM')
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((p) => p[0]?.toUpperCase() || '')
+                    .join('')}
+                </span>
+              );
+            })()}
+            {user.status === 'active' && (
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-white dark:bg-slate-900 ring-1 ring-slate-200/80 dark:ring-slate-700/80 flex items-center justify-center shadow-2xs pointer-events-none"
+                aria-hidden="true"
+              >
+                <BadgeCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              </span>
             )}
           </button>
-
-          <AmanahLogo size="xs" className="lg:hidden shrink-0" decorative />
         </div>
       </header>
 
@@ -2550,7 +2597,7 @@ export function DashboardShell() {
         </div>
       </main>
 
-      {/* bKash-Style Sticky Mobile Footer Navigation Bar */}
+      {/* Sticky Mobile Footer Navigation Bar */}
       <nav
         aria-label={tNav('primaryNav')}
         className="lg:hidden shrink-0 z-30 bg-white/92 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200/85 dark:border-slate-800/85 shadow-[0_-6px_24px_-12px_rgba(15,23,42,0.12)] pb-[env(safe-area-inset-bottom)]"
@@ -2565,16 +2612,16 @@ export function DashboardShell() {
                 target: 'fund-overview' as DashboardSectionId,
                 active: activeSection === 'fund-overview',
                 badge: 0,
+                priorityBlink: false,
               },
               {
-                id: 'my-amanah',
-                label: isAdmin ? tNav('transactions') : tNav('myAmanah'),
-                Icon: isAdmin ? History : Wallet,
-                target: (isAdmin ? 'transaction-history' : 'my-amanah') as DashboardSectionId,
-                active: isAdmin
-                  ? activeSection === 'transaction-history'
-                  : activeSection === 'my-amanah',
+                id: 'transactions',
+                label: tNav('transactions'),
+                Icon: History,
+                target: 'transaction-history' as DashboardSectionId,
+                active: activeSection === 'transaction-history',
                 badge: 0,
+                priorityBlink: false,
               },
               {
                 id: 'community',
@@ -2583,14 +2630,17 @@ export function DashboardShell() {
                 target: 'community' as DashboardSectionId,
                 active: activeSection === 'community',
                 badge: pendingBadgeCount('community'),
+                priorityBlink: false,
               },
               {
-                id: 'my-profile',
-                label: tNav('profile'),
-                Icon: User,
-                target: 'my-profile' as DashboardSectionId,
-                active: activeSection === 'my-profile',
-                badge: 0,
+                id: 'notification',
+                label: tNav('notifications'),
+                Icon: Bell,
+                target: 'notification' as DashboardSectionId,
+                active: activeSection === 'notification',
+                badge: pendingBadgeCount('notification'),
+                priorityBlink:
+                  pendingBadgeCount('notification') > 0 && hasUnreadPriorityNotification,
               },
             ] as const
           ).map((tab) => {
@@ -2601,7 +2651,7 @@ export function DashboardShell() {
                 type="button"
                 onClick={() => navigateToPage(tab.target, false)}
                 aria-current={tab.active ? 'page' : undefined}
-                className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 transition-colors cursor-pointer active:scale-95 ${
+                className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-1 transition-colors cursor-pointer active:scale-95 ${
                   tab.active
                     ? 'text-emerald-700 dark:text-emerald-400'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
@@ -2619,13 +2669,31 @@ export function DashboardShell() {
                     aria-hidden="true"
                   />
                   {tab.badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] px-1 rounded-full bg-amber-600 text-white font-mono text-[9px] font-bold tabular-nums flex items-center justify-center shadow-xs">
-                      {tab.badge > 99 ? '99+' : tab.badge}
+                    <span className="absolute -top-1.5 -right-2.5 flex items-center justify-center">
+                      {tab.id === 'notification' && (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute inset-0 rounded-full pointer-events-none ${
+                            tab.priorityBlink
+                              ? 'bg-red-500 amanah-blink-ring-urgent'
+                              : 'bg-amber-500 amanah-blink-ring'
+                          }`}
+                        />
+                      )}
+                      <span
+                        className={`relative min-w-[16px] h-[16px] px-1 rounded-full font-mono text-[9px] font-bold tabular-nums flex items-center justify-center shadow-xs ${
+                          tab.priorityBlink
+                            ? 'bg-red-600 dark:bg-red-500 text-white'
+                            : 'bg-amber-600 dark:bg-amber-500 text-white dark:text-slate-950'
+                        }`}
+                      >
+                        {tab.badge > 99 ? '99+' : tab.badge}
+                      </span>
                     </span>
                   )}
                 </span>
                 <span
-                  className={`text-[10px] leading-tight tracking-tight whitespace-nowrap ${
+                  className={`max-w-full truncate text-[10px] leading-tight tracking-tight whitespace-nowrap ${
                     tab.active ? 'font-semibold' : 'font-medium'
                   }`}
                 >
