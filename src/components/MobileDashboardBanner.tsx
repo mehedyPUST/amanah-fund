@@ -282,12 +282,12 @@ export function MobileDashboardBanner({
           Icon: ManagerDeskIcon,
           boxClass:
             totalQueueCount > 0
-              ? 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45'
-              : 'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:to-slate-900/90 border-indigo-200/90 dark:border-indigo-600/45',
+              ? 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-300/24 dark:via-amber-400/12 dark:to-yellow-500/16 border-amber-200/90 dark:border-amber-300/38'
+              : 'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-400/24 dark:via-indigo-500/12 dark:to-blue-500/18 border-indigo-200/90 dark:border-indigo-400/38',
           iconClass:
             totalQueueCount > 0
-              ? 'text-amber-700 dark:text-amber-300'
-              : 'text-indigo-700 dark:text-indigo-300',
+              ? 'text-amber-700 dark:text-amber-200'
+              : 'text-indigo-700 dark:text-indigo-200',
         },
         onClick: () =>
           totalQueueCount > 0 ? onOpenSheet('queues') : onNavigate('manager-desk'),
@@ -309,8 +309,8 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: ContributionIcon,
           boxClass:
-            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45',
-          iconClass: 'text-amber-700 dark:text-amber-300',
+            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-300/24 dark:via-amber-400/12 dark:to-yellow-500/16 border-amber-200/90 dark:border-amber-300/38',
+          iconClass: 'text-amber-700 dark:text-amber-200',
         },
         onClick: () => onNavigate('monthly-contribution'),
       });
@@ -349,8 +349,8 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: AboutSecurityIcon,
           boxClass:
-            'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-950/90 dark:to-slate-900/90 border-indigo-200/90 dark:border-indigo-600/45',
-          iconClass: 'text-indigo-700 dark:text-indigo-300',
+            'bg-gradient-to-br from-indigo-50 via-sky-50/75 to-indigo-100/90 dark:from-indigo-400/24 dark:via-indigo-500/12 dark:to-blue-500/18 border-indigo-200/90 dark:border-indigo-400/38',
+          iconClass: 'text-indigo-700 dark:text-indigo-200',
         },
         onClick: () => onNavigate('my-amanah'),
       });
@@ -372,8 +372,8 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: VotingIcon,
           boxClass:
-            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/85 dark:to-amber-900/45 border-amber-200/90 dark:border-amber-600/45',
-          iconClass: 'text-amber-700 dark:text-amber-300',
+            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-300/24 dark:via-amber-400/12 dark:to-yellow-500/16 border-amber-200/90 dark:border-amber-300/38',
+          iconClass: 'text-amber-700 dark:text-amber-200',
         },
         onClick: () => onNavigate('ballot'),
       });
@@ -393,7 +393,7 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: ActiveBorrowersIcon,
           boxClass:
-            'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/45 border-emerald-200/90 dark:border-emerald-600/45',
+            'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-400/22 dark:via-emerald-500/12 dark:to-teal-500/18 border-emerald-200/90 dark:border-emerald-400/35',
           iconClass: 'text-emerald-700 dark:text-emerald-300',
         },
         onClick: () =>
@@ -622,8 +622,8 @@ export function MobileDashboardBanner({
                           />
                         </div>
                       ) : (
-                        <span className="w-12 h-12 rounded-2xl border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-teal-950/85 dark:to-teal-900/45 border-teal-200/90 dark:border-teal-600/45 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_5px_12px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
-                          <QardHasanIcon className="w-5 h-5 text-teal-700 dark:text-teal-300" strokeWidth={1.75} aria-hidden="true" />
+                        <span className="w-12 h-12 rounded-2xl border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-teal-400/22 dark:via-cyan-500/12 dark:to-teal-500/18 border-teal-200/90 dark:border-teal-400/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_5px_12px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0">
+                          <QardHasanIcon className="w-5 h-5 text-teal-700 dark:text-teal-300" strokeWidth={1.7} aria-hidden="true" />
                         </span>
                       ))}
 
@@ -637,11 +637,11 @@ export function MobileDashboardBanner({
 
                     {slide.visual.kind === 'icon' && (
                       <span
-                        className={`w-12 h-12 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_5px_12px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
+                        className={`w-12 h-12 rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_10px_-4px_rgba(15,23,42,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_5px_12px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center shrink-0 ${slide.visual.boxClass}`}
                       >
                         <slide.visual.Icon
                           className={`w-[22px] h-[22px] ${slide.visual.iconClass}`}
-                          strokeWidth={1.75}
+                          strokeWidth={1.7}
                           aria-hidden="true"
                         />
                       </span>

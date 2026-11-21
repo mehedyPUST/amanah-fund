@@ -2636,18 +2636,18 @@ export function DashboardShell() {
                 className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-1 transition-colors cursor-pointer active:scale-95 ${
                   tab.active
                     ? 'text-emerald-700 dark:text-emerald-300'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    : 'text-slate-500 dark:text-slate-300/75 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
                 <span
                   className={`relative inline-flex items-center justify-center px-3.5 py-1 rounded-2xl border transition-all duration-150 ${
                     tab.active
-                      ? 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/90 dark:to-emerald-900/55 border-emerald-200/85 dark:border-emerald-600/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_8px_-3px_rgba(5,150,105,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+                      ? 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-400/24 dark:via-emerald-500/12 dark:to-teal-500/18 border-emerald-200/85 dark:border-emerald-400/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_3px_8px_-3px_rgba(5,150,105,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_4px_14px_-4px_rgba(16,185,129,0.35)]'
                       : 'border-transparent'
                   }`}
                 >
                   <Icon
-                    strokeWidth={tab.active ? 1.9 : 1.7}
+                    strokeWidth={tab.active ? 1.85 : 1.65}
                     className="w-[20px] h-[20px]"
                     aria-hidden="true"
                   />
