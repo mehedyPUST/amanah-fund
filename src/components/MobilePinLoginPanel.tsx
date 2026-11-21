@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Check,
@@ -45,10 +45,13 @@ export function MobilePinLoginPanel({
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [accountPickerOpen, setAccountPickerOpen] = useState(false);
   const [pin, setPin] = useState('');
+  const [pinFocused, setPinFocused] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shakeTick, setShakeTick] = useState(0);
   const [autoLogoutNotice, setAutoLogoutNotice] = useState<string | null>(null);
+  const pinInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const sync = () => {
@@ -100,7 +103,11 @@ export function MobilePinLoginPanel({
         }
       }
       setPin('');
+      setShakeTick((t) => t + 1);
       setError(err instanceof Error ? err.message : tAuth('pin.pinFailed'));
+      window.setTimeout(() => {
+        pinInputRef.current?.focus();
+      }, 60);
     } finally {
       setSubmitting(false);
     }
@@ -109,6 +116,15 @@ export function MobilePinLoginPanel({
   function handleFormSubmit(e: FormEvent) {
     e.preventDefault();
     void submitPinLogin(pin.trim());
+  }
+
+  function handlePinChange(rawValue: string) {
+    const digits = rawValue.replace(/\D/g, '').slice(0, 4);
+    setPin(digits);
+    if (error) setError(null);
+    if (digits.length === 4 && !submitting) {
+      void submitPinLogin(digits);
+    }
   }
 
   function handleRemoveLocalAccount(target: LocalRegisteredAccount) {
@@ -130,6 +146,9 @@ export function MobilePinLoginPanel({
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase() || '')
     .join('');
+
+  const inputId = compact ? 'mobile-gate-pin' : 'signin-device-pin';
+  const activeSlotIndex = Math.min(pin.length, 3);
 
   return (
     <div className={compact ? 'space-y-3.5' : 'space-y-4'}>
@@ -163,7 +182,7 @@ export function MobilePinLoginPanel({
             <button
               type="button"
               onClick={() => setAccountPickerOpen((v) => !v)}
-              className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+              className="min-h-[44px] px-2 -mr-2 text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
             >
               <span>{tAuth('pin.switchAccount')}</span>
               <ChevronDown
@@ -174,7 +193,7 @@ export function MobilePinLoginPanel({
           )}
         </div>
 
-        <div className="p-3.5 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 ring-1 ring-inset ring-white/60 dark:ring-white/5 bg-emerald-50/55 dark:bg-emerald-950/25 shadow-2xs flex items-center justify-between gap-3">
+        <div className="p-3 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/60 ring-1 ring-inset ring-white/60 dark:ring-white/5 bg-emerald-50/55 dark:bg-emerald-950/25 shadow-2xs flex items-center justify-between gap-2.5">
           <div className="flex items-center gap-3 min-w-0">
             {selectedAccount.photoUrl ? (
               <img
@@ -193,7 +212,7 @@ export function MobilePinLoginPanel({
                 {selectedAccount.name}
               </div>
               <div className="text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-1.5 truncate">
-                <span className="font-mono">{selectedAccount.memberCode}</span>
+                <span className="font-mono tabular-nums">{selectedAccount.memberCode}</span>
                 <span aria-hidden="true">·</span>
                 <span className="truncate">{selectedAccount.deviceName}</span>
               </div>
@@ -205,7 +224,7 @@ export function MobilePinLoginPanel({
             onClick={() => handleRemoveLocalAccount(selectedAccount)}
             title={tAuth('pin.forgetDevice')}
             aria-label={tAuth('pin.removeAccountAria', { name: selectedAccount.name })}
-            className="min-w-[36px] min-h-[36px] rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="min-w-[44px] min-h-[44px] -mr-1 rounded-xl text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
           >
             <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -232,7 +251,7 @@ export function MobilePinLoginPanel({
                       setPin('');
                       setError(null);
                     }}
-                    className={`w-full px-3 py-2.5 text-left flex items-center justify-between gap-2 text-xs transition-colors cursor-pointer ${
+                    className={`w-full min-h-[48px] px-3.5 py-2.5 text-left flex items-center justify-between gap-2 text-xs transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200'
                         : 'hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200'
@@ -269,50 +288,109 @@ export function MobilePinLoginPanel({
 
       <form onSubmit={handleFormSubmit} className="space-y-3">
         <div>
-          <label
-            htmlFor={compact ? 'mobile-gate-pin' : 'signin-device-pin'}
-            className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5"
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <label
+              htmlFor={inputId}
+              className="text-xs font-medium text-slate-700 dark:text-slate-300"
+            >
+              {tAuth('pin.enterPin')}
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowPin((v) => !v)}
+              aria-label={showPin ? tAuth('pin.hidePin') : tAuth('pin.showPin')}
+              className="min-w-[44px] min-h-[36px] px-2 -mr-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/70 inline-flex items-center justify-center gap-1 text-[11px] font-medium cursor-pointer transition-colors"
+            >
+              {showPin ? (
+                <EyeOff className="w-3.5 h-3.5" aria-hidden="true" />
+              ) : (
+                <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+              )}
+              <span>{showPin ? tAuth('pin.hidePin') : tAuth('pin.showPin')}</span>
+            </button>
+          </div>
+
+          <motion.div
+            key={shakeTick}
+            animate={shakeTick > 0 ? { x: [-6, 6, -4, 4, 0] } : { x: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => pinInputRef.current?.focus()}
+            className="relative"
           >
-            {tAuth('pin.enterPin')}
-          </label>
-          <div className="relative">
             <input
-              id={compact ? 'mobile-gate-pin' : 'signin-device-pin'}
-              type={showPin ? 'text' : 'password'}
+              ref={pinInputRef}
+              id={inputId}
+              type="tel"
               inputMode="numeric"
               pattern="\d{4}"
               maxLength={4}
               required
               autoComplete="one-time-code"
               autoFocus
+              disabled={submitting}
               value={pin}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
-                setPin(digits);
-                if (error) setError(null);
-              }}
-              placeholder="••••"
-              className="w-full min-h-[50px] pl-4 pr-11 py-2.5 text-center font-mono text-2xl tracking-[0.65em] tabular-nums text-slate-900 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-600 transition-colors"
+              onFocus={() => setPinFocused(true)}
+              onBlur={() => setPinFocused(false)}
+              onChange={(e) => handlePinChange(e.target.value)}
+              aria-label={tAuth('pin.enterPin')}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 text-base"
             />
-            <button
-              type="button"
-              onClick={() => setShowPin((v) => !v)}
-              aria-label={showPin ? tAuth('pin.hidePin') : tAuth('pin.showPin')}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 min-w-[40px] min-h-[40px] rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
-            >
-              {showPin ? (
-                <EyeOff className="w-4 h-4" aria-hidden="true" />
-              ) : (
-                <Eye className="w-4 h-4" aria-hidden="true" />
-              )}
-            </button>
-          </div>
+
+            <div className="grid grid-cols-4 gap-2.5" aria-hidden="true">
+              {[0, 1, 2, 3].map((slot) => {
+                const digit = pin[slot] || '';
+                const isFilled = digit.length > 0;
+                const isActive = pinFocused && !submitting && slot === activeSlotIndex;
+                return (
+                  <div
+                    key={slot}
+                    className={`h-[54px] rounded-2xl border flex items-center justify-center transition-all duration-150 ${
+                      error
+                        ? 'border-rose-400 dark:border-rose-600 bg-rose-50/50 dark:bg-rose-950/25'
+                        : isActive
+                        ? 'border-emerald-600 dark:border-[#00ED64] bg-white dark:bg-slate-950 ring-2 ring-emerald-600/20 dark:ring-[#00ED64]/20 shadow-xs'
+                        : isFilled
+                        ? 'border-emerald-300 dark:border-emerald-700/80 bg-emerald-50/40 dark:bg-emerald-950/20'
+                        : 'border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950'
+                    }`}
+                  >
+                    {isFilled ? (
+                      showPin ? (
+                        <span className="font-mono text-xl font-bold tabular-nums text-slate-900 dark:text-white">
+                          {digit}
+                        </span>
+                      ) : (
+                        <motion.span
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.12 }}
+                          className="w-3 h-3 rounded-full bg-emerald-700 dark:bg-[#00ED64]"
+                        />
+                      )
+                    ) : (
+                      <span
+                        className={`w-2 h-0.5 rounded-full ${
+                          isActive
+                            ? 'bg-emerald-600 dark:bg-[#00ED64] animate-pulse'
+                            : 'bg-slate-200 dark:bg-slate-700'
+                        }`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          <p className="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400 text-center">
+            {tAuth('pin.tapDigitsHint')}
+          </p>
         </div>
 
         <button
           type="submit"
           disabled={submitting || pin.length !== 4}
-          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
+          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
         >
           <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{submitting ? tAuth('pin.verifyingPin') : tAuth('pin.signInWithPin')}</span>
@@ -322,7 +400,7 @@ export function MobilePinLoginPanel({
       <button
         type="button"
         onClick={onUsePassword}
-        className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap"
+        className="w-full min-h-[44px] px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99] transition-all whitespace-nowrap"
       >
         <KeyRound className="w-3.5 h-3.5" aria-hidden="true" />
         <span>{tAuth('useEmailPassword')}</span>

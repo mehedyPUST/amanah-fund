@@ -621,7 +621,8 @@
       "showPin": "Show PIN",
       "verifyingPin": "Verifying PIN…",
       "signInWithPin": "Sign In with PIN",
-      "pinFailed": "PIN login failed. Try again."
+      "pinFailed": "PIN login failed. Try again.",
+      "tapDigitsHint": "Enter your 4-digit security PIN"
     },
     "signUpPage": {
       "eyebrow": "Admin-Verified Cooperative Onboarding · AES-256-GCM KYC",
@@ -976,6 +977,13 @@
       "secretBallotOpen": "Secret 2/3 Voting ballot open ({cast} / {total} ballots)",
       "quorumApprovedPayout": "2/3 quorum approved · Awaiting Manager payout release",
       "repaidOfTotal": "Repaid {repaid} of {total}",
+      "mySavings": "My Savings",
+      "duesClear": "Dues Clear",
+      "loanStepGuarantor": "Guarantor",
+      "loanStepShura": "Shura",
+      "loanStepBallot": "2/3 Vote",
+      "loanStepPayout": "Payout",
+      "loanStepRepay": "Repay",
       "banner": {
         "carouselLabel": "Cooperative highlights",
         "slideOf": "{current} / {total}",

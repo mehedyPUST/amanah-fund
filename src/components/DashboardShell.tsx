@@ -14,6 +14,7 @@ import {
   CalendarRange,
   ChartColumn,
   CheckCircle2,
+  ChevronRight,
   FileSpreadsheet,
   HandCoins,
   Home,
@@ -1658,8 +1659,8 @@ export function DashboardShell() {
       </div>
 
       {/* GRID 2 */}
-      <header className="lg:col-start-2 lg:row-start-1 h-[52px] sm:h-[54px] lg:h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
-        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+      <header className="lg:col-start-2 lg:row-start-1 h-[54px] sm:h-[56px] lg:h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
             <button
               type="button"
@@ -1711,21 +1712,20 @@ export function DashboardShell() {
             onClick={() => (mobileNavOpen ? closeMobileDrawer() : openMobileDrawer())}
             aria-label={mobileNavOpen ? tCommon('closeNavigationMenu') : tCommon('openNavigationMenu')}
             aria-expanded={mobileNavOpen}
-            className="lg:hidden w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="lg:hidden w-10 h-10 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/90 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 active:scale-95 flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs"
           >
             {mobileNavOpen ? (
-              <X className="w-4 h-4" aria-hidden="true" />
+              <X className="w-[18px] h-[18px]" aria-hidden="true" />
             ) : (
-              <Menu className="w-4 h-4" aria-hidden="true" />
+              <Menu className="w-[18px] h-[18px]" aria-hidden="true" />
             )}
           </button>
-          <AmanahLogo size="xs" className="lg:hidden shrink-0" decorative />
-          <div className="flex items-center gap-2 text-sm min-w-0">
-            <span className="text-slate-500 dark:text-slate-400 hidden lg:inline">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:gap-2 min-w-0">
+            <span className="text-slate-500 dark:text-slate-400 hidden lg:inline text-sm">
               {tCommon('brandName')}
             </span>
             <span className="text-slate-300 dark:text-slate-700 hidden lg:inline">/</span>
-            <h1 className="font-semibold text-slate-900 dark:text-white truncate text-[13.5px] sm:text-sm">
+            <h1 className="font-display font-bold lg:font-semibold text-slate-900 dark:text-white truncate text-[15px] sm:text-base lg:text-sm tracking-tight">
               {getDashboardSectionLabel(activeSection, user.role, locale)}
             </h1>
           </div>
@@ -1781,7 +1781,7 @@ export function DashboardShell() {
             aria-pressed={darkMode}
             title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white/85 dark:bg-[#032330]/85 text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 shadow-2xs transition-colors items-center justify-center cursor-pointer shrink-0"
+            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white/85 dark:bg-[#032330]/85 text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 active:scale-95 shadow-2xs transition-all items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
@@ -1796,7 +1796,7 @@ export function DashboardShell() {
             disabled={dataLoading}
             title={tCommon('refreshDashboardTitle')}
             aria-label={tCommon('refreshDashboard')}
-            className="w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 shadow-2xs transition-colors flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
+            className="w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/80 bg-white/85 dark:bg-slate-900/75 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/70 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-800 hover:text-emerald-700 dark:hover:text-emerald-300 active:scale-95 shadow-2xs transition-all flex items-center justify-center cursor-pointer shrink-0 disabled:opacity-70"
           >
             <RefreshCw
               className={`w-4 h-4 shrink-0 ${dataLoading ? 'animate-spin text-emerald-600 dark:text-emerald-400' : ''}`}
@@ -1806,12 +1806,11 @@ export function DashboardShell() {
 
           <button
             type="button"
-            onClick={() => void handleSignOut()}
-            title={tNav('signOut')}
-            aria-label={tNav('signOut')}
-            className="lg:hidden w-9 h-9 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/85 dark:bg-red-950/35 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white active:scale-95 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/60"
+            onClick={() => navigateToPage('fund-overview', false)}
+            aria-label={tCommon('brandName')}
+            className="lg:hidden ml-0.5 inline-flex items-center justify-center rounded-xl active:scale-95 transition-transform cursor-pointer shrink-0"
           >
-            <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <AmanahLogo size="xs" decorative />
           </button>
         </div>
       </header>
@@ -1975,13 +1974,13 @@ export function DashboardShell() {
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               aria-label={tCommon('dashboardMenuAria')}
-              className="fixed left-2 top-[58px] sm:top-[62px] w-[72vw] max-w-[300px] max-h-[calc(100dvh-68px)] sm:max-h-[calc(100dvh-74px)] z-10 amanah-card-emerald backdrop-blur-xl rounded-2xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 p-2.5 flex flex-col gap-1.5 shadow-2xl"
+              className="fixed left-2 top-[60px] sm:top-[64px] w-[72vw] max-w-[300px] max-h-[calc(100dvh-70px)] sm:max-h-[calc(100dvh-76px)] z-10 amanah-card-emerald backdrop-blur-xl rounded-2xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 p-2.5 flex flex-col gap-1.5 shadow-2xl"
             >
               {/* Compact User Profile Header */}
               <button
                 type="button"
                 onClick={() => navigateToPage('my-profile', true)}
-                className="w-full text-left flex items-center gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-800 min-w-0 shrink-0 hover:opacity-90 transition-opacity cursor-pointer"
+                className="w-full text-left flex items-center gap-2.5 px-1.5 pb-2.5 pt-0.5 border-b border-slate-200/80 dark:border-slate-800 min-w-0 shrink-0 hover:opacity-90 active:scale-[0.99] transition-all cursor-pointer"
               >
                 {(() => {
                   const drawerPhotoUrl = user.registrationDetails?.photoUrl || user.photoUrl;
@@ -2011,7 +2010,7 @@ export function DashboardShell() {
                   <div className="text-[14px] font-semibold text-slate-900 dark:text-white truncate leading-snug">
                     {user.name}
                   </div>
-                  <div className="mt-0.5 flex items-center gap-1 min-w-0 text-[12px] text-slate-600 dark:text-slate-400">
+                  <div className="mt-0.5 flex items-center gap-1 min-w-0 text-[11.5px] text-slate-600 dark:text-slate-400">
                     <span className="truncate">{translateRoleLabel(user.role, locale)}</span>
                     {user.status === 'active' ? (
                       <BadgeCheck
@@ -2028,6 +2027,10 @@ export function DashboardShell() {
                     )}
                   </div>
                 </div>
+                <ChevronRight
+                  className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0"
+                  aria-hidden="true"
+                />
               </button>
 
               <nav
@@ -2666,18 +2669,24 @@ export function DashboardShell() {
                     className="pointer-events-none absolute top-0 left-4 right-4 h-[2.5px] bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 dark:from-[#00ED64] dark:via-[#18E299] dark:to-[#00ED64] shadow-[0_1px_6px_rgba(16,185,129,0.4)] dark:shadow-[0_1px_10px_rgba(0,237,100,0.65)]"
                   />
                 )}
-                <span
-                  className={`relative inline-flex items-center justify-center p-1 transition-transform duration-150 ${
-                    tab.active ? 'mdb-icon-emerald scale-[1.04]' : ''
-                  }`}
-                >
+                <span className="relative inline-flex items-center justify-center px-3.5 py-0.5 transition-transform duration-150">
+                  {tab.active && (
+                    <motion.span
+                      layoutId="mobile-footer-active-pill"
+                      transition={{ type: 'spring', stiffness: 460, damping: 34 }}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 rounded-full bg-emerald-600/12 dark:bg-[#00ED64]/15"
+                    />
+                  )}
                   <Icon
-                    strokeWidth={tab.active ? 1.95 : 1.65}
-                    className="w-[21px] h-[21px]"
+                    strokeWidth={tab.active ? 2 : 1.65}
+                    className={`relative w-[20px] h-[20px] transition-transform duration-150 ${
+                      tab.active ? 'mdb-icon-emerald scale-[1.06]' : ''
+                    }`}
                     aria-hidden="true"
                   />
                   {tab.badge > 0 && (
-                    <span className="absolute -top-0.5 -right-1.5 flex items-center justify-center">
+                    <span className="absolute -top-0.5 right-0.5 flex items-center justify-center">
                       {tab.id === 'notification' && (
                         <span
                           aria-hidden="true"

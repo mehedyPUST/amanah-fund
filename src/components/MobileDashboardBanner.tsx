@@ -21,7 +21,7 @@ import type {
 } from '../types/coop.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 
-import halalCampusImg from '../assets/images/halal_investment_campus_1795273325541.jpg';
+import halalCampusImg from '../assets/images/halal_investment_campus_1795279894577.jpg';
 
 type BannerHue = 'emerald' | 'teal' | 'amber' | 'sky';
 
@@ -500,7 +500,7 @@ export function MobileDashboardBanner({
         scheduleInteractionResume(1600);
       }}
       onTouchCancel={() => scheduleInteractionResume(1200)}
-      className={`relative w-full h-[112px] sm:h-[122px] overflow-hidden rounded-xl border ring-1 ring-inset ring-white/60 dark:ring-white/[0.04] shadow-[0_6px_22px_-12px_rgba(15,23,42,0.1)] dark:shadow-[0_10px_26px_-12px_rgba(0,0,0,0.48)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
+      className={`relative w-full h-[116px] sm:h-[124px] overflow-hidden rounded-2xl border ring-1 ring-inset ring-white/70 dark:ring-white/[0.05] shadow-[0_8px_24px_-12px_rgba(15,23,42,0.12)] dark:shadow-[0_12px_28px_-12px_rgba(0,0,0,0.52)] transition-colors duration-300 select-none ${CARD_SURFACE_CLASS[currentSlide.hue]}`}
     >
       {/* Subtle geometric accent shimmer */}
       <div
@@ -528,7 +528,7 @@ export function MobileDashboardBanner({
               tabIndex={isActive ? 0 : -1}
               aria-hidden={!isActive}
               aria-label={`${slide.kicker} · ${slide.title}`}
-              className={`w-full h-full shrink-0 px-3.5 pt-2 pb-5 sm:px-4 sm:pt-2.5 sm:pb-6 flex items-center justify-between gap-2 text-left cursor-pointer active:opacity-95 transition-opacity ${
+              className={`w-full h-full shrink-0 px-4 pt-2.5 pb-6 sm:px-4.5 sm:pt-3 sm:pb-6 flex items-center justify-between gap-2.5 text-left cursor-pointer active:opacity-95 transition-opacity ${
                 isActive ? 'pointer-events-auto' : 'pointer-events-none'
               }`}
             >
@@ -538,7 +538,7 @@ export function MobileDashboardBanner({
                     <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 leading-snug line-clamp-1">
                       {slide.kicker}
                     </div>
-                    <h2 className="text-[15px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
+                    <h2 className="text-[15.5px] sm:text-base font-bold tracking-tight text-slate-900 dark:text-white leading-tight truncate">
                       {slide.title}
                     </h2>
                     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10.5px] font-mono tabular-nums leading-snug">
@@ -556,7 +556,7 @@ export function MobileDashboardBanner({
 
                   <div className="flex items-center gap-1 shrink-0">
                     {!bannerImgFailed && (
-                      <div className="w-[126px] sm:w-[164px] h-[76px] sm:h-[88px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
+                      <div className="w-[122px] sm:w-[160px] h-[74px] sm:h-[86px] overflow-hidden flex items-center justify-center pointer-events-none select-none">
                         <img
                           src="/assets/aistudio/image_5fd8619d.png"
                           alt=""

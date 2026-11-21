@@ -8,8 +8,8 @@ import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
-import heroTreasuryImg from '../assets/images/hero_cooperative_treasury_1795273325549.jpg';
-import halalCampusImg from '../assets/images/halal_investment_campus_1795273325541.jpg';
+import heroTreasuryImg from '../assets/images/hero_cooperative_treasury_1795279894765.jpg';
+import halalCampusImg from '../assets/images/halal_investment_campus_1795279894577.jpg';
 
 export function Hero({
   includeLifecycle = true,
@@ -75,10 +75,10 @@ export function Hero({
       <MotionCard
         as="section"
         hue="emerald"
-        className="backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-8 lg:p-10 transition-all duration-200"
+        className="backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-8 lg:p-10 transition-all duration-200"
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
-          <div className="lg:col-span-7 flex flex-col justify-between gap-6 py-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-stretch">
+          <div className="lg:col-span-7 flex flex-col justify-between gap-5 sm:gap-6 py-0.5 sm:py-1">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <span className="font-semibold text-emerald-700 dark:text-emerald-400">
@@ -99,10 +99,10 @@ export function Hero({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-2 whitespace-nowrap shrink-0"
+                className="group min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
               >
                 {user ? (
                   <>
@@ -123,7 +123,7 @@ export function Hero({
               {!user && (
                 <Link
                   href="/login"
-                  className="px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium shadow-2xs active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 text-sm font-medium shadow-2xs active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center whitespace-nowrap shrink-0"
                 >
                   {tNav('signIn')}
                 </Link>
@@ -133,7 +133,7 @@ export function Hero({
                 <button
                   type="button"
                   onClick={() => scrollToSection('notice-board')}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-2xs active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer"
+                  className="min-h-[44px] px-4 py-2.5 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-white/85 dark:bg-slate-950/65 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 shadow-2xs active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center whitespace-nowrap shrink-0 cursor-pointer"
                 >
                   {tHero('noticeBoard')}
                 </button>
@@ -148,7 +148,7 @@ export function Hero({
                     target.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }}
-                className="px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors whitespace-nowrap shrink-0"
+                className="min-h-[44px] px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-colors inline-flex items-center justify-center whitespace-nowrap shrink-0"
               >
                 {tNav('howItWorks')}
               </Link>
@@ -188,28 +188,28 @@ export function Hero({
         </div>
       </MotionCard>
 
-      {/* 4-Column Charter Metrics Strip (Full-Width Row Below Hero Split) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
+      {/* 4-Column Charter Metrics Strip (2x2 Bento on Mobile, 4-Col Row on XL) */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3.5">
         {keyTerms.map((metric, idx) => (
           <MotionCard
             key={metric.key}
             hue={metric.hue}
             delay={0.03 * idx}
-            className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-5 flex flex-col justify-between gap-3 transition-all duration-200"
+            className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between gap-2 sm:gap-3 transition-all duration-200"
           >
-            <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center justify-between gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
               <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
                 {metric.kicker}
               </span>
-              <span className="font-mono text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
+              <span className="font-mono text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
                 {metric.meta}
               </span>
             </div>
-            <div className="space-y-1">
-              <div className="font-display font-mono text-2xl sm:text-[26px] font-bold tracking-tight tabular-nums text-slate-900 dark:text-white">
+            <div className="space-y-0.5 sm:space-y-1">
+              <div className="font-display font-mono text-lg sm:text-[26px] font-bold tracking-tight tabular-nums text-slate-900 dark:text-white leading-tight">
                 {metric.value}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug sm:leading-relaxed">
                 {metric.sublabel}
               </p>
             </div>
@@ -233,10 +233,10 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
       hue="teal"
       inView
       className={`scroll-mt-2 backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl transition-all duration-200 ${
-        embedded ? 'p-6 sm:p-7' : 'p-6 sm:p-8'
+        embedded ? 'p-4 sm:p-7' : 'p-4 sm:p-8'
       }`}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 items-stretch">
         <div className="lg:col-span-5 flex">
           <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[220px] rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/25 dark:ring-white/10 bg-slate-100 dark:bg-slate-950 shadow-sm">
             {lifecycleImgFailed ? (

@@ -264,22 +264,22 @@ export function MobileVisitorGate() {
               className="w-full max-w-sm max-h-[92dvh] overflow-y-auto rounded-3xl bg-white/96 dark:bg-slate-900/96 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/80 dark:ring-white/10 shadow-[0_24px_60px_-16px_rgba(15,23,42,0.3)]"
             >
               {/* Brand Header */}
-              <div className="bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800 text-white px-5 py-4">
+              <div className="bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800 text-white px-4 sm:px-5 py-3.5 sm:py-4">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                     <AmanahLogo
                       size="md"
                       decorative
-                      className="ring-white/30 shadow-sm"
+                      className="ring-white/30 shadow-sm shrink-0"
                     />
                     <div className="min-w-0">
                       <h2
                         id="mobile-visitor-gate-title"
-                        className="font-display text-lg font-bold tracking-tight truncate"
+                        className="font-display text-base sm:text-lg font-bold tracking-tight truncate"
                       >
                         {tCommon('brandName')}
                       </h2>
-                      <p className="text-xs text-emerald-100/85 truncate">
+                      <p className="text-[11px] sm:text-xs text-emerald-100/85 truncate">
                         {tAuth('mobileGate.tagline')}
                       </p>
                     </div>
@@ -292,7 +292,7 @@ export function MobileVisitorGate() {
                 </div>
               </div>
 
-              <div className="p-5 space-y-4">
+              <div className="p-4 sm:p-5 space-y-3.5 sm:space-y-4">
                 {activationChallenge ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
@@ -305,7 +305,7 @@ export function MobileVisitorGate() {
                           setActivationChallenge(null);
                           setActivationError(null);
                         }}
-                        className="text-xs font-medium text-slate-500 dark:text-slate-400 inline-flex items-center gap-1 cursor-pointer"
+                        className="min-h-[36px] px-2 -mr-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 inline-flex items-center gap-1 cursor-pointer"
                       >
                         <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{tCommon('back')}</span>
@@ -411,7 +411,7 @@ export function MobileVisitorGate() {
                       </span>
                       <Link
                         href="/login?forgot=1"
-                        className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline py-1"
+                        className="min-h-[40px] px-1 -mr-1 inline-flex items-center text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline"
                       >
                         {tAuth('forgotPassword')}
                       </Link>
@@ -515,7 +515,7 @@ export function MobileVisitorGate() {
                                 ? tAuth('mobileGate.hidePassword')
                                 : tAuth('mobileGate.showPassword')
                             }
-                            className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[40px] min-h-[40px] rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
+                            className="absolute right-0.5 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer"
                           >
                             {showPassword ? (
                               <EyeOff className="w-4 h-4" aria-hidden="true" />
@@ -529,7 +529,7 @@ export function MobileVisitorGate() {
                       <button
                         type="submit"
                         disabled={submitting}
-                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 flex items-center justify-center gap-2 active:scale-[0.99] transition-all cursor-pointer whitespace-nowrap"
+                        className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
                       >
                         <Lock className="w-4 h-4" aria-hidden="true" />
                         <span>{submitting ? tAuth('signingIn') : tAuth('signIn')}</span>
@@ -543,7 +543,7 @@ export function MobileVisitorGate() {
                           setError(null);
                           setUsePasswordMode(false);
                         }}
-                        className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                        className="w-full min-h-[44px] px-3 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 text-xs font-medium text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99] transition-all whitespace-nowrap"
                       >
                         <Smartphone className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{tAuth('useDevicePin')}</span>

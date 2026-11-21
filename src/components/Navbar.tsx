@@ -203,9 +203,9 @@ export function Navbar() {
           onClick={() => setMobileOpen((o) => !o)}
           aria-label={tCommon('toggleNavigationMenu')}
           aria-expanded={mobileOpen}
-          className="md:hidden order-1 w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100/90 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer shrink-0 shadow-2xs"
+          className="md:hidden order-1 w-10 h-10 rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0 shadow-2xs"
         >
-          {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          {mobileOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
         </button>
 
         {/* Zone 1: Clean single-element Brand Wordmark (far right on mobile, far left on desktop) */}
@@ -394,7 +394,7 @@ export function Navbar() {
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center w-full min-h-[40px] text-left px-2.5 py-2 rounded-xl text-[14px] font-medium transition-colors truncate ${
+                    className={`flex items-center w-full min-h-[44px] text-left px-3 py-2 rounded-xl text-[14px] font-medium transition-colors truncate ${
                       active
                         ? 'bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/70'
@@ -418,7 +418,7 @@ export function Navbar() {
                 type="button"
                 onClick={() => void handleRefreshPage()}
                 disabled={refreshing}
-                className="w-full min-h-[40px] py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 text-[13.5px] font-medium flex items-center justify-start gap-2 cursor-pointer whitespace-nowrap"
+                className="w-full min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 text-slate-700 dark:text-slate-200 text-[13.5px] font-medium flex items-center justify-start gap-2 cursor-pointer active:scale-[0.99] transition-all whitespace-nowrap"
               >
                 <RefreshCw
                   className={`w-4 h-4 shrink-0 ${refreshing ? 'animate-spin text-emerald-600' : ''}`}
@@ -435,7 +435,7 @@ export function Navbar() {
                       setMobileBrowseMode(false);
                       setMobileOpen(false);
                     }}
-                    className="w-full min-h-[40px] py-2 px-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[13.5px] font-semibold shadow-xs flex items-center justify-start gap-2 whitespace-nowrap"
+                    className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[13.5px] font-semibold shadow-xs flex items-center justify-start gap-2 active:scale-[0.99] transition-all whitespace-nowrap"
                   >
                     <LayoutDashboard className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">{tNav('dashboard')}</span>
@@ -444,7 +444,7 @@ export function Navbar() {
                     type="button"
                     onClick={() => void handleSignOut()}
                     disabled={signingOut}
-                    className="w-full min-h-[40px] py-2 px-2.5 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-[13.5px] font-medium flex items-center justify-start gap-2 cursor-pointer disabled:opacity-60 whitespace-nowrap"
+                    className="w-full min-h-[44px] py-2 px-3 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 text-[13.5px] font-medium flex items-center justify-start gap-2 cursor-pointer disabled:opacity-60 active:scale-[0.99] transition-all whitespace-nowrap"
                   >
                     <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate">{signingOut ? tNav('signingOut') : tNav('signOut')}</span>
@@ -455,14 +455,14 @@ export function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="w-full min-h-[40px] py-2 px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[13.5px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-start"
+                    className="w-full min-h-[44px] py-2 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-[13.5px] font-medium hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-start"
                   >
                     {tNav('signIn')}
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setMobileOpen(false)}
-                    className="w-full min-h-[40px] py-2 px-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[13.5px] font-semibold shadow-xs flex items-center justify-start gap-2"
+                    className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[13.5px] font-semibold shadow-xs flex items-center justify-start gap-2"
                   >
                     <span className="truncate">{tNav('joinAmanah')}</span>
                     <ArrowRight className="w-4 h-4 shrink-0" aria-hidden="true" />

@@ -17,9 +17,9 @@ export function Footer() {
 
   return (
     <footer className="w-full bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/85 rounded-2xl shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
-      <div className="px-6 sm:px-8 py-7 sm:py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="space-y-3">
+      <div className="px-4 sm:px-8 py-5 sm:py-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="space-y-2.5 sm:space-y-3">
             <div className="flex items-center gap-2.5">
               <AmanahLogo size="xs" decorative />
               <span className="font-display font-bold text-[15px] tracking-tight text-slate-900 dark:text-white">
@@ -31,61 +31,63 @@ export function Footer() {
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tFooter('cooperativePages')}
-            </h3>
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-              <li>
-                <Link href="/" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  {tNav('home')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  {tNav('howItWorks')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  {tNav('about')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/rules" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  {tNav('rules')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/#faq" className="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
-                  {tNav('faq')}
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <div className="grid grid-cols-2 gap-5 sm:contents">
+            <div className="space-y-2.5 sm:space-y-3">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {tFooter('cooperativePages')}
+              </h3>
+              <ul className="space-y-1 sm:space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                <li>
+                  <Link href="/" className="min-h-[32px] sm:min-h-0 inline-flex items-center hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                    {tNav('home')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/how-it-works" className="min-h-[32px] sm:min-h-0 inline-flex items-center hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                    {tNav('howItWorks')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/about" className="min-h-[32px] sm:min-h-0 inline-flex items-center hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                    {tNav('about')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/rules" className="min-h-[32px] sm:min-h-0 inline-flex items-center hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                    {tNav('rules')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/#faq" className="min-h-[32px] sm:min-h-0 inline-flex items-center hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">
+                    {tNav('faq')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-          <div className="space-y-3">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {tFooter('custodyAudit')}
-            </h3>
-            <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
-              <li className="flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
-                <span>{tFooter('custodyItem1')}</span>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
-                <span>{tFooter('custodyItem2')}</span>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
-                <span>{tFooter('custodyItem3')}</span>
-              </li>
-              <li className="flex items-center gap-1.5">
-                <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0" aria-hidden="true" />
-                <span>{tFooter('custodyItem4')}</span>
-              </li>
-            </ul>
+            <div className="space-y-2.5 sm:space-y-3">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {tFooter('custodyAudit')}
+              </h3>
+              <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                <li className="flex items-start gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0 mt-1.5" aria-hidden="true" />
+                  <span>{tFooter('custodyItem1')}</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0 mt-1.5" aria-hidden="true" />
+                  <span>{tFooter('custodyItem2')}</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0 mt-1.5" aria-hidden="true" />
+                  <span>{tFooter('custodyItem3')}</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500/70 shrink-0 mt-1.5" aria-hidden="true" />
+                  <span>{tFooter('custodyItem4')}</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -98,14 +100,14 @@ export function Footer() {
                 onClick={() => {
                   if (user) setMobileBrowseMode(false);
                 }}
-                className="inline-flex items-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap"
+                className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 {user ? tNav('dashboard') : tNav('signIn')}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
-                  className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+                  className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
                 >
                   {tNav('joinAmanah')}
                 </Link>
@@ -115,7 +117,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-7 pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="mt-6 sm:mt-7 pt-4 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <span>
             {tFooter('copyright', { year: new Date().getUTCFullYear() })}
           </span>
@@ -128,7 +130,7 @@ export function Footer() {
               onClick={toggleDarkMode}
               title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
               aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
+              className="min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer whitespace-nowrap"
             >
               {darkMode ? (
                 <>

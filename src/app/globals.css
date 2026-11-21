@@ -414,7 +414,7 @@ html.dark [data-surface='app'] .amanah-card-rose:hover {
   border-color: rgba(251, 113, 133, 0.4);
 }
 
-/* Tighter section spacing on small screens inside app surfaces */
+/* Tighter section spacing & unified radius on small screens inside app surfaces */
 @media (max-width: 639px) {
   [data-surface='app'] :is(
     .amanah-card-emerald,
@@ -423,7 +423,7 @@ html.dark [data-surface='app'] .amanah-card-rose:hover {
     .amanah-card-sky,
     .amanah-card-rose
   ) {
-    border-radius: 0.875rem;
+    border-radius: 1rem;
   }
 
   [data-surface='app'] .space-y-5 > :not([hidden]) ~ :not([hidden]),
@@ -470,15 +470,15 @@ html.dark .amanah-panel {
 .mfs-tile {
   aspect-ratio: 5 / 6;
   width: 100%;
-  min-height: clamp(5.85rem, 25vw, 6.85rem);
-  padding: clamp(0.625rem, 2.3vw, 0.85rem) clamp(0.32rem, 1.1vw, 0.45rem);
+  min-height: clamp(5.7rem, 24.2vw, 6.75rem);
+  padding: clamp(0.55rem, 2.1vw, 0.8rem) clamp(0.3rem, 1vw, 0.44rem);
 }
 
 .mfs-tile-compact {
   aspect-ratio: 5 / 6;
   width: 100%;
-  min-height: clamp(5.3rem, 22.5vw, 6.15rem);
-  padding: clamp(0.5rem, 1.9vw, 0.7rem) clamp(0.28rem, 0.9vw, 0.42rem);
+  min-height: clamp(5.2rem, 22vw, 6.05rem);
+  padding: clamp(0.46rem, 1.8vw, 0.66rem) clamp(0.26rem, 0.9vw, 0.4rem);
 }
 
 .amanah-icon-duotone {
@@ -563,33 +563,33 @@ html.dark .mdb-icon-rose {
 }
 
 .mfs-tile .mfs-tile-icon-box {
-  width: clamp(2.85rem, 12.2vw, 3.25rem);
-  height: clamp(2.85rem, 12.2vw, 3.25rem);
-  border-radius: 0.9rem;
+  width: clamp(2.8rem, 11.8vw, 3.2rem);
+  height: clamp(2.8rem, 11.8vw, 3.2rem);
+  border-radius: 0.92rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 3px 10px -5px rgba(0, 104, 74, 0.14);
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 4px 12px -5px rgba(0, 104, 74, 0.16);
 }
 
 .mfs-tile .mfs-tile-icon {
-  width: clamp(1.32rem, 5.7vw, 1.5rem);
-  height: clamp(1.32rem, 5.7vw, 1.5rem);
+  width: clamp(1.3rem, 5.5vw, 1.48rem);
+  height: clamp(1.3rem, 5.5vw, 1.48rem);
 }
 
 .mfs-tile-compact .mfs-tile-icon-box {
-  width: clamp(2.5rem, 10.8vw, 2.88rem);
-  height: clamp(2.5rem, 10.8vw, 2.88rem);
-  border-radius: 0.78rem;
+  width: clamp(2.45rem, 10.5vw, 2.84rem);
+  height: clamp(2.45rem, 10.5vw, 2.84rem);
+  border-radius: 0.8rem;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.88),
-    0 2px 8px -4px rgba(0, 104, 74, 0.12);
+    0 3px 9px -4px rgba(0, 104, 74, 0.14);
 }
 
 html.dark .mfs-tile .mfs-tile-icon-box,
 html.dark .mfs-tile-compact .mfs-tile-icon-box {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 4px 14px -6px rgba(0, 0, 0, 0.65);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 6px 16px -6px rgba(0, 0, 0, 0.7);
 }
 
 html.dark .mfs-tile .mfs-tile-icon,
@@ -598,13 +598,14 @@ html.dark .mfs-tile-compact .mfs-tile-icon {
 }
 
 .mfs-tile-compact .mfs-tile-icon {
-  width: clamp(1.18rem, 5vw, 1.34rem);
-  height: clamp(1.18rem, 5vw, 1.34rem);
+  width: clamp(1.16rem, 4.9vw, 1.32rem);
+  height: clamp(1.16rem, 4.9vw, 1.32rem);
 }
 
 .mfs-tile-label {
-  font-size: clamp(0.67rem, 2.75vw, 0.77rem);
-  letter-spacing: -0.01em;
+  font-size: clamp(0.68rem, 2.75vw, 0.77rem);
+  letter-spacing: -0.012em;
+  line-height: 1.22;
 }
 
 

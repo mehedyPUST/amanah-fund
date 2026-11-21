@@ -621,7 +621,8 @@
       "showPin": "পিন দেখুন",
       "verifyingPin": "পিন যাচাই হচ্ছে…",
       "signInWithPin": "পিন দিয়ে লগইন করুন",
-      "pinFailed": "পিন লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।"
+      "pinFailed": "পিন লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
+      "tapDigitsHint": "আপনার ৪-ডিজিট নিরাপত্তা পিন দিন"
     },
     "signUpPage": {
       "eyebrow": "অ্যাডমিন-যাচাইকৃত সমবায় নিবন্ধন · AES-256-GCM কেওয়াইসি",
@@ -976,6 +977,13 @@
       "secretBallotOpen": "গোপন ২/৩ ভোটগ্রহণ উন্মুক্ত ({cast} / {total}টি ভোট)",
       "quorumApprovedPayout": "২/৩ কোরামে অনুমোদিত · ম্যানেজার বিতরণের অপেক্ষায়",
       "repaidOfTotal": "{total}-এর মধ্যে {repaid} পরিশোধিত",
+      "mySavings": "আমার সঞ্চয়",
+      "duesClear": "বকেয়া নেই",
+      "loanStepGuarantor": "জামিনদার",
+      "loanStepShura": "শূরা",
+      "loanStepBallot": "২/৩ ভোট",
+      "loanStepPayout": "বিতরণ",
+      "loanStepRepay": "পরিশোধ",
       "banner": {
         "carouselLabel": "সমবায়ের প্রধান তথ্যসমূহ",
         "slideOf": "{current} / {total}",

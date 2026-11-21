@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
   X,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useDragControls } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   MobileActivityRowsSkeleton,
@@ -106,6 +107,7 @@ function MobileBottomSheet({
   children: ReactNode;
 }) {
   const tCommon = useTranslations('Common');
+  const dragControls = useDragControls();
   useBodyScrollLock(open);
 
   useEffect(() => {
@@ -141,37 +143,53 @@ function MobileBottomSheet({
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.04, bottom: 0.5 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 85 || info.velocity.y > 420) {
+                onClose();
+              }
+            }}
             className="relative z-10 w-full max-h-[88dvh] bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl rounded-t-3xl border-t border-slate-200/90 dark:border-slate-800/90 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-2xl flex flex-col overflow-hidden"
           >
-            <div className="pt-2.5 pb-1 shrink-0">
-              <div
-                className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto"
-                aria-hidden="true"
-              />
-            </div>
-
-            <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                  {title}
-                </h2>
-                {subtitle && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                    {subtitle}
-                  </p>
-                )}
+            <div
+              onPointerDown={(e) => dragControls.start(e)}
+              className="touch-none cursor-grab active:cursor-grabbing shrink-0"
+            >
+              <div className="pt-2.5 pb-1">
+                <div
+                  className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700 mx-auto"
+                  aria-hidden="true"
+                />
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label={tCommon('closeItem', { title })}
-                className="min-w-[44px] min-h-[44px] -mr-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
-              >
-                <X className="w-5 h-5" />
-              </button>
+
+              <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                    {title}
+                  </h2>
+                  {subtitle && (
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                      {subtitle}
+                    </p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  aria-label={tCommon('closeItem', { title })}
+                  className="min-w-[44px] min-h-[44px] -mr-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-subtle p-4 pb-6 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-subtle p-4 pb-6 space-y-4">
               {children}
             </div>
 
@@ -195,7 +213,7 @@ const MFS_TAP_SPRING = {
 };
 
 const TILE_SURFACE_CLASS =
-  'border-slate-200/85 dark:border-[#163948] bg-white/95 dark:bg-[#02202D]/95 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45';
+  'border-slate-200/80 dark:border-[#163948] bg-white/95 dark:bg-[#02202D]/95 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 active:bg-emerald-50/40 dark:active:bg-[#052938]';
 
 function MfsGridTileButton({
   tile,
@@ -218,7 +236,7 @@ function MfsGridTileButton({
       transition={MFS_TAP_SPRING}
       className={`group relative ${
         compact ? 'mfs-tile-compact gap-1.5 rounded-2xl' : 'mfs-tile gap-2 rounded-2xl'
-      } border ring-1 ring-inset ring-white/95 dark:ring-white/[0.05] shadow-[0_3px_12px_-6px_rgba(15,23,42,0.09)] dark:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.52)] hover:shadow-[0_8px_18px_-8px_rgba(15,23,42,0.14)] flex flex-col items-center justify-center transition-all cursor-pointer ${TILE_SURFACE_CLASS}`}
+      } border ring-1 ring-inset ring-white/95 dark:ring-white/[0.05] shadow-[0_3px_12px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.52)] hover:shadow-[0_8px_18px_-8px_rgba(15,23,42,0.13)] flex flex-col items-center justify-center transition-all cursor-pointer ${TILE_SURFACE_CLASS}`}
     >
       {typeof tile.badge === 'number' && tile.badge > 0 && (
         <span className="absolute top-1.5 right-1.5 z-10 flex items-center justify-center">
@@ -257,8 +275,8 @@ function MfsGridTileButton({
       <span
         className={`mfs-tile-label w-full px-0.5 ${
           labelWeight === 'semibold'
-            ? 'font-semibold text-slate-800 dark:text-slate-100 leading-snug'
-            : 'font-medium text-slate-700 dark:text-slate-200 leading-tight'
+            ? 'font-semibold text-slate-800 dark:text-slate-100'
+            : 'font-medium text-slate-700 dark:text-slate-200'
         } text-center ${singleLine ? 'line-clamp-1' : 'line-clamp-2'}`}
       >
         {tile.label}
@@ -694,7 +712,7 @@ export function MobileMfsHome({
     .filter(Boolean);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
       {/* Sliding Cooperative Highlights & Intelligence Banner */}
       <MobileDashboardBanner
         config={config}
@@ -710,6 +728,56 @@ export function MobileMfsHome({
         onNavigate={onNavigate}
       />
 
+      {/* Personal Member Standing Quick Wallet Bar */}
+      {!isAdmin && (
+        <motion.button
+          type="button"
+          whileTap={{ scale: 0.985 }}
+          transition={MFS_TAP_SPRING}
+          onClick={() =>
+            onNavigate(personal.dueContributionAmount > 0 ? 'monthly-contribution' : 'my-amanah')
+          }
+          className={`w-full min-h-[50px] px-3.5 py-2.5 rounded-2xl border ring-1 ring-inset ring-white/80 dark:ring-white/[0.04] shadow-[0_3px_14px_-8px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_18px_-8px_rgba(0,0,0,0.45)] flex items-center justify-between gap-2.5 text-left transition-colors cursor-pointer ${
+            personal.dueContributionAmount > 0
+              ? 'border-amber-200/85 dark:border-amber-800/60 bg-amber-50/75 dark:bg-amber-950/25'
+              : 'border-emerald-200/80 dark:border-emerald-900/50 bg-white/95 dark:bg-slate-900/90'
+          }`}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-8 h-8 rounded-xl bg-emerald-500/12 dark:bg-[#00ED64]/14 text-emerald-700 dark:text-[#00ED64] flex items-center justify-center shrink-0">
+              <ContributionIcon className="w-4 h-4" strokeWidth={1.85} aria-hidden="true" />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[10.5px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                {tDash('mobile.mySavings')} · <span className="font-mono">{user.memberCode}</span>
+              </div>
+              <div className="font-mono text-[13.5px] font-bold tabular-nums text-slate-900 dark:text-white truncate">
+                {formatMoney(personal.totalContributed, ccy)}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {personal.dueContributionAmount > 0 ? (
+              <span className="text-right">
+                <span className="block text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  {tDash('mobile.banner.dueNowSuffix')}
+                </span>
+                <span className="block font-mono text-xs font-bold tabular-nums text-amber-800 dark:text-amber-300">
+                  {formatMoney(personal.dueContributionAmount, ccy)}
+                </span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>{tDash('mobile.duesClear')}</span>
+              </span>
+            )}
+            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" aria-hidden="true" />
+          </div>
+        </motion.button>
+      )}
+
       {/* 1. Actionable Alerts & Active Loan Stage Tracker */}
       {(myGuarantorRequests.length > 0 ||
         (!isAdmin && !personal.eligibility.noOverdueInstallments) ||
@@ -721,7 +789,7 @@ export function MobileMfsHome({
             <button
               type="button"
               onClick={() => onNavigate('quard-hasan')}
-              className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
+              className="w-full min-h-[52px] px-3.5 py-2.5 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
@@ -748,7 +816,7 @@ export function MobileMfsHome({
               onClick={() =>
                 isAdmin ? setActiveSheet('borrowers') : onNavigate('quard-hasan')
               }
-              className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
+              className="w-full min-h-[52px] px-3.5 py-2.5 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50/90 dark:bg-red-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-gradient-to-br from-rose-50 to-red-100/90 dark:from-[#331826] dark:via-[#07222D] dark:to-[#001822] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
@@ -773,7 +841,7 @@ export function MobileMfsHome({
             <button
               type="button"
               onClick={() => onNavigate('member-registry')}
-              className="w-full min-h-[52px] px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
+              className="w-full min-h-[52px] px-3.5 py-2.5 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/35 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] flex items-center justify-center shrink-0">
@@ -792,64 +860,112 @@ export function MobileMfsHome({
             </button>
           )}
 
-          {loanProgress && (
-            <div className="rounded-2xl border border-teal-200/80 dark:border-teal-900/60 bg-teal-50/60 dark:bg-teal-950/25 p-3.5 space-y-2.5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
-                    <QardHasanIcon className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
-                    <span className="font-mono">{loanProgress.loan.id}</span>
-                    <span aria-hidden="true">·</span>
-                    <span className="font-mono tabular-nums">
-                      {formatMoney(loanProgress.loan.amount, ccy)}
-                    </span>
+          {loanProgress && (() => {
+            const stageIdx =
+              loanProgress.loan.status === 'pending_guarantor'
+                ? 0
+                : loanProgress.loan.status === 'pending_manager_review'
+                  ? 1
+                  : loanProgress.loan.status === 'pending_vote'
+                    ? 2
+                    : loanProgress.loan.status === 'approved_pending_disbursement'
+                      ? 3
+                      : 4;
+            const stageLabels = [
+              tDash('mobile.loanStepGuarantor'),
+              tDash('mobile.loanStepShura'),
+              tDash('mobile.loanStepBallot'),
+              stageIdx >= 4 ? tDash('mobile.loanStepRepay') : tDash('mobile.loanStepPayout'),
+            ];
+            return (
+              <div className="rounded-2xl border border-teal-200/80 dark:border-teal-900/60 bg-teal-50/65 dark:bg-teal-950/25 p-3.5 space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white">
+                      <QardHasanIcon className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
+                      <span className="font-mono">{loanProgress.loan.id}</span>
+                      <span aria-hidden="true">·</span>
+                      <span className="font-mono tabular-nums">
+                        {formatMoney(loanProgress.loan.amount, ccy)}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <StatusText status={loanProgress.loan.status} />
+                      <span aria-hidden="true">·</span>
+                      <span className="font-mono tabular-nums">
+                        {loanProgress.loan.installmentMonths} {tCommon('monthsShort')}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 flex flex-wrap items-center gap-1.5">
-                    <StatusText status={loanProgress.loan.status} />
-                    <span aria-hidden="true">·</span>
-                    <span className="font-mono tabular-nums">
-                      {loanProgress.loan.installmentMonths} {tCommon('monthsShort')}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onNavigate(
+                        loanProgress.loan.status === 'pending_vote' ? 'ballot' : 'quard-hasan'
+                      )
+                    }
+                    className="min-h-[36px] px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 transition-all"
+                  >
+                    <span>
+                      {loanProgress.loan.status === 'pending_vote'
+                        ? tDash('alerts.openVoting')
+                        : tDash('alerts.openQardHasan')}
                     </span>
-                  </div>
+                    <ArrowRight className="w-3 h-3" aria-hidden="true" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onNavigate(
-                      loanProgress.loan.status === 'pending_vote' ? 'ballot' : 'quard-hasan'
-                    )
-                  }
-                  className="min-h-[36px] px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[11px] font-semibold shadow-xs inline-flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer transition-colors"
-                >
-                  <span>
-                    {loanProgress.loan.status === 'pending_vote'
-                      ? tDash('alerts.openVoting')
-                      : tDash('alerts.openQardHasan')}
-                  </span>
-                  <ArrowRight className="w-3 h-3" aria-hidden="true" />
-                </button>
-              </div>
 
-              <div className="space-y-1">
-                <div className="h-1.5 w-full rounded-full bg-slate-200/80 dark:bg-slate-800 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${loanProgress.barColor}`}
-                    style={{ width: `${loanProgress.progressPct}%` }}
-                  />
+                {/* 4-Stage Visual Stepper */}
+                <div className="grid grid-cols-4 gap-1 pt-0.5">
+                  {stageLabels.map((lbl, idx) => {
+                    const done = stageIdx > idx || (stageIdx === 4 && idx === 3 && loanProgress.progressPct === 100);
+                    const active = Math.min(stageIdx, 3) === idx;
+                    return (
+                      <div key={lbl} className="space-y-1">
+                        <div
+                          className={`h-1 rounded-full transition-colors ${
+                            done
+                              ? 'bg-emerald-600 dark:bg-[#00ED64]'
+                              : active
+                                ? 'bg-teal-600 dark:bg-teal-400'
+                                : 'bg-slate-200 dark:bg-slate-800'
+                          }`}
+                        />
+                        <div
+                          className={`text-[9.5px] text-center truncate ${
+                            active || done
+                              ? 'font-semibold text-slate-800 dark:text-slate-100'
+                              : 'text-slate-500 dark:text-slate-400'
+                          }`}
+                        >
+                          {lbl}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600 dark:text-slate-400">
-                  <span className="truncate">{loanProgress.stageCaption}</span>
-                  <span className="font-mono tabular-nums shrink-0 font-semibold">
-                    {loanProgress.progressPct}%
-                  </span>
+
+                <div className="space-y-1">
+                  <div className="h-1.5 w-full rounded-full bg-slate-200/80 dark:bg-slate-800 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${loanProgress.barColor}`}
+                      style={{ width: `${loanProgress.progressPct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                    <span className="truncate">{loanProgress.stageCaption}</span>
+                    <span className="font-mono tabular-nums shrink-0 font-semibold">
+                      {loanProgress.progressPct}%
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
-      {/* 3. Treasury Headline KPI Strip (2x2 clean grid) */}
+      {/* 3. Treasury Headline KPI Strip (2-col clean grid) */}
       <section aria-label={tDash('fundOverview')} className="space-y-2">
         <div className="flex items-center justify-between gap-2 px-0.5">
           <h2 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -882,21 +998,27 @@ export function MobileMfsHome({
             onClick={() => setActiveSheet('pulse')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[100px] p-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('fundHeight')}
               </span>
-              <span className="w-10 h-10 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border border-[#00684A]/22 dark:border-[#00ED64]/38 flex items-center justify-center shrink-0">
-                <ActiveBorrowersIcon className="w-[19px] h-[19px] text-emerald-700 mdb-icon-emerald" strokeWidth={1.7} />
+              <span className="w-9 h-9 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border border-[#00684A]/22 dark:border-[#00ED64]/38 flex items-center justify-center shrink-0">
+                <ActiveBorrowersIcon className="w-[18px] h-[18px] text-emerald-700 mdb-icon-emerald" strokeWidth={1.7} />
               </span>
             </div>
-            <div>
-              <div className="font-mono text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+            <div className="space-y-1 w-full">
+              <div className="font-mono text-[15px] font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatMoney(treasury.amanahHeight, ccy)}
               </div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 tabular-nums">
+              <div className="h-1 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-[#00ED64] dark:to-[#18E299]"
+                  style={{ width: `${thisMonthContribPct}%` }}
+                />
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate tabular-nums">
                 {tDash('kpi.membersMonthPct', {
                   count: treasury.contributingMembersCount,
                   pct: thisMonthContribPct,
@@ -910,22 +1032,23 @@ export function MobileMfsHome({
             onClick={() => onNavigate('transaction-history')}
             whileTap={{ scale: 0.96, y: 1.5 }}
             transition={MFS_TAP_SPRING}
-            className="min-h-[96px] p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
+            className="min-h-[100px] p-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_16px_-10px_rgba(15,23,42,0.1)] dark:shadow-[0_6px_18px_-10px_rgba(0,0,0,0.45)] active:bg-slate-50 dark:active:bg-slate-800/90 active:shadow-inner flex flex-col justify-between text-left transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between gap-2 w-full">
               <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
                 {tDash('kpi.currentBalance')}
               </span>
-              <span className="w-10 h-10 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] bg-gradient-to-br from-teal-50 via-emerald-50/75 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border border-[#00684A]/22 dark:border-[#00ED64]/38 flex items-center justify-center shrink-0">
-                <AboutSecurityIcon className="w-[19px] h-[19px] text-teal-700 mdb-icon-teal" strokeWidth={1.7} />
+              <span className="w-9 h-9 rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] bg-gradient-to-br from-teal-50 via-emerald-50/75 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border border-[#00684A]/22 dark:border-[#00ED64]/38 flex items-center justify-center shrink-0">
+                <AboutSecurityIcon className="w-[18px] h-[18px] text-teal-700 mdb-icon-teal" strokeWidth={1.7} />
               </span>
             </div>
-            <div>
-              <div className="font-mono text-sm font-bold tabular-nums text-slate-900 dark:text-white">
+            <div className="space-y-1 w-full">
+              <div className="font-mono text-[15px] font-bold tabular-nums text-slate-900 dark:text-white">
                 {formatMoney(treasury.currentBalance, ccy)}
               </div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 tabular-nums">
-                {tDash('kpi.liquidReserveTapLedger')}
+              <div className="flex items-center justify-between gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+                <span className="truncate">{tDash('kpi.liquidReserveTapLedger')}</span>
+                <ChevronRight className="w-3 h-3 shrink-0 opacity-70" aria-hidden="true" />
               </div>
             </div>
           </motion.button>
@@ -943,7 +1066,7 @@ export function MobileMfsHome({
             onClick={openCustomizeSheet}
             aria-label={tDash('mobile.customizeIconsAria')}
             title={tDash('mobile.customizeIconsAria')}
-            className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-white/95 dark:bg-[#052735] hover:bg-emerald-50 dark:hover:bg-[#073432] hover:border-[#00684A]/50 dark:hover:border-[#00ED64]/75 text-slate-700 mdb-icon-slate hover:text-emerald-700 inline-flex items-center justify-center cursor-pointer transition-colors shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(0,104,74,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_12px_-4px_rgba(0,0,0,0.6)] shrink-0"
+            className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-white/95 dark:bg-[#052735] hover:bg-emerald-50 dark:hover:bg-[#073432] hover:border-[#00684A]/50 dark:hover:border-[#00ED64]/75 text-slate-700 mdb-icon-slate hover:text-emerald-700 active:scale-95 inline-flex items-center justify-center cursor-pointer transition-all shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_2px_6px_-3px_rgba(0,104,74,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_12px_-4px_rgba(0,0,0,0.6)] shrink-0"
           >
             <SiteSettingsIcon className="w-[17px] h-[17px]" strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -983,7 +1106,7 @@ export function MobileMfsHome({
               onClick={() => setMoreExpanded((prev) => !prev)}
               aria-expanded={moreExpanded}
               aria-controls="mfs-more-grid"
-              className="w-full min-h-[44px] px-3.5 py-2.5 rounded-xl bg-white/90 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.4)] hover:bg-slate-50 dark:hover:bg-slate-800/75 active:scale-[0.995] flex items-center justify-between gap-2 transition-all cursor-pointer"
+              className="w-full min-h-[46px] px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.08)] dark:shadow-[0_4px_14px_-8px_rgba(0,0,0,0.4)] hover:bg-slate-50 dark:hover:bg-slate-800/75 active:scale-[0.99] flex items-center justify-between gap-2 transition-all cursor-pointer"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
@@ -1043,14 +1166,14 @@ export function MobileMfsHome({
           <button
             type="button"
             onClick={() => onNavigate('transaction-history')}
-            className="text-xs font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[44px] px-1.5"
+            className="text-xs font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 cursor-pointer min-h-[40px] px-1.5"
           >
             <span>{tDash('mobile.seeAll')}</span>
             <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="rounded-xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_20px_-10px_rgba(0,0,0,0.45)] divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
+        <div className="rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 ring-1 ring-inset ring-white/80 dark:ring-white/5 shadow-[0_4px_18px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_6px_20px_-10px_rgba(0,0,0,0.45)] divide-y divide-slate-100 dark:divide-slate-800 overflow-hidden">
           {activityLoading && recentActivity.length === 0 ? (
             <MobileActivityRowsSkeleton rows={3} />
           ) : recentActivity.length === 0 ? (
