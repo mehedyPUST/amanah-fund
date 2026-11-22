@@ -36,9 +36,9 @@ export function HomeHighlights() {
       Icon: HelpCircle,
       hue: 'emerald',
       iconBoxClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
+        'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20',
       badgeClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50',
+        'bg-emerald-100/80 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60',
       ctaClass: 'text-emerald-700 dark:text-emerald-400',
     },
     {
@@ -49,12 +49,12 @@ export function HomeHighlights() {
       description: t('card2Desc'),
       cta: t('card2Cta'),
       Icon: ShieldCheck,
-      hue: 'teal',
+      hue: 'sky',
       iconBoxClass:
-        'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300',
+        'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20',
       badgeClass:
-        'bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/50',
-      ctaClass: 'text-teal-700 dark:text-teal-400',
+        'bg-blue-100/80 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/60',
+      ctaClass: 'text-blue-700 dark:text-blue-400',
     },
     {
       href: '/rules',
@@ -64,12 +64,12 @@ export function HomeHighlights() {
       description: t('card3Desc'),
       cta: t('card3Cta'),
       Icon: ScrollText,
-      hue: 'emerald',
+      hue: 'violet',
       iconBoxClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
+        'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/20',
       badgeClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/50',
-      ctaClass: 'text-emerald-700 dark:text-emerald-400',
+        'bg-purple-100/80 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200/80 dark:border-purple-800/60',
+      ctaClass: 'text-purple-700 dark:text-purple-400',
     },
   ];
 

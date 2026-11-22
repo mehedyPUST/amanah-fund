@@ -1894,7 +1894,7 @@ export function DashboardShell() {
             aria-pressed={darkMode}
             title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white/85 dark:bg-[#032330]/85 text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 active:scale-95 shadow-2xs transition-all items-center justify-center cursor-pointer shrink-0"
+            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-gray-700/85 bg-white/85 dark:bg-gray-800/90 text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 active:scale-95 shadow-2xs transition-all items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
@@ -1972,7 +1972,7 @@ export function DashboardShell() {
                 aria-pressed={darkMode}
                 title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                 aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                className="w-full h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#032330]/90 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 text-slate-600 dark:text-slate-200 transition-colors flex items-center justify-center cursor-pointer"
+                className="w-full h-9 rounded-xl border border-slate-200/85 dark:border-gray-700/85 bg-slate-50/85 dark:bg-gray-800/90 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 text-slate-600 dark:text-slate-200 transition-colors flex items-center justify-center cursor-pointer"
               >
                 {darkMode ? (
                   <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
@@ -2029,7 +2029,7 @@ export function DashboardShell() {
                 aria-checked={darkMode}
                 title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                 aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                className="w-full py-2 px-3 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#032330]/90 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 flex items-center justify-between gap-2 cursor-pointer whitespace-nowrap"
+                className="w-full py-2 px-3 rounded-xl border border-slate-200/85 dark:border-gray-700/85 bg-slate-50/85 dark:bg-gray-800/90 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 flex items-center justify-between gap-2 cursor-pointer whitespace-nowrap"
               >
                 <span className="flex items-center gap-2 min-w-0">
                   {darkMode ? (
@@ -2045,14 +2045,14 @@ export function DashboardShell() {
                   aria-hidden="true"
                   className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
                     darkMode
-                      ? 'bg-[#00ED64]/25 border border-[#00ED64]/50'
+                      ? 'bg-emerald-500/25 border border-emerald-400/50'
                       : 'bg-slate-200 border border-slate-300/80'
                   }`}
                 >
                   <span
                     className={`inline-block h-2.5 w-2.5 rounded-full transition-transform duration-150 ${
                       darkMode
-                        ? 'translate-x-3.5 bg-[#00ED64]'
+                        ? 'translate-x-3.5 bg-emerald-400'
                         : 'translate-x-0.5 bg-slate-500'
                     }`}
                   />
@@ -2192,12 +2192,12 @@ export function DashboardShell() {
                     aria-pressed={darkMode}
                     title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                     aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200/80 dark:border-[#163948] bg-white/85 dark:bg-[#032330]/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#063235] hover:border-emerald-300/80 dark:hover:border-[#00ED64]/45 transition-colors text-[12.5px] font-medium cursor-pointer whitespace-nowrap"
+                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200/80 dark:border-gray-700/85 bg-white/85 dark:bg-gray-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 transition-colors text-[12.5px] font-medium cursor-pointer whitespace-nowrap"
                   >
                     {darkMode ? (
                       <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
                     ) : (
-                      <Moon className="w-3.5 h-3.5 text-emerald-700 dark:text-[#00ED64] shrink-0" aria-hidden="true" />
+                      <Moon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                     )}
                     <span className="truncate">{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
                   </button>
@@ -2779,7 +2779,7 @@ export function DashboardShell() {
                 aria-current={tab.active ? 'page' : undefined}
                 className={`relative min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-1 transition-colors cursor-pointer active:scale-95 ${
                   tab.active
-                    ? 'text-emerald-700 dark:text-[#00ED64]'
+                    ? 'text-emerald-700 dark:text-emerald-400'
                     : 'text-slate-500 dark:text-slate-300/75 hover:text-slate-800 dark:hover:text-white'
                 }`}
               >
@@ -2788,7 +2788,7 @@ export function DashboardShell() {
                     layoutId="mobile-footer-active-line"
                     transition={{ type: 'spring', stiffness: 460, damping: 34 }}
                     aria-hidden="true"
-                    className="pointer-events-none absolute top-0 left-4 right-4 h-[2.5px] bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 dark:from-[#00ED64] dark:via-[#18E299] dark:to-[#00ED64] shadow-[0_1px_6px_rgba(16,185,129,0.4)] dark:shadow-[0_1px_10px_rgba(0,237,100,0.65)]"
+                    className="pointer-events-none absolute top-0 left-4 right-4 h-[2.5px] bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-500 dark:from-emerald-400 dark:via-teal-400 dark:to-emerald-400 shadow-[0_1px_6px_rgba(16,185,129,0.4)] dark:shadow-[0_1px_10px_rgba(52,211,153,0.5)]"
                   />
                 )}
                 <span className="relative inline-flex items-center justify-center px-3.5 py-0.5 transition-transform duration-150">
@@ -2797,7 +2797,7 @@ export function DashboardShell() {
                       layoutId="mobile-footer-active-pill"
                       transition={{ type: 'spring', stiffness: 460, damping: 34 }}
                       aria-hidden="true"
-                      className="pointer-events-none absolute inset-0 rounded-full bg-emerald-600/12 dark:bg-[#00ED64]/15"
+                      className="pointer-events-none absolute inset-0 rounded-full bg-emerald-600/12 dark:bg-emerald-400/15"
                     />
                   )}
                   <Icon

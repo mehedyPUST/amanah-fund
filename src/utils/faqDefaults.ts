@@ -1,7 +1,7 @@
 import type { FaqCategory, FaqItem } from '../types/coop.ts';
 
 export type FaqFilterCategory = 'all' | FaqCategory;
-export type FaqCardHue = 'emerald' | 'violet' | 'teal' | 'amber';
+export type FaqCardHue = 'emerald' | 'violet' | 'teal' | 'amber' | 'sky';
 
 export const FAQ_CATEGORIES: Array<{ key: FaqFilterCategory; label: string }> = [
   { key: 'all', label: 'All Questions' },
@@ -16,12 +16,12 @@ export const FAQ_CATEGORY_META: Record<
   { label: string; hue: FaqCardHue }
 > = {
   membership: { label: 'Membership', hue: 'emerald' },
-  fund: { label: 'Fund & Savings', hue: 'teal' },
-  loans: { label: 'Qard Hasan', hue: 'emerald' },
-  governance: { label: 'Governance & Halal', hue: 'teal' },
+  fund: { label: 'Fund & Savings', hue: 'sky' },
+  loans: { label: 'Qard Hasan', hue: 'amber' },
+  governance: { label: 'Governance & Halal', hue: 'violet' },
 };
 
-export const FAQ_CARD_HUE_CYCLE: FaqCardHue[] = ['emerald', 'teal'];
+export const FAQ_CARD_HUE_CYCLE: FaqCardHue[] = ['emerald', 'sky', 'violet', 'amber'];
 
 const DEFAULT_FAQ_SEED: Array<{
   id: string;

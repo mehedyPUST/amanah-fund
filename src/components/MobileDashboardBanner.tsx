@@ -277,8 +277,8 @@ export function MobileDashboardBanner({
           Icon: ManagerDeskIcon,
           boxClass:
             totalQueueCount > 0
-              ? 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38'
-              : 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+              ? 'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/65 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30'
+              : 'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/70 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30',
           iconClass:
             totalQueueCount > 0
               ? 'text-amber-700 mdb-icon-gold'
@@ -304,7 +304,7 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: ContributionIcon,
           boxClass:
-            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/65 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30',
           iconClass: 'text-amber-700 mdb-icon-gold',
         },
         onClick: () => onNavigate('monthly-contribution'),
@@ -344,7 +344,7 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: AboutSecurityIcon,
           boxClass:
-            'bg-gradient-to-br from-teal-50 via-emerald-50/80 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+            'bg-gradient-to-br from-teal-50 via-emerald-50/80 to-teal-100/90 dark:from-teal-950/70 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30',
           iconClass: 'text-teal-700 mdb-icon-teal',
         },
         onClick: () => onNavigate('my-amanah'),
@@ -367,7 +367,7 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: VotingIcon,
           boxClass:
-            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-[#2C2812] dark:via-[#08242E] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+            'bg-gradient-to-br from-amber-50 via-amber-50/90 to-orange-100/85 dark:from-amber-950/65 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30',
           iconClass: 'text-amber-700 mdb-icon-gold',
         },
         onClick: () => onNavigate('ballot'),
@@ -388,7 +388,7 @@ export function MobileDashboardBanner({
           kind: 'icon',
           Icon: ActiveBorrowersIcon,
           boxClass:
-            'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-[#053129] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38',
+            'bg-gradient-to-br from-emerald-50 via-emerald-50/90 to-emerald-100/95 dark:from-emerald-950/70 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30',
           iconClass: 'text-emerald-700 mdb-icon-emerald',
         },
         onClick: () =>
@@ -621,7 +621,7 @@ export function MobileDashboardBanner({
                           />
                         </div>
                       ) : (
-                        <span className="w-12 h-12 rounded-2xl border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-[#063235] dark:via-[#02232D] dark:to-[#001822] border-[#00684A]/22 dark:border-[#00ED64]/38 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(0,104,74,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] flex items-center justify-center shrink-0">
+                        <span className="w-12 h-12 rounded-2xl border bg-gradient-to-br from-teal-50 via-cyan-50/80 to-teal-100/90 dark:from-teal-950/70 dark:via-gray-900 dark:to-gray-900 border-emerald-700/20 dark:border-emerald-500/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.88),0_3px_10px_-5px_rgba(16,185,129,0.14)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_4px_14px_-6px_rgba(0,0,0,0.65)] flex items-center justify-center shrink-0">
                           <QardHasanIcon className="w-5 h-5 text-teal-700 mdb-icon-teal" strokeWidth={1.7} aria-hidden="true" />
                         </span>
                       ))}

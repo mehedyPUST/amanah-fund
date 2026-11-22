@@ -16,7 +16,7 @@ export function Footer() {
   const tFooter = useTranslations('Public.footer');
 
   return (
-    <footer className="w-full bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/85 rounded-2xl shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
+    <footer className="w-full bg-gradient-to-b from-slate-50/90 via-white to-slate-50/90 dark:from-gray-950/95 dark:via-gray-900/95 dark:to-gray-950/95 backdrop-blur-xl border border-slate-200/80 dark:border-gray-800/85 rounded-2xl shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
       <div className="px-4 sm:px-8 py-5 sm:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           <div className="space-y-2.5 sm:space-y-3">
@@ -100,7 +100,7 @@ export function Footer() {
                 onClick={() => {
                   if (user) setMobileBrowseMode(false);
                 }}
-                className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap"
+                className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 {user ? tNav('dashboard') : tNav('signIn')}
               </Link>

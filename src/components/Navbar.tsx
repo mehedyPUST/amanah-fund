@@ -201,7 +201,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/94 dark:bg-slate-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-slate-800/85 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.1)] dark:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.55)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4">
+      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-gray-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-gray-800/85 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.55)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4">
         {/* Mobile Left Hamburger Toggle */}
         <button
           type="button"
@@ -297,7 +297,7 @@ export function Navbar() {
                   setMobileBrowseMode(false);
                   setMobileOpen(false);
                 }}
-                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tNav('dashboard')}</span>
@@ -323,7 +323,7 @@ export function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
+                className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
               >
                 <span>{tNav('joinAmanah')}</span>
                 <ArrowRight

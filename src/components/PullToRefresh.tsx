@@ -249,18 +249,18 @@ export function PullToRefreshIndicator({
         }}
         className={`relative w-10 h-10 rounded-full flex items-center justify-center border backdrop-blur-md transition-colors ${
           isReady || isRefreshing
-            ? 'bg-white/95 dark:bg-[#02202D]/95 border-[#00684A]/35 dark:border-[#00ED64]/55 shadow-[0_6px_18px_-6px_rgba(0,104,74,0.3)] dark:shadow-[0_6px_20px_-6px_rgba(0,237,100,0.35)]'
-            : 'bg-white/90 dark:bg-[#02202D]/90 border-[#00684A]/20 dark:border-[#00ED64]/30 shadow-[0_4px_12px_-6px_rgba(0,104,74,0.18)] dark:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.55)]'
+            ? 'bg-white/95 dark:bg-gray-900/95 border-emerald-600/35 dark:border-emerald-400/55 shadow-[0_6px_18px_-6px_rgba(16,185,129,0.28)] dark:shadow-[0_6px_20px_-6px_rgba(52,211,153,0.3)]'
+            : 'bg-white/90 dark:bg-gray-900/90 border-emerald-600/20 dark:border-emerald-500/30 shadow-[0_4px_12px_-6px_rgba(16,185,129,0.18)] dark:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.55)]'
         }`}
       >
         {isRefreshing ? (
           <>
             <span
               aria-hidden="true"
-              className="absolute inset-0 rounded-full border-2 border-emerald-500/15 dark:border-[#00ED64]/15 border-t-[#00684A] border-r-teal-500 dark:border-t-[#00ED64] dark:border-r-[#18E299] animate-spin"
+              className="absolute inset-0 rounded-full border-2 border-emerald-500/15 dark:border-emerald-400/15 border-t-emerald-700 border-r-teal-500 dark:border-t-emerald-400 dark:border-r-teal-400 animate-spin"
             />
             <RefreshCw
-              className="w-4 h-4 text-[#00684A] dark:text-[#00ED64] animate-spin"
+              className="w-4 h-4 text-emerald-700 dark:text-emerald-400 animate-spin"
               style={{ animationDuration: '1.15s' }}
               strokeWidth={2.1}
               aria-hidden="true"
@@ -276,7 +276,7 @@ export function PullToRefreshIndicator({
                   'radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px))',
                 mask: 'radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px))',
               }}
-              className="absolute inset-0 rounded-full text-[#00684A]/70 dark:text-[#00ED64]/85"
+              className="absolute inset-0 rounded-full text-emerald-700/70 dark:text-emerald-400/85"
             />
             <RefreshCw
               style={{
@@ -284,7 +284,7 @@ export function PullToRefreshIndicator({
               }}
               className={`w-4 h-4 transition-colors ${
                 isReady
-                  ? 'text-[#00684A] dark:text-[#00ED64]'
+                  ? 'text-emerald-700 dark:text-emerald-400'
                   : 'text-slate-500 dark:text-slate-300'
               }`}
               strokeWidth={2}

@@ -26,7 +26,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p1Desc'),
       hue: 'emerald',
       iconBoxClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
+        'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20',
     },
     {
       key: 'p2',
@@ -34,9 +34,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: Users,
       title: t('p2Title'),
       description: t('p2Desc'),
-      hue: 'teal',
+      hue: 'sky',
       iconBoxClass:
-        'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300',
+        'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20',
     },
     {
       key: 'p3',
@@ -44,9 +44,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: Lock,
       title: t('p3Title'),
       description: t('p3Desc'),
-      hue: 'emerald',
+      hue: 'violet',
       iconBoxClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
+        'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/20',
     },
     {
       key: 'p4',
@@ -54,9 +54,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: Vote,
       title: t('p4Title'),
       description: t('p4Desc'),
-      hue: 'teal',
+      hue: 'amber',
       iconBoxClass:
-        'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300',
+        'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20',
     },
     {
       key: 'p5',
@@ -66,7 +66,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       description: t('p5Desc'),
       hue: 'emerald',
       iconBoxClass:
-        'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300',
+        'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-md shadow-emerald-500/20',
     },
   ];
 

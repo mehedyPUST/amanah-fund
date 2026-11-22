@@ -362,10 +362,10 @@ export function MobilePinLoginPanel({
                       error
                         ? 'border-rose-400 dark:border-rose-600 bg-rose-50/50 dark:bg-rose-950/25'
                         : isActive
-                        ? 'border-emerald-600 dark:border-[#00ED64] bg-white dark:bg-slate-950 ring-2 ring-emerald-600/20 dark:ring-[#00ED64]/20 shadow-xs'
+                        ? 'border-emerald-600 dark:border-emerald-400 bg-white dark:bg-gray-950 ring-2 ring-emerald-600/20 dark:ring-emerald-400/20 shadow-xs'
                         : isFilled
                         ? 'border-emerald-300 dark:border-emerald-700/80 bg-emerald-50/40 dark:bg-emerald-950/20'
-                        : 'border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-950'
+                        : 'border-slate-200/90 dark:border-gray-700/80 bg-white dark:bg-gray-950'
                     }`}
                   >
                     {isFilled ? (
@@ -378,15 +378,15 @@ export function MobilePinLoginPanel({
                           initial={{ scale: 0.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ duration: 0.12 }}
-                          className="w-3 h-3 rounded-full bg-emerald-700 dark:bg-[#00ED64]"
+                          className="w-3 h-3 rounded-full bg-emerald-700 dark:bg-emerald-400"
                         />
                       )
                     ) : (
                       <span
                         className={`w-2 h-0.5 rounded-full ${
                           isActive
-                            ? 'bg-emerald-600 dark:bg-[#00ED64] animate-pulse'
-                            : 'bg-slate-200 dark:bg-slate-700'
+                            ? 'bg-emerald-600 dark:bg-emerald-400 animate-pulse'
+                            : 'bg-slate-200 dark:bg-gray-700'
                         }`}
                       />
                     )}
@@ -404,7 +404,7 @@ export function MobilePinLoginPanel({
         <button
           type="submit"
           disabled={submitting || pin.length !== 4}
-          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+          className="w-full min-h-[48px] px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-55 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 flex items-center justify-center gap-2 active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
         >
           <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
           <span>{submitting ? tAuth('pin.verifyingPin') : tAuth('pin.signInWithPin')}</span>

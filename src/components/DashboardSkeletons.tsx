@@ -10,7 +10,7 @@ export function MobileActivityRowsSkeleton({ rows = 3 }: { rows?: number }) {
           className="w-full min-h-[60px] px-3.5 py-2.5 flex items-center justify-between gap-3"
         >
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span className="w-10 h-10 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-slate-100/70 dark:bg-[#052735]/80 flex items-center justify-center shrink-0">
+            <span className="w-10 h-10 rounded-xl border border-emerald-700/20 dark:border-emerald-500/30 bg-slate-100/70 dark:bg-gray-800/80 flex items-center justify-center shrink-0">
               <Skeleton width={22} height={22} borderRadius={6} />
             </span>
             <div className="min-w-0 flex-1 space-y-1.5">
@@ -40,7 +40,7 @@ export function MobileMfsHomeSkeleton() {
             <Skeleton width="82%" height={11} />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <span className="w-12 h-12 rounded-2xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-white/60 dark:bg-[#052735]/80 flex items-center justify-center shrink-0">
+            <span className="w-12 h-12 rounded-2xl border border-emerald-700/20 dark:border-emerald-500/30 bg-white/60 dark:bg-gray-800/80 flex items-center justify-center shrink-0">
               <Skeleton width={26} height={26} borderRadius={8} />
             </span>
           </div>
@@ -82,7 +82,7 @@ export function MobileMfsHomeSkeleton() {
             >
               <div className="flex items-center justify-between gap-2 w-full">
                 <Skeleton width={70} height={11} />
-                <span className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-slate-100/70 dark:bg-[#052735]/80 flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-xl border border-emerald-700/20 dark:border-emerald-500/30 bg-slate-100/70 dark:bg-gray-800/80 flex items-center justify-center shrink-0">
                   <Skeleton width={18} height={18} borderRadius={6} />
                 </span>
               </div>
@@ -99,7 +99,7 @@ export function MobileMfsHomeSkeleton() {
       <section className="space-y-2">
         <div className="flex items-center justify-between gap-2 px-0.5">
           <Skeleton width={68} height={12} />
-          <span className="w-9 h-9 rounded-xl border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-white/90 dark:bg-[#052735] flex items-center justify-center shrink-0">
+          <span className="w-9 h-9 rounded-xl border border-emerald-700/20 dark:border-emerald-500/30 bg-white/90 dark:bg-gray-800 flex items-center justify-center shrink-0">
             <Skeleton width={17} height={17} borderRadius={5} />
           </span>
         </div>
@@ -107,9 +107,9 @@ export function MobileMfsHomeSkeleton() {
           {Array.from({ length: 8 }).map((_, idx) => (
             <div
               key={idx}
-              className="mfs-tile gap-2 rounded-2xl border border-slate-200/80 dark:border-[#163948] bg-white/95 dark:bg-[#02202D]/95 flex flex-col items-center justify-center"
+              className="mfs-tile gap-2 rounded-2xl border border-slate-200/80 dark:border-gray-800 bg-white/95 dark:bg-gray-900/95 flex flex-col items-center justify-center"
             >
-              <span className="mfs-tile-icon-box border border-[#00684A]/22 dark:border-[#00ED64]/38 bg-slate-100/70 dark:bg-[#052735]/80 flex items-center justify-center shrink-0">
+              <span className="mfs-tile-icon-box border border-emerald-700/20 dark:border-emerald-500/30 bg-slate-100/70 dark:bg-gray-800/80 flex items-center justify-center shrink-0">
                 <Skeleton width={22} height={22} borderRadius={6} />
               </span>
               <Skeleton width={46} height={10} />
@@ -168,7 +168,7 @@ export function MobileDashboardShellSkeleton() {
               className="relative flex flex-col items-center justify-center gap-1 px-1"
             >
               {idx === 0 && (
-                <span className="pointer-events-none absolute top-0 left-4 right-4 h-[2.5px] bg-gradient-to-r from-emerald-600/40 via-teal-500/40 to-emerald-500/40 dark:from-[#00ED64]/45 dark:via-[#18E299]/45 dark:to-[#00ED64]/45" />
+                <span className="pointer-events-none absolute top-0 left-4 right-4 h-[2.5px] bg-gradient-to-r from-emerald-600/40 via-teal-500/40 to-emerald-500/40 dark:from-emerald-400/45 dark:via-teal-400/45 dark:to-emerald-400/45" />
               )}
               <Skeleton width={22} height={22} borderRadius={6} />
               <Skeleton width={46} height={9} />

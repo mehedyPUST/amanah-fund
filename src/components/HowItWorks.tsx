@@ -229,15 +229,31 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.16 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+            className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           >
+            <div
+              aria-hidden="true"
+              className="hidden lg:block pointer-events-none absolute top-1/2 left-[12.5%] right-[12.5%] h-0.5 -translate-y-1/2 bg-gradient-to-r from-emerald-200 via-blue-200 to-purple-200 dark:from-emerald-900/70 dark:via-blue-900/70 dark:to-purple-900/70"
+            />
             {currentGuide.steps.map((step, idx) => {
               const Icon = step.Icon;
-              const stepHue: CardHue = (['emerald', 'teal', 'emerald', 'teal'] as const)[idx % 4];
+              const stepHue: CardHue = (['emerald', 'sky', 'violet', 'amber'] as const)[idx % 4];
               const iconBoxClass =
-                stepHue === 'teal'
-                  ? 'bg-teal-50 dark:bg-teal-950/50 border border-teal-200/80 dark:border-teal-700/50 text-teal-700 dark:text-teal-300'
-                  : 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300';
+                stepHue === 'sky'
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : stepHue === 'violet'
+                    ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/20'
+                    : stepHue === 'amber'
+                      ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md shadow-amber-500/20'
+                      : 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/20';
+              const hintColorClass =
+                stepHue === 'sky'
+                  ? 'text-blue-700 dark:text-blue-400'
+                  : stepHue === 'violet'
+                    ? 'text-purple-700 dark:text-purple-400'
+                    : stepHue === 'amber'
+                      ? 'text-amber-700 dark:text-amber-400'
+                      : 'text-emerald-700 dark:text-emerald-400';
               return (
                 <MotionCard
                   key={step.number}
@@ -247,7 +263,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
-                      <div className={`w-9 h-9 rounded-xl shadow-2xs flex items-center justify-center ${iconBoxClass}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBoxClass}`}>
                         <Icon className="w-4 h-4" aria-hidden="true" />
                       </div>
                       <span className="font-mono text-xs font-semibold text-slate-400 dark:text-slate-500">
@@ -262,7 +278,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                  <div className={`pt-3 border-t border-slate-200/75 dark:border-slate-800 text-[11px] font-medium ${hintColorClass}`}>
                     {step.actionHint}
                   </div>
                 </MotionCard>
@@ -290,7 +306,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}
-              className="group px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs shadow-emerald-900/15 active:scale-[0.98] transition-all whitespace-nowrap"
+              className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
               <ArrowRight

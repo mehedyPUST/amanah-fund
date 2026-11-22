@@ -13,30 +13,30 @@ export type CardHue =
   | 'deep-emerald';
 
 const HUE_DEEP_OVERLAY: Record<CardHue, string> = {
-  emerald: 'bg-gradient-to-br from-emerald-500/[0.03] via-transparent to-teal-500/[0.02] dark:from-emerald-400/[0.05] dark:to-teal-400/[0.04]',
-  teal: 'bg-gradient-to-br from-teal-500/[0.03] via-transparent to-emerald-500/[0.02] dark:from-teal-400/[0.05] dark:to-emerald-400/[0.04]',
-  amber: 'bg-gradient-to-br from-amber-500/[0.03] via-transparent to-orange-500/[0.02] dark:from-amber-400/[0.05] dark:to-orange-400/[0.04]',
-  sky: 'bg-gradient-to-br from-sky-500/[0.03] via-transparent to-teal-500/[0.02] dark:from-sky-400/[0.05] dark:to-teal-400/[0.04]',
-  rose: 'bg-gradient-to-br from-rose-500/[0.03] via-transparent to-amber-500/[0.02] dark:from-rose-400/[0.05] dark:to-amber-400/[0.04]',
-  violet: 'bg-gradient-to-br from-teal-500/[0.03] via-transparent to-emerald-500/[0.02] dark:from-teal-400/[0.05] dark:to-emerald-400/[0.04]',
-  'deep-emerald': 'bg-gradient-to-br from-emerald-500/[0.045] via-transparent to-teal-500/[0.03] dark:from-emerald-400/[0.07] dark:to-teal-400/[0.05]',
+  emerald: 'bg-gradient-to-br from-emerald-500/[0.04] via-transparent to-green-500/[0.03] dark:from-emerald-400/[0.06] dark:to-emerald-500/[0.04]',
+  teal: 'bg-gradient-to-br from-teal-500/[0.04] via-transparent to-emerald-500/[0.03] dark:from-teal-400/[0.06] dark:to-emerald-400/[0.04]',
+  amber: 'bg-gradient-to-br from-amber-500/[0.05] via-transparent to-orange-500/[0.03] dark:from-amber-400/[0.06] dark:to-orange-400/[0.04]',
+  sky: 'bg-gradient-to-br from-blue-500/[0.045] via-transparent to-sky-500/[0.03] dark:from-blue-400/[0.06] dark:to-sky-400/[0.04]',
+  rose: 'bg-gradient-to-br from-rose-500/[0.045] via-transparent to-pink-500/[0.03] dark:from-rose-400/[0.06] dark:to-pink-400/[0.04]',
+  violet: 'bg-gradient-to-br from-purple-500/[0.045] via-transparent to-indigo-500/[0.03] dark:from-purple-400/[0.06] dark:to-indigo-400/[0.04]',
+  'deep-emerald': 'bg-gradient-to-br from-emerald-500/[0.055] via-transparent to-teal-500/[0.035] dark:from-emerald-400/[0.08] dark:to-teal-400/[0.05]',
 };
 
 const HUE_SURFACE_CLASS: Record<CardHue, string> = {
   emerald:
-    'amanah-card-emerald border-emerald-500/24 dark:border-emerald-400/20 hover:border-emerald-600/44 dark:hover:border-emerald-300/38',
+    'amanah-card-emerald border-emerald-200/90 dark:border-emerald-800/65 hover:border-emerald-400/70 dark:hover:border-emerald-500/55',
   'deep-emerald':
-    'amanah-card-emerald border-emerald-500/30 dark:border-emerald-400/25 hover:border-emerald-600/50 dark:hover:border-emerald-300/45',
+    'amanah-card-emerald border-emerald-300/80 dark:border-emerald-700/70 hover:border-emerald-500/65 dark:hover:border-emerald-400/60',
   teal:
-    'amanah-card-teal border-teal-500/24 dark:border-teal-400/20 hover:border-teal-600/44 dark:hover:border-teal-300/38',
+    'amanah-card-teal border-teal-200/90 dark:border-teal-800/65 hover:border-teal-400/70 dark:hover:border-teal-500/55',
   violet:
-    'bg-white/95 dark:bg-slate-900/92 border-slate-200/85 dark:border-slate-800/85 hover:border-teal-500/35 dark:hover:border-teal-400/35',
+    'amanah-card-violet border-purple-200/90 dark:border-purple-800/65 hover:border-purple-400/70 dark:hover:border-purple-500/55',
   amber:
-    'amanah-card-amber border-amber-500/26 dark:border-amber-400/22 hover:border-amber-600/46 dark:hover:border-amber-300/40',
+    'amanah-card-amber border-amber-200/90 dark:border-amber-800/65 hover:border-amber-400/70 dark:hover:border-amber-500/55',
   sky:
-    'amanah-card-sky border-sky-500/24 dark:border-sky-400/20 hover:border-sky-600/44 dark:hover:border-sky-300/38',
+    'amanah-card-sky border-blue-200/90 dark:border-blue-800/65 hover:border-blue-400/70 dark:hover:border-blue-500/55',
   rose:
-    'amanah-card-rose border-rose-500/26 dark:border-rose-400/22 hover:border-rose-600/46 dark:hover:border-rose-300/40',
+    'amanah-card-rose border-rose-200/90 dark:border-rose-800/65 hover:border-rose-400/70 dark:hover:border-rose-500/55',
 };
 
 const DEPTH_VARIANTS = {

@@ -45,7 +45,7 @@ export function Hero({
       meta: tHero('terms.contribMeta'),
       value: tHero('terms.contribValue'),
       sublabel: tHero('terms.contribSub'),
-      hue: 'teal',
+      hue: 'sky',
     },
     {
       key: 'quorum',
@@ -53,7 +53,7 @@ export function Hero({
       meta: tHero('terms.quorumMeta'),
       value: tHero('terms.quorumValue'),
       sublabel: tHero('terms.quorumSub'),
-      hue: 'emerald',
+      hue: 'violet',
     },
     {
       key: 'term',
@@ -61,7 +61,7 @@ export function Hero({
       meta: tHero('terms.termMeta'),
       value: tHero('terms.termValue'),
       sublabel: tHero('terms.termSub'),
-      hue: 'teal',
+      hue: 'amber',
     },
   ];
 
@@ -102,7 +102,7 @@ export function Hero({
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group min-h-[44px] px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-sm font-semibold shadow-sm shadow-emerald-900/15 active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
+                className="group min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
               >
                 {user ? (
                   <>
@@ -176,7 +176,7 @@ export function Hero({
                     onError={() => setHeroImgFailed(true)}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-transparent flex items-end justify-between gap-3">
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-emerald-950/85 via-emerald-900/40 to-transparent flex items-end justify-between gap-3">
                     <div className="text-xs text-white/95 font-medium leading-snug">
                       {tHero('bannerCaption')}
                     </div>
@@ -258,7 +258,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
                   onError={() => setLifecycleImgFailed(true)}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-slate-950/75 via-slate-950/30 to-transparent">
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-emerald-950/80 via-emerald-900/35 to-transparent">
                   <span className="text-xs font-medium text-white/95">
                     {tLife('caption')}
                   </span>
@@ -292,7 +292,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
             </div>
 
             <div className="space-y-2 sm:border-l sm:border-slate-200/80 sm:dark:border-slate-800/75 sm:pl-6">
-              <div className="font-mono text-xs font-semibold text-teal-700 dark:text-teal-400">
+              <div className="font-mono text-xs font-semibold text-blue-700 dark:text-blue-400">
                 {tLife('stage2Index')}
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">

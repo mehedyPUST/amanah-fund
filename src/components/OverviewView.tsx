@@ -373,11 +373,11 @@ export function OverviewView({
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('amanahHeightTitle')}</span>
-            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
-              <Wallet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] shadow-sm shadow-emerald-500/20 bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shrink-0">
+              <Wallet className="w-4 h-4 text-white" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-emerald-600 dark:text-emerald-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-emerald-600 dark:text-emerald-400">
             {formatMoney(treasury.amanahHeight, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -389,17 +389,17 @@ export function OverviewView({
         </MotionCard>
 
         <MotionCard
-          hue="teal"
+          hue="sky"
           delay={0.06}
           className="border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{t('kpi.currentBalance')}</span>
-            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-400" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] shadow-sm shadow-blue-500/20 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-white" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-teal-700 dark:text-teal-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-blue-700 dark:text-blue-400">
             {formatMoney(treasury.currentBalance, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -414,11 +414,11 @@ export function OverviewView({
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('qardHasanTotalCurrent')}</span>
-            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/30 flex items-center justify-center shrink-0">
-              <HandCoins className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] shadow-sm shadow-amber-500/20 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shrink-0">
+              <HandCoins className="w-4 h-4 text-white" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-amber-700 dark:text-amber-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {formatMoney(treasury.quardHasanTotalCurrent, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
@@ -434,17 +434,17 @@ export function OverviewView({
         </MotionCard>
 
         <MotionCard
-          hue="teal"
+          hue="violet"
           delay={0.14}
           className="border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-400">
             <span>{tOv('repaymentsReturnedPlus')}</span>
-            <span className="w-8 h-8 rounded-[10px] shadow-2xs bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+            <span className="w-8 h-8 rounded-[10px] shadow-sm shadow-purple-500/20 bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-4 h-4 text-white" aria-hidden="true" />
             </span>
           </div>
-          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-teal-700 dark:text-teal-300">
+          <div className="mt-2.5 text-2xl sm:text-[26px] font-bold tracking-tight font-mono tabular-nums text-purple-700 dark:text-purple-400">
             {formatMoney(treasury.totalRepaid, ccy)}
           </div>
           <div className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
