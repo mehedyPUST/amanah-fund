@@ -64,9 +64,9 @@ export function About({ embedded = false }: { embedded?: boolean }) {
       Icon: KeyRound,
       title: t('p5Title'),
       description: t('p5Desc'),
-      hue: 'emerald',
+      hue: 'teal',
       iconBoxClass:
-        'bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-md shadow-emerald-500/20',
+        'bg-gradient-to-br from-teal-500 to-teal-600 text-white shadow-md shadow-teal-500/20',
     },
   ];
 
@@ -74,7 +74,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
+          ? 'bg-gradient-to-b from-white/98 to-slate-50/50 dark:from-[#02232D]/96 dark:to-[#001E2B]/98 backdrop-blur-xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,10,15,0.68)] p-6 sm:p-7'
           : ''
       }`}
     >
@@ -87,7 +87,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
           className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-slate-800"
         >
           <div className="max-w-3xl space-y-2">
-            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+            <div className="text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
               {t('eyebrow')}
             </div>
             <HeadingTag

@@ -80,8 +80,8 @@ export function Hero({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-5 sm:gap-6 py-0.5 sm:py-1">
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-                <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium animate__animated animate__fadeIn">
+                <span className="font-semibold text-emerald-700 dark:text-[#00ED64]">
                   {tHero('kickerTreasury')}
                 </span>
                 <span aria-hidden="true">·</span>
@@ -90,11 +90,11 @@ export function Hero({
                 <span>{tHero('kickerCap')}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.35rem,3.4vw,3.15rem)] font-bold tracking-[-0.025em] text-slate-900 dark:text-white leading-[1.12] text-balance max-w-2xl">
+              <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.35rem,3.4vw,3.15rem)] font-bold tracking-[-0.025em] text-slate-900 dark:text-white leading-[1.12] text-balance max-w-2xl animate__animated animate__fadeInUp">
                 {tHero('headline')}
               </h1>
 
-              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
+              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl animate__animated animate__fadeIn">
                 {tHero('subheadline')}
               </p>
             </div>
@@ -102,7 +102,7 @@ export function Hero({
             <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
               <Link
                 href={user ? '/dashboard' : '/signup'}
-                className="group min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-sm font-semibold shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
+                className="group min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-[#00684A] dark:to-[#05875C] dark:hover:from-[#05875C] dark:hover:to-[#13AA52] text-white text-sm font-semibold shadow-md shadow-emerald-600/20 active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
               >
                 {user ? (
                   <>
@@ -190,31 +190,41 @@ export function Hero({
 
       {/* 4-Column Charter Metrics Strip (2x2 Bento on Mobile, 4-Col Row on XL) */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3.5">
-        {keyTerms.map((metric, idx) => (
-          <MotionCard
-            key={metric.key}
-            hue={metric.hue}
-            delay={0.03 * idx}
-            className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between gap-2 sm:gap-3 transition-all duration-200"
-          >
-            <div className="flex items-center justify-between gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
-                {metric.kicker}
-              </span>
-              <span className="font-mono text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
-                {metric.meta}
-              </span>
-            </div>
-            <div className="space-y-0.5 sm:space-y-1">
-              <div className="font-display font-mono text-lg sm:text-[26px] font-bold tracking-tight tabular-nums text-slate-900 dark:text-white leading-tight">
-                {metric.value}
+        {keyTerms.map((metric, idx) => {
+          const kickerColorClass =
+            metric.hue === 'sky'
+              ? 'text-blue-700 dark:text-blue-400'
+              : metric.hue === 'violet'
+                ? 'text-purple-700 dark:text-purple-400'
+                : metric.hue === 'amber'
+                  ? 'text-amber-700 dark:text-amber-400'
+                  : 'text-emerald-700 dark:text-[#00ED64]';
+          return (
+            <MotionCard
+              key={metric.key}
+              hue={metric.hue}
+              delay={0.03 * idx}
+              className="backdrop-blur-xl border ring-1 ring-inset ring-white/70 dark:ring-white/5 rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between gap-2 sm:gap-3 transition-all duration-200"
+            >
+              <div className="flex items-center justify-between gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                <span className={`font-semibold truncate ${kickerColorClass}`}>
+                  {metric.kicker}
+                </span>
+                <span className="font-mono text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
+                  {metric.meta}
+                </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug sm:leading-relaxed">
-                {metric.sublabel}
-              </p>
-            </div>
-          </MotionCard>
-        ))}
+              <div className="space-y-0.5 sm:space-y-1">
+                <div className="font-display font-mono text-lg sm:text-[26px] font-bold tracking-tight tabular-nums text-slate-900 dark:text-white leading-tight">
+                  {metric.value}
+                </div>
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 leading-snug sm:leading-relaxed">
+                  {metric.sublabel}
+                </p>
+              </div>
+            </MotionCard>
+          );
+        })}
       </div>
 
       {includeLifecycle && <HeroLifecycle embedded={embedded} />}

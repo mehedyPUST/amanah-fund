@@ -788,10 +788,10 @@ export function OverviewView({
         )}
 
         <section
-          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.4)] flex flex-col justify-between`}
+          className={`${isAdmin ? 'xl:col-span-7' : 'xl:col-span-12'} amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-[0_6px_24px_-14px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)] flex flex-col justify-between`}
         >
           <div>
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 animate__animated animate__fadeIn">
               <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                 {tOv('activeGovernanceQueues')}
               </h3>
@@ -800,7 +800,7 @@ export function OverviewView({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-slate-200/75 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
               <button
                 type="button"
                 onClick={() =>
@@ -808,7 +808,7 @@ export function OverviewView({
                     ? onOpenManagerDeskTab('qard-hasan')
                     : onNavigate(isStaff ? 'manager-desk' : 'quard-hasan')
                 }
-                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-amber rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-400 font-medium">
                   <span>{t('sheets.pendingLoanReviews')}</span>
@@ -831,18 +831,18 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('ballot')}
-                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-violet rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-purple-700 dark:text-purple-400 font-medium">
                   <span>{t('sheets.openTwoThirdsBallots')}</span>
-                  <span className="w-8 h-8 rounded-[10px] bg-amber-100/85 dark:bg-amber-500/15 border border-amber-200/80 dark:border-amber-500/30 flex items-center justify-center shrink-0">
-                    <Vote className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <span className="w-8 h-8 rounded-[10px] bg-purple-100/85 dark:bg-purple-500/15 border border-purple-200/80 dark:border-purple-500/30 flex items-center justify-center shrink-0">
+                    <Vote className="w-4 h-4 text-purple-600 dark:text-purple-400" aria-hidden="true" />
                   </span>
                 </div>
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingVotesCount}
                 </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
+                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
                   {tOv('castAnonymizedVote')}
                 </div>
               </button>
@@ -862,13 +862,13 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-emerald rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-emerald-700 dark:text-[#00ED64] font-medium">
                   <span>{t('sheets.pendingDeposits')}</span>
-                  <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-[#00684A]/35 border border-emerald-200/80 dark:border-[#00ED64]/30 flex items-center justify-center shrink-0">
                     <ShieldCheck
-                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                      className="w-4 h-4 text-emerald-600 dark:text-[#00ED64]"
                       aria-hidden="true"
                     />
                   </span>
@@ -876,7 +876,7 @@ export function OverviewView({
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingContributionsCount}
                 </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-[#00ED64] transition-colors">
                   {isStaff
                     ? tOv('reviewInDeskArrow', {
                         desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
@@ -894,13 +894,13 @@ export function OverviewView({
                     onNavigate(isStaff ? 'manager-desk' : 'ballot');
                   }
                 }}
-                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-sky rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between gap-2 text-xs text-teal-700 dark:text-teal-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-blue-700 dark:text-blue-400 font-medium">
                   <span>{t('sheets.awaitingDisbursement')}</span>
-                  <span className="w-8 h-8 rounded-[10px] bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 rounded-[10px] bg-blue-100/85 dark:bg-blue-500/15 border border-blue-200/80 dark:border-blue-500/30 flex items-center justify-center shrink-0">
                     <ShieldCheck
-                      className="w-4 h-4 text-teal-600 dark:text-teal-400"
+                      className="w-4 h-4 text-blue-600 dark:text-blue-400"
                       aria-hidden="true"
                     />
                   </span>
@@ -908,7 +908,7 @@ export function OverviewView({
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingDisbursementsCount}
                 </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-blue-700 dark:group-hover:text-blue-300 transition-colors">
                   {isStaff
                     ? tOv('confirmPayoutArrow', {
                         desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),
@@ -932,13 +932,13 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group bg-white/95 dark:bg-slate-900/90 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-left p-4 transition-colors duration-150 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
+                className="group amanah-card-teal rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
               >
-                <div className="flex items-center justify-between gap-2 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                <div className="flex items-center justify-between gap-2 text-xs text-teal-700 dark:text-teal-400 font-medium">
                   <span>{t('sheets.pendingRepayments')}</span>
-                  <span className="w-8 h-8 rounded-[10px] bg-emerald-100/85 dark:bg-emerald-500/15 border border-emerald-200/80 dark:border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 rounded-[10px] bg-teal-100/85 dark:bg-teal-500/15 border border-teal-200/80 dark:border-teal-500/30 flex items-center justify-center shrink-0">
                     <CheckCircle2
-                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                      className="w-4 h-4 text-teal-600 dark:text-teal-400"
                       aria-hidden="true"
                     />
                   </span>
@@ -946,7 +946,7 @@ export function OverviewView({
                 <div className="text-xl font-bold font-mono tabular-nums text-slate-900 dark:text-white">
                   {treasury.pendingRepaymentsCount}
                 </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                <div className="text-xs text-slate-600 dark:text-slate-400 font-medium group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
                   {isStaff
                     ? tOv('verifyInstallmentsArrow', {
                         desk: isAdmin ? tNav('governanceDesk') : tNav('managerDesk'),

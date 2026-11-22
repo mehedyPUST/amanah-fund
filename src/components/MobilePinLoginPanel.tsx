@@ -362,10 +362,10 @@ export function MobilePinLoginPanel({
                       error
                         ? 'border-rose-400 dark:border-rose-600 bg-rose-50/50 dark:bg-rose-950/25'
                         : isActive
-                        ? 'border-emerald-600 dark:border-emerald-400 bg-white dark:bg-gray-950 ring-2 ring-emerald-600/20 dark:ring-emerald-400/20 shadow-xs'
+                        ? 'border-emerald-600 dark:border-[#00ED64] bg-white dark:bg-[#00151F] ring-2 ring-emerald-600/20 dark:ring-[#00ED64]/20 shadow-xs'
                         : isFilled
-                        ? 'border-emerald-300 dark:border-emerald-700/80 bg-emerald-50/40 dark:bg-emerald-950/20'
-                        : 'border-slate-200/90 dark:border-gray-700/80 bg-white dark:bg-gray-950'
+                        ? 'border-emerald-300 dark:border-[#00684A] bg-emerald-50/40 dark:bg-[#02232D]'
+                        : 'border-slate-200/90 dark:border-[#163948] bg-white dark:bg-[#00151F]'
                     }`}
                   >
                     {isFilled ? (
@@ -378,15 +378,15 @@ export function MobilePinLoginPanel({
                           initial={{ scale: 0.5, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ duration: 0.12 }}
-                          className="w-3 h-3 rounded-full bg-emerald-700 dark:bg-emerald-400"
+                          className="w-3 h-3 rounded-full bg-emerald-700 dark:bg-[#00ED64]"
                         />
                       )
                     ) : (
                       <span
-                        className={`w-2 h-0.5 rounded-full ${
+                        className={`w-2.5 h-0.5 rounded-full transition-transform duration-150 ${
                           isActive
-                            ? 'bg-emerald-600 dark:bg-emerald-400 animate-pulse'
-                            : 'bg-slate-200 dark:bg-gray-700'
+                            ? 'bg-emerald-600 dark:bg-[#00ED64] scale-x-125'
+                            : 'bg-slate-200 dark:bg-[#234B5C]'
                         }`}
                       />
                     )}

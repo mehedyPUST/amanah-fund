@@ -1122,8 +1122,8 @@ export function AppProviders({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           >
             <SkeletonTheme
-              baseColor={darkMode ? '#0B2A37' : '#d1ddd8'}
-              highlightColor={darkMode ? '#1A3C4B' : '#edf4f1'}
+              baseColor={darkMode ? '#072734' : '#d1ddd8'}
+              highlightColor={darkMode ? '#113B4B' : '#edf4f1'}
               borderRadius={8}
             >
               <ToastProvider>
@@ -1138,7 +1138,7 @@ export function AppProviders({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.96 }}
                     transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                    className="fixed top-4 right-4 left-4 sm:left-auto sm:w-[360px] z-[95] rounded-xl border border-emerald-200/90 dark:border-emerald-800/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl p-3.5"
+                    className="fixed top-4 right-4 left-4 sm:left-auto sm:w-[360px] z-[95] rounded-xl border border-emerald-200/90 dark:border-[#00ED64]/35 bg-white/95 dark:bg-[#001E2B]/95 backdrop-blur-md shadow-xl p-3.5"
                     role="status"
                     aria-live="polite"
                   >
@@ -1152,7 +1152,7 @@ export function AppProviders({
                         }}
                         className="flex-1 min-w-0 flex items-start gap-2.5 text-left cursor-pointer"
                       >
-                        <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-[#00684A]/45 text-emerald-700 dark:text-[#00ED64] flex items-center justify-center shrink-0 mt-0.5">
                           <BellRing className="w-4 h-4" aria-hidden="true" />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -1192,10 +1192,10 @@ export function AppProviders({
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.96, y: 8 }}
                       transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="w-full max-w-sm rounded-xl border border-teal-200/80 dark:border-teal-900/60 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-5 shadow-xl"
+                      className="w-full max-w-sm rounded-xl border border-teal-200/80 dark:border-[#163948] bg-white/95 dark:bg-[#001E2B]/96 backdrop-blur-md p-5 shadow-xl"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400">
+                        <div className="flex items-center gap-2 text-teal-700 dark:text-[#00ED64]">
                           <ShieldCheck className="w-5 h-5 shrink-0" />
                           <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                             {activeMessages.Auth.totp.title}
@@ -1226,21 +1226,21 @@ export function AppProviders({
                             value={totpCodeInput}
                             onChange={(e) => setTotpCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
                             placeholder="000000"
-                            className="w-full rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/30 dark:bg-slate-800 px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums text-slate-900 dark:text-slate-100 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 focus:outline-none"
+                            className="w-full rounded-lg border border-teal-200 dark:border-[#163948] bg-teal-50/30 dark:bg-[#00151F] px-3 py-2 text-center font-mono text-lg tracking-widest tabular-nums text-slate-900 dark:text-slate-100 focus:border-emerald-600 dark:focus:border-[#00ED64] focus:ring-2 focus:ring-emerald-600/20 dark:focus:ring-[#00ED64]/20 focus:outline-none"
                           />
                         </div>
                         <div className="flex items-center justify-end gap-2">
                           <button
                             type="button"
                             onClick={cancelTotpPrompt}
-                            className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                            className="rounded-lg border border-slate-300 dark:border-[#163948] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#082B39] cursor-pointer whitespace-nowrap"
                           >
                             {activeMessages.Common.cancel}
                           </button>
                           <button
                             type="submit"
                             disabled={totpCodeInput.length !== 6}
-                            className="rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-50 cursor-pointer whitespace-nowrap shadow-2xs transition-colors"
+                            className="rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-[#00684A] dark:hover:bg-[#05875C] px-3.5 py-1.5 text-xs font-medium text-white disabled:opacity-50 cursor-pointer whitespace-nowrap shadow-2xs transition-colors"
                           >
                             {activeMessages.Auth.totp.verifyContinue}
                           </button>

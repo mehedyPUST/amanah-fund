@@ -36,7 +36,7 @@ export const viewport: Viewport = {
   interactiveWidget: 'resizes-content',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#059669' },
-    { media: '(prefers-color-scheme: dark)', color: '#020617' },
+    { media: '(prefers-color-scheme: dark)', color: '#001E2B' },
   ],
 };
 
@@ -94,6 +94,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       suppressHydrationWarning
       className={`${displayHeading.variable} ${bodySans.variable} ${jetbrainsMono.variable} ${anekBangla.variable}${initialTheme === 'dark' ? ' dark' : ''}`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var d=document.documentElement;var m=document.cookie.match(/(?:^|; )amanah_theme=([^;]+)/);var c=m?decodeURIComponent(m[1]):null;var s=null;try{s=localStorage.getItem('amanah_theme');}catch(e){}var t=(c==='dark'||c==='light')?c:(s==='dark'||s==='light')?s:null;if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){t='dark';}if(t==='dark'){d.classList.add('dark');}else if(t==='light'){d.classList.remove('dark');}}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="amanah-ambient-canvas text-slate-900 dark:text-slate-100 antialiased selection:bg-emerald-600 selection:text-white">
         <AppProviders
           initialLocale={locale}

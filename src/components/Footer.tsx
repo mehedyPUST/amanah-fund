@@ -16,7 +16,7 @@ export function Footer() {
   const tFooter = useTranslations('Public.footer');
 
   return (
-    <footer className="w-full bg-gradient-to-b from-slate-50/90 via-white to-slate-50/90 dark:from-gray-950/95 dark:via-gray-900/95 dark:to-gray-950/95 backdrop-blur-xl border border-slate-200/80 dark:border-gray-800/85 rounded-2xl shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.5)]">
+    <footer className="w-full bg-gradient-to-b from-emerald-50/35 via-white to-slate-50/90 dark:from-[#00151F]/96 dark:via-[#001E2B]/96 dark:to-[#00151F]/96 backdrop-blur-xl border border-slate-200/80 dark:border-[#163948] rounded-2xl shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)]">
       <div className="px-4 sm:px-8 py-5 sm:py-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           <div className="space-y-2.5 sm:space-y-3">
@@ -100,14 +100,14 @@ export function Footer() {
                 onClick={() => {
                   if (user) setMobileBrowseMode(false);
                 }}
-                className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+                className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-[#00684A] dark:to-[#05875C] dark:hover:from-[#05875C] dark:hover:to-[#13AA52] text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 {user ? tNav('dashboard') : tNav('signIn')}
               </Link>
               {!user && (
                 <Link
                   href="/signup"
-                  className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/85 dark:bg-slate-950/60 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+                  className="min-h-[40px] inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 dark:border-[#163948] bg-white/85 dark:bg-[#02232D] text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#082B39] transition-colors whitespace-nowrap"
                 >
                   {tNav('joinAmanah')}
                 </Link>

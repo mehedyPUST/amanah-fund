@@ -162,14 +162,14 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     <div
       className={`w-full text-slate-900 dark:text-slate-100 ${
         embedded
-          ? 'bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] p-6 sm:p-7'
+          ? 'bg-gradient-to-b from-white/98 to-emerald-50/25 dark:from-[#02232D]/96 dark:to-[#001E2B]/98 backdrop-blur-xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 rounded-2xl shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,10,15,0.68)] p-6 sm:p-7'
           : ''
       }`}
     >
       <section className="space-y-6 sm:space-y-7">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-slate-800">
-          <div className="max-w-2xl space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-[#163948]">
+          <div className="max-w-2xl space-y-1.5 animate__animated animate__fadeIn">
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
               <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('eyebrow')}</span>
             </div>
@@ -211,7 +211,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                     <motion.span
                       layoutId="how-it-works-role-tab"
                       transition={{ type: 'spring', stiffness: 450, damping: 34 }}
-                      className="absolute inset-0 rounded-lg bg-emerald-700 dark:bg-emerald-600 shadow-xs border border-emerald-600/80 dark:border-emerald-500/80"
+                      className="absolute inset-0 rounded-lg bg-emerald-700 dark:bg-[#00684A] shadow-xs border border-emerald-600/80 dark:border-[#00ED64]/40"
                       aria-hidden="true"
                     />
                   )}
@@ -306,7 +306,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             </Link>
             <Link
               href={user ? '/dashboard' : '/signup'}
-              className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all whitespace-nowrap"
+              className="group px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-[#00684A] dark:to-[#05875C] dark:hover:from-[#05875C] dark:hover:to-[#13AA52] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all whitespace-nowrap"
             >
               <span>{user ? tNav('dashboard') : tNav('joinAmanah')}</span>
               <ArrowRight

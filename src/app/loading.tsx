@@ -12,7 +12,7 @@ export default function AppLoading() {
   const [isFirstVisitLoad] = useState<boolean>(() => !hasVisitedBefore);
 
   const logoSplashContent = (
-    <div className="relative flex flex-col items-center">
+    <div className="relative flex flex-col items-center animate__animated animate__fadeIn">
       <div className="mb-5">
         <AmanahLoadingLogo variant="lockup" size="xl" />
       </div>
@@ -24,10 +24,10 @@ export default function AppLoading() {
         {tCommon('loadingHeroSubtitle')}
       </p>
 
-      <div className="mt-4 w-36 h-1 rounded-full bg-slate-200/90 dark:bg-slate-800 overflow-hidden">
-        <div className="h-full w-1/2 rounded-full bg-emerald-600 dark:bg-emerald-500 animate-pulse" />
+      <div className="mt-4 w-36 leading-none">
+        <Skeleton height={4} borderRadius={999} />
       </div>
-      <p className="mt-2.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+      <p className="mt-2.5 text-[11px] font-medium text-emerald-700 dark:text-[#00ED64]">
         {tCommon('loadingWorkspace')}
       </p>
     </div>

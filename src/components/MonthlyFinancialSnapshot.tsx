@@ -119,7 +119,7 @@ export function MonthlyFinancialSnapshot({
       aria-labelledby="monthly-financial-snapshot-heading"
       className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate__animated animate__fadeIn">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
+import Skeleton from 'react-loading-skeleton';
 import type {
   Contribution,
   DashboardOverview,
@@ -508,10 +509,7 @@ export function HeaderNotificationBell({
                         {tNotif('bell.loadingAlerts')}
                       </p>
                       {[0, 1, 2].map((idx) => (
-                        <div
-                          key={idx}
-                          className="h-14 rounded-xl bg-slate-100 dark:bg-slate-800/70 animate-pulse"
-                        />
+                        <Skeleton key={idx} height={56} borderRadius={12} />
                       ))}
                     </div>
                   ) : (

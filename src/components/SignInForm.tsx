@@ -303,14 +303,14 @@ export function SignInForm() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/85 rounded-2xl p-6 sm:p-9 shadow-[0_10px_36px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
+        className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/80 dark:ring-white/5 rounded-2xl p-6 sm:p-9 shadow-[0_10px_36px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
       >
         {/* Left Institutional Context Column */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-6 animate__animated animate__fadeIn">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <AmanahLogo size="md" decorative className="shadow-sm" />
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
                 <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>
                   {activationChallenge

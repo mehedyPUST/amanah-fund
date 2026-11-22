@@ -291,7 +291,7 @@ export function ActionModal({
             onClick={(e) => e.stopPropagation()}
             className={`relative z-10 w-full ${
               maxWidthClass || 'max-w-[26rem]'
-            } bg-white/98 dark:bg-slate-900/98 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 ring-1 ring-inset ring-white/80 dark:ring-white/5 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,0,0,0.62)] overflow-hidden my-auto flex flex-col max-h-[92vh]`}
+            } bg-white/98 dark:bg-[#001E2B]/98 backdrop-blur-xl border border-slate-200/90 dark:border-[#163948] ring-1 ring-inset ring-white/80 dark:ring-[#00ED64]/10 rounded-2xl shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)] dark:shadow-[0_24px_64px_-16px_rgba(0,10,15,0.78)] overflow-hidden my-auto flex flex-col max-h-[92vh]`}
           >
             {/* Top accent bar */}
             <div
@@ -451,7 +451,7 @@ export function ActionModal({
 
                 {/* Details for non-success layouts */}
                 {!isSuccessNotice && details && details.length > 0 && (
-                  <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/50 divide-y divide-slate-200/70 dark:divide-slate-800 text-xs overflow-hidden">
+                  <div className="mt-4 rounded-xl border border-slate-200 dark:border-[#163948] bg-slate-50/90 dark:bg-[#00151F]/70 divide-y divide-slate-200/70 dark:divide-[#163948] text-xs overflow-hidden">
                     {details.map((item) => (
                       <div
                         key={`${item.label}-${item.value}`}
@@ -490,7 +490,7 @@ export function ActionModal({
                           if (inputError) setInputError(null);
                         }}
                         placeholder={inputPlaceholder}
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-500/60 transition-shadow"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-[#163948] bg-white dark:bg-[#00151F] focus:outline-none focus:ring-2 focus:ring-emerald-600/25 dark:focus:ring-[#00ED64]/25 focus:border-emerald-500/60 dark:focus:border-[#00ED64]/60 transition-shadow"
                       />
                     ) : (
                       <input
@@ -503,7 +503,7 @@ export function ActionModal({
                           if (inputError) setInputError(null);
                         }}
                         placeholder={inputPlaceholder}
-                        className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/25 focus:border-emerald-500/60 transition-shadow"
+                        className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-[#163948] bg-white dark:bg-[#00151F] focus:outline-none focus:ring-2 focus:ring-emerald-600/25 dark:focus:ring-[#00ED64]/25 focus:border-emerald-500/60 dark:focus:border-[#00ED64]/60 transition-shadow"
                       />
                     )}
                     {inputError && (
@@ -517,10 +517,10 @@ export function ActionModal({
 
               {/* Footer actions */}
               <div
-                className={`px-5 sm:px-6 pb-5 sm:pb-6 shrink-0 bg-white dark:bg-slate-900 ${
+                className={`px-5 sm:px-6 pb-5 sm:pb-6 shrink-0 bg-white dark:bg-[#001E2B] ${
                   isSuccessNotice
                     ? 'pt-1'
-                    : 'pt-3 border-t border-slate-100 dark:border-slate-800/80'
+                    : 'pt-3 border-t border-slate-100 dark:border-[#163948]'
                 }`}
               >
                 <div

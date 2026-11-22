@@ -152,7 +152,7 @@ export function PWAUpdateButton({
         </span>
         {updateAvailable && !applyingUpdate && (
           <span
-            className="w-2 h-2 rounded-full bg-amber-300 animate-pulse shrink-0"
+            className="w-2 h-2 rounded-full bg-[#00ED64] ring-2 ring-[#00ED64]/35 shrink-0"
             aria-hidden="true"
           />
         )}
@@ -167,7 +167,7 @@ export function PWAUpdateButton({
             transition={{ duration: 0.15 }}
             role="dialog"
             aria-label={tPwa('versionStatusTitle')}
-            className={`absolute ${popoverPositionClass} z-[70] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3.5 shadow-[0_18px_44px_-14px_rgba(15,23,42,0.22)] space-y-2.5 text-left`}
+            className={`absolute ${popoverPositionClass} z-[70] bg-white/95 dark:bg-[#001E2B]/96 backdrop-blur-xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 rounded-2xl p-3.5 shadow-[0_18px_44px_-14px_rgba(15,23,42,0.22)] space-y-2.5 text-left`}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">

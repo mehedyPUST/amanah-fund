@@ -1894,7 +1894,7 @@ export function DashboardShell() {
             aria-pressed={darkMode}
             title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
             aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-gray-700/85 bg-white/85 dark:bg-gray-800/90 text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 active:scale-95 shadow-2xs transition-all items-center justify-center cursor-pointer shrink-0"
+            className="flex w-9 h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white/85 dark:bg-[#02232D] text-slate-600 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 active:scale-95 shadow-2xs transition-all items-center justify-center cursor-pointer shrink-0"
           >
             {darkMode ? (
               <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
@@ -1934,7 +1934,7 @@ export function DashboardShell() {
       {/* GRID 3 */}
       <aside
         id="dashboard-desktop-sidebar"
-        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)]"
+        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)]"
       >
         <nav
           className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
@@ -1972,7 +1972,7 @@ export function DashboardShell() {
                 aria-pressed={darkMode}
                 title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                 aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                className="w-full h-9 rounded-xl border border-slate-200/85 dark:border-gray-700/85 bg-slate-50/85 dark:bg-gray-800/90 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 text-slate-600 dark:text-slate-200 transition-colors flex items-center justify-center cursor-pointer"
+                className="w-full h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#02232D] hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 text-slate-600 dark:text-slate-200 transition-colors flex items-center justify-center cursor-pointer"
               >
                 {darkMode ? (
                   <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
@@ -2029,7 +2029,7 @@ export function DashboardShell() {
                 aria-checked={darkMode}
                 title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                 aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                className="w-full py-2 px-3 rounded-xl border border-slate-200/85 dark:border-gray-700/85 bg-slate-50/85 dark:bg-gray-800/90 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 flex items-center justify-between gap-2 cursor-pointer whitespace-nowrap"
+                className="w-full py-2 px-3 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#02232D] hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 flex items-center justify-between gap-2 cursor-pointer whitespace-nowrap"
               >
                 <span className="flex items-center gap-2 min-w-0">
                   {darkMode ? (
@@ -2045,14 +2045,14 @@ export function DashboardShell() {
                   aria-hidden="true"
                   className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
                     darkMode
-                      ? 'bg-emerald-500/25 border border-emerald-400/50'
+                      ? 'bg-[#00ED64]/20 border border-[#00ED64]/55'
                       : 'bg-slate-200 border border-slate-300/80'
                   }`}
                 >
                   <span
                     className={`inline-block h-2.5 w-2.5 rounded-full transition-transform duration-150 ${
                       darkMode
-                        ? 'translate-x-3.5 bg-emerald-400'
+                        ? 'translate-x-3.5 bg-[#00ED64]'
                         : 'translate-x-0.5 bg-slate-500'
                     }`}
                   />
@@ -2192,12 +2192,12 @@ export function DashboardShell() {
                     aria-pressed={darkMode}
                     title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
                     aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200/80 dark:border-gray-700/85 bg-white/85 dark:bg-gray-800/90 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-emerald-950/50 hover:border-emerald-300/80 dark:hover:border-emerald-500/45 transition-colors text-[12.5px] font-medium cursor-pointer whitespace-nowrap"
+                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 h-9 px-2.5 rounded-lg border border-slate-200/80 dark:border-[#163948] bg-white/85 dark:bg-[#02232D] text-slate-700 dark:text-slate-200 hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 transition-colors text-[12.5px] font-medium cursor-pointer whitespace-nowrap"
                   >
                     {darkMode ? (
                       <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
                     ) : (
-                      <Moon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                      <Moon className="w-3.5 h-3.5 text-emerald-700 dark:text-[#00ED64] shrink-0" aria-hidden="true" />
                     )}
                     <span className="truncate">{darkMode ? tCommon('lightMode') : tCommon('darkMode')}</span>
                   </button>
@@ -2211,7 +2211,7 @@ export function DashboardShell() {
       {/* GRID 4: Multi-Page Dashboard Content */}
       <main
         data-surface="app"
-        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1 lg:bg-white/95 lg:dark:bg-slate-900/92 lg:backdrop-blur-xl lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-slate-800/85 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 lg:shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:lg:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] overflow-hidden"
+        className="lg:col-start-2 lg:row-start-2 min-w-0 min-h-0 w-full flex-1 flex flex-col lg:pl-3 lg:pr-1 lg:bg-white/95 lg:dark:bg-[#001E2B]/94 lg:backdrop-blur-xl lg:rounded-2xl lg:border lg:border-slate-200/85 lg:dark:border-[#163948] lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-[#00ED64]/10 lg:shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:lg:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)] overflow-hidden"
       >
         <div
           ref={mainScrollRef}

@@ -75,16 +75,16 @@ export function HomeHighlights() {
 
   return (
     <section className="w-full space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-slate-200/75 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pb-4 border-b border-slate-200/75 dark:border-[#163948] animate__animated animate__fadeIn">
         <div className="space-y-1">
-          <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
             {t('eyebrow')}
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">
             {t('heading')}
           </h2>
         </div>
-        <span className="font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">
+        <span className="font-mono text-xs tabular-nums px-2.5 py-1 rounded-lg border border-amber-200/85 dark:border-amber-500/30 bg-gradient-to-br from-amber-50 to-amber-100/70 dark:from-amber-950/45 dark:to-[#02232D] text-amber-800 dark:text-amber-300 self-start sm:self-auto">
           {t('meta')}
         </span>
       </div>

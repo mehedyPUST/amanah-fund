@@ -65,7 +65,7 @@ function buildAddressRows(
 
 function SectionBar({ num, title }: { num: string; title: string }) {
   return (
-    <div className="flex items-center gap-2 rounded bg-emerald-50 border border-emerald-200 border-l-4 border-l-emerald-600 px-2.5 py-1.5">
+    <div className="flex items-center gap-2 rounded border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-50/35 px-2.5 py-1.5">
       <span className="text-[11px] font-bold tracking-wide text-emerald-900 uppercase">
         {num}. {title}
       </span>

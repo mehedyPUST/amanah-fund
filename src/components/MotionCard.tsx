@@ -13,30 +13,30 @@ export type CardHue =
   | 'deep-emerald';
 
 const HUE_DEEP_OVERLAY: Record<CardHue, string> = {
-  emerald: 'bg-gradient-to-br from-emerald-500/[0.04] via-transparent to-green-500/[0.03] dark:from-emerald-400/[0.06] dark:to-emerald-500/[0.04]',
-  teal: 'bg-gradient-to-br from-teal-500/[0.04] via-transparent to-emerald-500/[0.03] dark:from-teal-400/[0.06] dark:to-emerald-400/[0.04]',
-  amber: 'bg-gradient-to-br from-amber-500/[0.05] via-transparent to-orange-500/[0.03] dark:from-amber-400/[0.06] dark:to-orange-400/[0.04]',
-  sky: 'bg-gradient-to-br from-blue-500/[0.045] via-transparent to-sky-500/[0.03] dark:from-blue-400/[0.06] dark:to-sky-400/[0.04]',
-  rose: 'bg-gradient-to-br from-rose-500/[0.045] via-transparent to-pink-500/[0.03] dark:from-rose-400/[0.06] dark:to-pink-400/[0.04]',
-  violet: 'bg-gradient-to-br from-purple-500/[0.045] via-transparent to-indigo-500/[0.03] dark:from-purple-400/[0.06] dark:to-indigo-400/[0.04]',
-  'deep-emerald': 'bg-gradient-to-br from-emerald-500/[0.055] via-transparent to-teal-500/[0.035] dark:from-emerald-400/[0.08] dark:to-teal-400/[0.05]',
+  emerald: 'bg-gradient-to-br from-emerald-500/[0.06] via-emerald-500/[0.02] to-transparent dark:from-[#00ED64]/[0.08] dark:to-transparent',
+  teal: 'bg-gradient-to-br from-teal-500/[0.06] via-teal-500/[0.02] to-transparent dark:from-teal-400/[0.08] dark:to-transparent',
+  amber: 'bg-gradient-to-br from-amber-500/[0.06] via-amber-500/[0.02] to-transparent dark:from-amber-400/[0.08] dark:to-transparent',
+  sky: 'bg-gradient-to-br from-blue-500/[0.06] via-sky-500/[0.02] to-transparent dark:from-blue-400/[0.08] dark:to-transparent',
+  rose: 'bg-gradient-to-br from-rose-500/[0.06] via-rose-500/[0.02] to-transparent dark:from-rose-400/[0.08] dark:to-transparent',
+  violet: 'bg-gradient-to-br from-purple-500/[0.06] via-purple-500/[0.02] to-transparent dark:from-purple-400/[0.08] dark:to-transparent',
+  'deep-emerald': 'bg-gradient-to-br from-emerald-600/[0.07] via-emerald-500/[0.025] to-transparent dark:from-[#00ED64]/[0.10] dark:to-transparent',
 };
 
 const HUE_SURFACE_CLASS: Record<CardHue, string> = {
   emerald:
-    'amanah-card-emerald border-emerald-200/90 dark:border-emerald-800/65 hover:border-emerald-400/70 dark:hover:border-emerald-500/55',
+    'amanah-card-emerald border-emerald-200/90 dark:border-[#00ED64]/24 hover:border-emerald-400/75 dark:hover:border-[#00ED64]/50',
   'deep-emerald':
-    'amanah-card-emerald border-emerald-300/80 dark:border-emerald-700/70 hover:border-emerald-500/65 dark:hover:border-emerald-400/60',
+    'amanah-card-emerald border-emerald-300/80 dark:border-[#00ED64]/30 hover:border-emerald-500/70 dark:hover:border-[#00ED64]/60',
   teal:
-    'amanah-card-teal border-teal-200/90 dark:border-teal-800/65 hover:border-teal-400/70 dark:hover:border-teal-500/55',
+    'amanah-card-teal border-teal-200/90 dark:border-teal-500/26 hover:border-teal-400/75 dark:hover:border-teal-400/52',
   violet:
-    'amanah-card-violet border-purple-200/90 dark:border-purple-800/65 hover:border-purple-400/70 dark:hover:border-purple-500/55',
+    'amanah-card-violet border-purple-200/90 dark:border-purple-500/26 hover:border-purple-400/75 dark:hover:border-purple-400/52',
   amber:
-    'amanah-card-amber border-amber-200/90 dark:border-amber-800/65 hover:border-amber-400/70 dark:hover:border-amber-500/55',
+    'amanah-card-amber border-amber-200/90 dark:border-amber-500/26 hover:border-amber-400/75 dark:hover:border-amber-400/52',
   sky:
-    'amanah-card-sky border-blue-200/90 dark:border-blue-800/65 hover:border-blue-400/70 dark:hover:border-blue-500/55',
+    'amanah-card-sky border-blue-200/90 dark:border-blue-500/26 hover:border-blue-400/75 dark:hover:border-blue-400/52',
   rose:
-    'amanah-card-rose border-rose-200/90 dark:border-rose-800/65 hover:border-rose-400/70 dark:hover:border-rose-500/55',
+    'amanah-card-rose border-rose-200/90 dark:border-rose-500/26 hover:border-rose-400/75 dark:hover:border-rose-400/52',
 };
 
 const DEPTH_VARIANTS = {

@@ -201,7 +201,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-gray-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-gray-800/85 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,0,0,0.55)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4">
+      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#163948] shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,10,15,0.68)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 animate__animated animate__fadeIn">
         {/* Mobile Left Hamburger Toggle */}
         <button
           type="button"
@@ -211,7 +211,7 @@ export function Navbar() {
           }}
           aria-label={tCommon('toggleNavigationMenu')}
           aria-expanded={mobileOpen}
-          className="md:hidden order-1 w-10 h-10 rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0 shadow-2xs"
+          className="md:hidden order-1 w-10 h-10 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white dark:bg-[#02232D] text-slate-700 dark:text-slate-200 hover:bg-emerald-50/70 dark:hover:bg-[#082B39] active:scale-95 transition-all flex items-center justify-center cursor-pointer shrink-0 shadow-2xs"
         >
           {mobileOpen ? <X className="w-[18px] h-[18px]" /> : <Menu className="w-[18px] h-[18px]" />}
         </button>
@@ -246,8 +246,8 @@ export function Navbar() {
                 aria-current={active ? 'page' : undefined}
                 className={`relative px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150 whitespace-nowrap shrink-0 ${
                   active
-                    ? 'text-emerald-800 dark:text-emerald-300 font-semibold bg-emerald-50/90 dark:bg-emerald-950/45'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-100/75 dark:hover:bg-slate-800/50'
+                    ? 'text-emerald-800 dark:text-[#00ED64] font-semibold bg-emerald-50/90 dark:bg-[#00684A]/25'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-[#00ED64] hover:bg-slate-100/75 dark:hover:bg-[#082B39]/75'
                 }`}
               >
                 <span>{link.label}</span>
@@ -255,7 +255,7 @@ export function Navbar() {
                   <motion.span
                     layoutId="public-navbar-underline"
                     transition={{ type: 'spring', stiffness: 460, damping: 36 }}
-                    className="absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] rounded-full bg-emerald-600 dark:bg-emerald-400"
+                    className="absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] rounded-full bg-emerald-600 dark:bg-[#00ED64]"
                     aria-hidden="true"
                   />
                 )}
@@ -297,7 +297,7 @@ export function Navbar() {
                   setMobileBrowseMode(false);
                   setMobileOpen(false);
                 }}
-                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-[#00684A] dark:to-[#05875C] dark:hover:from-[#05875C] dark:hover:to-[#13AA52] text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
               >
                 <LayoutDashboard className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{tNav('dashboard')}</span>
@@ -308,7 +308,7 @@ export function Navbar() {
                 disabled={signingOut}
                 title={tNav('signOut')}
                 aria-label={tNav('signOut')}
-                className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200/85 dark:border-slate-700/85 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 transition-colors duration-150 shrink-0 cursor-pointer disabled:opacity-60 shadow-2xs"
+                className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-white dark:bg-[#02232D] text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 transition-colors duration-150 shrink-0 cursor-pointer disabled:opacity-60 shadow-2xs"
               >
                 <LogOut className="w-4 h-4" aria-hidden="true" />
               </button>
@@ -317,13 +317,13 @@ export function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hidden sm:inline-flex items-center px-3 h-9 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-slate-100/75 dark:hover:bg-slate-800/60 transition-colors duration-150 whitespace-nowrap shrink-0"
+                className="hidden sm:inline-flex items-center px-3 h-9 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-[#00ED64] hover:bg-slate-100/75 dark:hover:bg-[#082B39]/75 transition-colors duration-150 whitespace-nowrap shrink-0"
               >
                 {tNav('signIn')}
               </Link>
               <Link
                 href="/signup"
-                className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-emerald-500 dark:to-emerald-600 dark:hover:from-emerald-400 dark:hover:to-emerald-500 text-white text-xs font-semibold shadow-sm shadow-emerald-500/20 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
+                className="group hidden sm:inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-[#00684A] dark:to-[#05875C] dark:hover:from-[#05875C] dark:hover:to-[#13AA52] text-white text-xs font-semibold shadow-sm shadow-emerald-600/20 active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0"
               >
                 <span>{tNav('joinAmanah')}</span>
                 <ArrowRight

@@ -55,11 +55,11 @@ export function StatisticsView({
             </>
           ) : (
             <>
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-[#00ED64] animate__animated animate__fadeIn">
                 <BarChart3 className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t('eyebrow')}</span>
               </div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-base font-semibold text-slate-900 dark:text-white animate__animated animate__fadeIn">
                 {t('heading')}
               </h2>
             </>
@@ -69,7 +69,7 @@ export function StatisticsView({
         <div className="flex flex-wrap items-center gap-2 text-xs shrink-0">
           <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
             {t('poolLiquidity')}{' '}
-            <strong className="text-emerald-700 dark:text-emerald-400">
+            <strong className="text-emerald-700 dark:text-[#00ED64]">
               {loading && !overview ? (
                 <Skeleton width={90} height={14} inline />
               ) : overview ? (

@@ -249,8 +249,8 @@ export function PullToRefreshIndicator({
         }}
         className={`relative w-10 h-10 rounded-full flex items-center justify-center border backdrop-blur-md transition-colors ${
           isReady || isRefreshing
-            ? 'bg-white/95 dark:bg-gray-900/95 border-emerald-600/35 dark:border-emerald-400/55 shadow-[0_6px_18px_-6px_rgba(16,185,129,0.28)] dark:shadow-[0_6px_20px_-6px_rgba(52,211,153,0.3)]'
-            : 'bg-white/90 dark:bg-gray-900/90 border-emerald-600/20 dark:border-emerald-500/30 shadow-[0_4px_12px_-6px_rgba(16,185,129,0.18)] dark:shadow-[0_4px_14px_-6px_rgba(0,0,0,0.55)]'
+            ? 'bg-white/95 dark:bg-[#001E2B]/95 border-emerald-600/35 dark:border-[#00ED64]/55 shadow-[0_6px_18px_-6px_rgba(16,185,129,0.28)] dark:shadow-[0_6px_20px_-6px_rgba(0,237,100,0.28)]'
+            : 'bg-white/90 dark:bg-[#001E2B]/90 border-emerald-600/20 dark:border-[#00ED64]/30 shadow-[0_4px_12px_-6px_rgba(16,185,129,0.18)] dark:shadow-[0_4px_14px_-6px_rgba(0,10,15,0.65)]'
         }`}
       >
         {isRefreshing ? (
