@@ -1406,7 +1406,7 @@ export function CommunityView({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
-      className="max-w-6xl mx-auto space-y-5"
+      className="w-full min-w-0 space-y-5"
     >
       {/* Timeline Cover / Header Card */}
       <div className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl overflow-hidden shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
@@ -1488,7 +1488,7 @@ export function CommunityView({
       {/* Facebook-style 2-Column Timeline Body */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Sticky Sidebar: Intro & Verified Members Grid */}
-        <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-4 order-2 lg:order-1">
+        <aside className="lg:col-span-4 2xl:col-span-3 min-w-0 lg:sticky lg:top-20 space-y-4 order-2 lg:order-1">
           {/* Intro Card */}
           <div className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
             <h3 className="font-display text-sm font-semibold text-slate-900 dark:text-white">
@@ -1578,7 +1578,7 @@ export function CommunityView({
         </aside>
 
         {/* Right Main Timeline Stream */}
-        <div className="lg:col-span-8 space-y-4 order-1 lg:order-2">
+        <div className="lg:col-span-8 2xl:col-span-9 min-w-0 space-y-4 order-1 lg:order-2">
           {user.communityMuted && (
             <div
               role="status"
