@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { AgreementVerificationCard } from '../../../../components/AgreementVerificationCard.tsx';
-import { getPublicAgreementVerification } from '../../../../server/ssrData.ts';
+import { AgreementVerificationCard } from '../../../components/AgreementVerificationCard.tsx';
+import { getPublicAgreementVerification } from '../../../server/ssrData.ts';
 
 export const dynamic = 'force-dynamic';
 
