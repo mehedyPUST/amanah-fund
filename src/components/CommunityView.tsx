@@ -14,10 +14,12 @@ import {
   Loader2,
   Lock,
   MessageSquare,
+  MoreHorizontal,
   Pin,
   PinOff,
   Plus,
   Search,
+  Send,
   ShieldAlert,
   ShieldCheck,
   Smile,
@@ -265,6 +267,8 @@ export function CommunityView({
   const editContentRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [moderationBusyId, setModerationBusyId] = useState<string | null>(null);
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
+  const commentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Comments State
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
@@ -273,7 +277,7 @@ export function CommunityView({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState('');
 
-  // Active Members Directory (for @mention autocomplete in public posts & comments)
+  // Active Members Directory (for @mention autocomplete & timeline sidebar)
   const [directory, setDirectory] = useState<DirectoryMember[]>([]);
 
   const [modal, setModal] = useState<
@@ -409,6 +413,52 @@ export function CommunityView({
     ];
     return all;
   }, [directory, user.id, user.name, user.role, user.memberCode, user.photoUrl]);
+
+  const memberPhotoById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const m of mentionableMembers) {
+      if (m.photoUrl) map.set(m.id, m.photoUrl);
+    }
+    for (const p of posts) {
+      if (p.authorPhotoUrl && !map.has(p.authorId)) {
+        map.set(p.authorId, p.authorPhotoUrl);
+      }
+    }
+    return map;
+  }, [mentionableMembers, posts]);
+
+  const timelineStats = useMemo(() => {
+    const visiblePosts = posts.filter((p) => p.status !== 'hidden');
+    return {
+      totalPosts: visiblePosts.length,
+      pinnedPosts: visiblePosts.filter((p) => p.isPinned).length,
+      membersCount: mentionableMembers.length,
+    };
+  }, [posts, mentionableMembers.length]);
+
+  const firstName = useMemo(
+    () => user.name.trim().split(/\s+/)[0] || user.name,
+    [user.name]
+  );
+
+  useEffect(() => {
+    if (!openMenuPostId) return;
+    const handlePointerDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest(`[data-post-menu="${openMenuPostId}"]`)) {
+        setOpenMenuPostId(null);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenMenuPostId(null);
+    };
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openMenuPostId]);
 
   function extractTrailingMentionQuery(text: string): string | null {
     const match = /(?:^|\s)@([A-Za-z0-9_.\-\s]{0,24})$/.exec(text);
@@ -1356,41 +1406,183 @@ export function CommunityView({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
-      className="space-y-6"
+      className="max-w-6xl mx-auto space-y-5"
     >
-      {/* Top Toolbar: Public Posts Header + New Post Action */}
-      <div className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
-        <div className="space-y-1">
-          <div className="flex items-center gap-1.5 text-xs font-medium text-teal-700 dark:text-teal-400">
-            <Users className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>{t('toolbarEyebrow')}</span>
+      {/* Timeline Cover / Header Card */}
+      <div className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl overflow-hidden shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+        <div className="p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-100/80 dark:bg-emerald-950/70 border border-emerald-200 dark:border-emerald-800/70 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <Users className="w-6 h-6" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 space-y-0.5">
+              <h2 className="font-display text-lg sm:text-xl font-semibold text-slate-900 dark:text-white truncate">
+                {t('toolbarHeading')}
+              </h2>
+              <p className="text-xs font-medium text-teal-700 dark:text-teal-400 truncate">
+                {t('toolbarEyebrow')}
+              </p>
+            </div>
           </div>
-          <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-            {t('toolbarHeading')}
-          </h2>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="w-3.5 h-3.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+                aria-hidden="true"
+              />
+              <input
+                type="search"
+                value={feedSearch}
+                onChange={(e) => setFeedSearch(e.target.value)}
+                placeholder={t('searchFeedPlaceholder')}
+                className="w-full min-h-[40px] sm:min-h-0 pl-9 pr-3.5 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+              />
+            </div>
+
+            {!user.communityMuted && (
+              <button
+                type="button"
+                onClick={() => setComposerOpen((prev) => !prev)}
+                className="justify-center min-h-[40px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+              >
+                {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
+                <span>{composerOpen ? t('closeComposer') : t('newPost')}</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {!user.communityMuted && (
-          <div className="flex items-center justify-end shrink-0 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={() => {
-                setComposerOpen((prev) => !prev);
-              }}
-              className="w-full sm:w-auto justify-center min-h-[44px] sm:min-h-0 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 whitespace-nowrap shrink-0 cursor-pointer inline-flex items-center gap-1.5"
-            >
-              {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-              <span>{composerOpen ? t('closeComposer') : t('newPost')}</span>
-            </button>
-          </div>
-        )}
+        {/* Facebook-style Bottom Timeline Topic Navigation Bar */}
+        <div className="border-t border-slate-200/70 dark:border-slate-800/70 px-3 sm:px-6 flex flex-nowrap items-center gap-1 overflow-x-auto no-scrollbar scroll-smooth">
+          {(
+            [
+              { id: 'all', label: t('filterAllTopics') },
+              { id: 'pinned', label: t('filterPinned') },
+              ...CATEGORIES.map((c) => ({ id: c, label: t(`categories.${c}`) })),
+              ...(isAdmin ? [{ id: 'hidden' as const, label: t('filterHiddenAdmin') }] : []),
+            ] as Array<{ id: typeof feedCategory; label: string }>
+          ).map((item) => {
+            const active = feedCategory === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={(e) => {
+                  setFeedCategory(item.id);
+                  scrollFilterButtonWithNeighbors(e.currentTarget);
+                }}
+                className={`min-h-[42px] px-3.5 py-2.5 text-xs font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  active
+                    ? 'border-emerald-700 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300 font-semibold'
+                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/60 dark:hover:bg-slate-800/40 rounded-t-lg'
+                }`}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="space-y-5">
+      {/* Facebook-style 2-Column Timeline Body */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left Sticky Sidebar: Intro & Verified Members Grid */}
+        <aside className="lg:col-span-4 lg:sticky lg:top-20 space-y-4 order-2 lg:order-1">
+          {/* Intro Card */}
+          <div className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+            <h3 className="font-display text-sm font-semibold text-slate-900 dark:text-white">
+              {t('timelineIntroTitle')}
+            </h3>
+            <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex items-center gap-2.5">
+                <MessageSquare className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                <span className="tabular-nums">
+                  {t('timelineStatsPosts', { count: timelineStats.totalPosts })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Pin className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" aria-hidden="true" />
+                <span className="tabular-nums">
+                  {t('timelineStatsPinned', { count: timelineStats.pinnedPosts })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                <span className="tabular-nums">
+                  {t('timelineStatsMembers', { count: timelineStats.membersCount })}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Verified Members 3x3 Photo Tile Grid (Facebook "Friends" Box) */}
+          {mentionableMembers.length > 0 && (
+            <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+              <div className="flex items-baseline justify-between gap-2">
+                <h3 className="font-display text-sm font-semibold text-slate-900 dark:text-white">
+                  {t('timelineMembersTitle')}
+                </h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                  {t('timelineMembersSubtitle', { count: mentionableMembers.length })}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                {mentionableMembers.slice(0, 9).map((m) => {
+                  const initials = m.name
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((p) => p[0]?.toUpperCase() || '')
+                    .join('');
+                  const tileInner = (
+                    <>
+                      <div className="aspect-square w-full rounded-xl overflow-hidden border border-slate-200/80 dark:border-slate-700/80 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/60 dark:to-teal-950/40 flex items-center justify-center">
+                        {m.photoUrl ? (
+                          <img
+                            src={m.photoUrl}
+                            alt={m.name}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+                            {initials || 'AM'}
+                          </span>
+                        )}
+                      </div>
+                      <span className="block mt-1 text-[11px] font-medium text-slate-700 dark:text-slate-300 truncate text-left">
+                        {m.name}
+                      </span>
+                    </>
+                  );
+
+                  return onViewMemberProfile ? (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => onViewMemberProfile(m.id)}
+                      title={t('viewAuthorProfileTitle', { name: m.name })}
+                      className="group text-left cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 rounded-xl"
+                    >
+                      {tileInner}
+                    </button>
+                  ) : (
+                    <div key={m.id}>{tileInner}</div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </aside>
+
+        {/* Right Main Timeline Stream */}
+        <div className="lg:col-span-8 space-y-4 order-1 lg:order-2">
           {user.communityMuted && (
             <div
               role="status"
-              className="rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200"
+              className="rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200"
             >
               <VolumeX className="w-4 h-4 shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
               <div>
@@ -1402,542 +1594,564 @@ export function CommunityView({
             </div>
           )}
 
-          {/* New Post Composer */}
-          <AnimatePresence>
-            {composerOpen && !user.communityMuted && (
-              <motion.form
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.16 }}
-                onSubmit={handleCreatePost}
-                className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {t('createPostHeading')}
-                  </h3>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {t('postingAs', { name: user.name })} <span className="font-mono">{user.memberCode}</span>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-3">
-                  <div>
-                    <label
-                      htmlFor="post-category"
-                      className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
+          {/* Facebook-style "What's on your mind?" Inline Composer Card */}
+          {!user.communityMuted && (
+            <div className="bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
+              {!composerOpen ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <AvatarBadge name={user.name} photoUrl={user.photoUrl} size="md" shape="circle" />
+                    <button
+                      type="button"
+                      onClick={() => setComposerOpen(true)}
+                      className="flex-1 min-h-[42px] px-4 py-2 rounded-full bg-slate-100/90 dark:bg-slate-800/75 hover:bg-slate-200/70 dark:hover:bg-slate-800 text-left text-xs sm:text-sm text-slate-500 dark:text-slate-400 transition-colors cursor-pointer truncate"
                     >
-                      {t('labelTopic')}
-                    </label>
-                    <select
-                      id="post-category"
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value as CommunityCategory)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                    >
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {t(`categories.${cat}`)}
-                        </option>
-                      ))}
-                    </select>
+                      {t('whatsOnYourMind', { name: firstName })}
+                    </button>
                   </div>
-                  <div>
-                    <label
-                      htmlFor="post-title"
-                      className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
-                    >
-                      {t('labelHeadline')}
-                    </label>
-                    <input
-                      id="post-title"
-                      type="text"
-                      required
-                      minLength={3}
-                      maxLength={140}
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      placeholder={t('placeholderHeadline')}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-                    />
-                  </div>
-                </div>
 
-                <div className="relative">
-                  <label
-                    htmlFor="post-content"
-                    className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
+                  <div className="border-t border-slate-200/75 dark:border-slate-800/75 pt-2.5 grid grid-cols-3 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setComposerOpen(true);
+                        setLinkBuilderOpen(true);
+                      }}
+                      className="min-h-[38px] px-2 py-1.5 rounded-lg hover:bg-slate-100/80 dark:hover:bg-slate-800/60 text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      <Link2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{t('addLinkToggle')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setComposerOpen(true);
+                        setPollEnabled(true);
+                      }}
+                      className="min-h-[38px] px-2 py-1.5 rounded-lg hover:bg-slate-100/80 dark:hover:bg-slate-800/60 text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      <BarChart2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{t('attachPollBtn')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setComposerOpen(true);
+                        setNewEmojiOpen(true);
+                      }}
+                      className="min-h-[38px] px-2 py-1.5 rounded-lg hover:bg-slate-100/80 dark:hover:bg-slate-800/60 text-xs font-medium text-slate-600 dark:text-slate-300 flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                      <Smile className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{t('emojiBtn')}</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <AnimatePresence>
+                  <motion.form
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.16 }}
+                    onSubmit={handleCreatePost}
+                    className="space-y-4"
                   >
-                    {t('labelMessagePre')} <span className="font-mono">@Name</span> {t('labelMessagePost')}
-                  </label>
-                  <textarea
-                    ref={postContentRef}
-                    id="post-content"
-                    rows={4}
-                    required
-                    minLength={3}
-                    maxLength={4000}
-                    value={newContent}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setNewContent(val);
-                      setPostMentionQuery(extractTrailingMentionQuery(val));
-                    }}
-                    placeholder={t('placeholderPostBody')}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 resize-y"
-                  />
-                  {postMentionQuery !== null && filterMentionMatches(postMentionQuery).length > 0 && (
-                    <div
-                      role="listbox"
-                      aria-label={t('mentionSuggestionsAria')}
-                      className="mt-1 rounded-lg border border-slate-200/85 dark:border-slate-700/85 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
-                    >
-                      {filterMentionMatches(postMentionQuery).map((m) => (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={() => {
-                            setNewContent((prev) => applyMentionSelection(prev, m.name));
-                            setPostMentionQuery(null);
-                          }}
-                          className="w-full px-3 py-2 text-left text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center justify-between gap-2 cursor-pointer"
-                        >
-                          <span className="font-medium text-slate-900 dark:text-white">
-                            @{m.name}
-                          </span>
-                          <span className="font-mono text-slate-500 dark:text-slate-400">
-                            {m.memberCode}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Optional Poll Builder */}
-                {pollEnabled && (
-                  <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/40 dark:bg-teal-950/20 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
-                        <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{t('communityPollTitle')}</span>
-                      </span>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <AvatarBadge name={user.name} photoUrl={user.photoUrl} size="md" shape="circle" />
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                            {t('createPostHeading')}
+                          </h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {t('postingAs', { name: user.name })} <span className="font-mono">{user.memberCode}</span>
+                          </p>
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setPollEnabled(false)}
-                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
+                        onClick={() => setComposerOpen(false)}
+                        aria-label={t('closeComposer')}
+                        className="p-1.5 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer shrink-0"
                       >
-                        {t('removePoll')}
+                        <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <input
-                      type="text"
-                      value={pollQuestion}
-                      onChange={(e) => setPollQuestion(e.target.value)}
-                      placeholder={t('placeholderPollQuestion')}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs sm:text-sm"
-                    />
-                    <div className="space-y-2">
-                      {pollOptions.map((opt, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={opt}
-                            onChange={(e) =>
-                              setPollOptions((prev) =>
-                                prev.map((v, i) => (i === idx ? e.target.value : v))
-                              )
-                            }
-                            placeholder={t('placeholderPollOption', { num: idx + 1 })}
-                            className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs"
-                          />
-                          {pollOptions.length > 2 && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setPollOptions((prev) => prev.filter((_, i) => i !== idx))
-                              }
-                              aria-label={t('removeOptionAria')}
-                              className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                      {pollOptions.length < 6 ? (
-                        <button
-                          type="button"
-                          onClick={() => setPollOptions((prev) => [...prev, ''])}
-                          className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+
+                    <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-3">
+                      <div>
+                        <label
+                          htmlFor="post-category"
+                          className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>{t('addOption')}</span>
-                        </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('maxPollOptions')}</span>
-                      )}
-                      <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={pollAllowMultiple}
-                          onChange={(e) => setPollAllowMultiple(e.target.checked)}
-                          className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
-                        />
-                        <span>{t('allowMultipleChoices')}</span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                {newEmojiOpen && (
-                  <CommunityEmojiPicker
-                    onSelect={(emoji) =>
-                      insertEmojiAtCursor(emoji, postContentRef.current, newContent, setNewContent)
-                    }
-                  />
-                )}
-
-                {(linkBuilderOpen || newLinks.length > 0) && (
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                        <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                        <span>
-                          {t('shareLinksCount', { count: newLinks.length, max: MAX_COMMUNITY_POST_LINKS })}
-                        </span>
-                      </span>
-                      {linkBuilderOpen && (
-                        <button
-                          type="button"
-                          onClick={() => setLinkBuilderOpen(false)}
-                          className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                          {t('labelTopic')}
+                        </label>
+                        <select
+                          id="post-category"
+                          value={newCategory}
+                          onChange={(e) => setNewCategory(e.target.value as CommunityCategory)}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                         >
-                          {tCommon('hide')}
-                        </button>
-                      )}
-                    </div>
-
-                    {newLinks.length > 0 && (
-                      <div className="space-y-1.5">
-                        {newLinks.map((item) => {
-                          const isFlagged = Boolean(
-                            newPostBlocked && newSpamCheckResult?.flaggedLinks.includes(item.url)
-                          );
-                          return (
-                            <div
-                              key={item.url}
-                              className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
-                                isFlagged
-                                  ? 'border-rose-300 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/35'
-                                  : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
-                              }`}
-                            >
-                              <div className="min-w-0">
-                                <span className="font-medium text-slate-900 dark:text-white">
-                                  {item.label || getCommunityLinkHost(item.url)}
-                                </span>
-                                <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
-                                <span
-                                  className={
-                                    isFlagged
-                                      ? 'text-rose-700 dark:text-rose-300 font-medium'
-                                      : 'text-teal-700 dark:text-teal-400'
-                                  }
-                                >
-                                  {isFlagged
-                                    ? t('flaggedLink')
-                                    : getLocalizedLinkKindLabel(item.kind)}
-                                </span>
-                                <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                  {item.url}
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
-                                }
-                                aria-label={t('removeLinkAria')}
-                                className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          );
-                        })}
+                          {CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {t(`categories.${cat}`)}
+                            </option>
+                          ))}
+                        </select>
                       </div>
-                    )}
-
-                    {linkBuilderOpen && newLinks.length < MAX_COMMUNITY_POST_LINKS && (
-                      <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px_120px_auto] gap-2">
+                      <div>
+                        <label
+                          htmlFor="post-title"
+                          className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
+                        >
+                          {t('labelHeadline')}
+                        </label>
                         <input
-                          type="url"
-                          value={newLinkUrl}
-                          onChange={(e) => setNewLinkUrl(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddLink('new');
-                            }
-                          }}
-                          placeholder={t('placeholderLinkUrl')}
-                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                          id="post-title"
+                          type="text"
+                          required
+                          minLength={3}
+                          maxLength={140}
+                          value={newTitle}
+                          onChange={(e) => setNewTitle(e.target.value)}
+                          placeholder={t('placeholderHeadline')}
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
                         />
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <label
+                        htmlFor="post-content"
+                        className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1"
+                      >
+                        {t('labelMessagePre')} <span className="font-mono">@Name</span> {t('labelMessagePost')}
+                      </label>
+                      <textarea
+                        ref={postContentRef}
+                        id="post-content"
+                        rows={4}
+                        required
+                        minLength={3}
+                        maxLength={4000}
+                        value={newContent}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewContent(val);
+                          setPostMentionQuery(extractTrailingMentionQuery(val));
+                        }}
+                        placeholder={t('placeholderPostBody')}
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 resize-y"
+                      />
+                      {postMentionQuery !== null && filterMentionMatches(postMentionQuery).length > 0 && (
+                        <div
+                          role="listbox"
+                          aria-label={t('mentionSuggestionsAria')}
+                          className="mt-1 rounded-lg border border-slate-200/85 dark:border-slate-700/85 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-lg divide-y divide-slate-100 dark:divide-slate-800 max-h-44 overflow-y-auto z-20"
+                        >
+                          {filterMentionMatches(postMentionQuery).map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => {
+                                setNewContent((prev) => applyMentionSelection(prev, m.name));
+                                setPostMentionQuery(null);
+                              }}
+                              className="w-full px-3 py-2 text-left text-xs hover:bg-emerald-50 dark:hover:bg-emerald-950/40 flex items-center justify-between gap-2 cursor-pointer"
+                            >
+                              <span className="font-medium text-slate-900 dark:text-white">
+                                @{m.name}
+                              </span>
+                              <span className="font-mono text-slate-500 dark:text-slate-400">
+                                {m.memberCode}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Optional Poll Builder */}
+                    {pollEnabled && (
+                      <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-900/60 bg-teal-50/40 dark:bg-teal-950/20 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
+                            <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{t('communityPollTitle')}</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setPollEnabled(false)}
+                            className="text-xs text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
+                          >
+                            {t('removePoll')}
+                          </button>
+                        </div>
                         <input
                           type="text"
-                          maxLength={80}
-                          value={newLinkLabel}
-                          onChange={(e) => setNewLinkLabel(e.target.value)}
-                          placeholder={t('placeholderLinkLabel')}
-                          className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                          value={pollQuestion}
+                          onChange={(e) => setPollQuestion(e.target.value)}
+                          placeholder={t('placeholderPollQuestion')}
+                          className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs sm:text-sm"
                         />
-                        <select
-                          value={newLinkKind}
-                          onChange={(e) =>
-                            setNewLinkKind(e.target.value as 'auto' | CommunityPostLinkKind)
-                          }
-                          aria-label={t('linkKindAria')}
-                          className="px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
-                        >
-                          <option value="auto">{t('linkTypeAuto')}</option>
-                          <option value="photo">{t('linkTypePhoto')}</option>
-                          <option value="video">{t('linkTypeVideo')}</option>
-                          <option value="document">{t('linkTypeDoc')}</option>
-                          <option value="link">{t('linkTypeWeb')}</option>
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => handleAddLink('new')}
-                          disabled={!newLinkUrl.trim()}
-                          className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-teal-600 hover:bg-slate-800 dark:hover:bg-teal-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer"
-                        >
-                          {t('addLinkBtn')}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {(newRewriteFeedback || checkingNewSpam || newSpamCheckResult) && (
-                  <div className="space-y-2">
-                    {newRewriteFeedback && (
-                      <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-teal-50/70 dark:bg-teal-950/30 text-xs text-teal-800 dark:text-teal-200">
-                        <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                        <span>{t('aiRewriteApplied', { feedback: newRewriteFeedback })}</span>
-                      </div>
-                    )}
-                    {checkingNewSpam && (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/70 text-xs text-slate-700 dark:text-slate-300">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
-                        <span>{t('checkingSpamNotice')}</span>
-                      </div>
-                    )}
-                    {!checkingNewSpam && newSpamCheckResult && (
-                      <div
-                        className={`flex items-start justify-between gap-3 px-3 py-2.5 rounded-lg border text-xs ${
-                          newPostBlocked
-                            ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
-                            : newSpamCheckResult.riskLevel === 'caution'
-                              ? 'border-amber-200 dark:border-amber-900/70 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
-                              : 'border-emerald-200 dark:border-emerald-900/70 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
-                        }`}
-                      >
-                        <div className="flex items-start gap-2 min-w-0">
-                          {newSpamCheckResult.riskLevel === 'safe' ? (
-                            <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                          ) : (
-                            <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
-                          )}
-                          <div className="space-y-1 min-w-0">
-                            <div className="font-semibold">
-                              {newPostBlocked
-                                ? t('spamBlockedTitle')
-                                : newSpamCheckResult.riskLevel === 'caution'
-                                  ? t('spamCautionTitle')
-                                  : t('spamSafeTitle')}
-                              <span className="ml-1.5 font-mono text-[10px] opacity-75">
-                                ({newSpamCheckResult.checkedWith === 'groq' ? t('checkedWithGroq') : t('checkedWithGuard')})
-                              </span>
+                        <div className="space-y-2">
+                          {pollOptions.map((opt, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) =>
+                                  setPollOptions((prev) =>
+                                    prev.map((v, i) => (i === idx ? e.target.value : v))
+                                  )
+                                }
+                                placeholder={t('placeholderPollOption', { num: idx + 1 })}
+                                className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs"
+                              />
+                              {pollOptions.length > 2 && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPollOptions((prev) => prev.filter((_, i) => i !== idx))
+                                  }
+                                  aria-label={t('removeOptionAria')}
+                                  className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
-                            <div>{newSpamCheckResult.reason}</div>
-                            {newSpamCheckResult.flaggedLinks.length > 0 && (
-                              <div className="font-mono text-[11px] break-all">
-                                {t('flaggedListPrefix', { list: newSpamCheckResult.flaggedLinks.join(', ') })}
-                              </div>
-                            )}
-                            {newPostBlocked && (
-                              <div className="text-[11px] font-medium">
-                                {t('removeFlaggedHint')}
-                              </div>
-                            )}
-                          </div>
+                          ))}
                         </div>
-                        {newPostBlocked &&
-                          (newSpamCheckResult.flaggedLinks.length > 0 || newLinks.length > 0) && (
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                          {pollOptions.length < 6 ? (
                             <button
                               type="button"
-                              onClick={() => removeFlaggedLinksFromDraft('new')}
-                              className="px-2.5 py-1.5 rounded-md border border-rose-300 dark:border-rose-800 bg-white/95 dark:bg-slate-900/90 hover:bg-rose-100/70 dark:hover:bg-rose-900/50 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
+                              onClick={() => setPollOptions((prev) => [...prev, ''])}
+                              className="text-xs font-medium text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
                             >
-                              {t('removeFlaggedBtn')}
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>{t('addOption')}</span>
                             </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">{t('maxPollOptions')}</span>
                           )}
+                          <label className="inline-flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={pollAllowMultiple}
+                              onChange={(e) => setPollAllowMultiple(e.target.checked)}
+                              className="rounded border-slate-300 dark:border-slate-600 dark:bg-slate-900 text-emerald-600 focus:ring-emerald-600"
+                            />
+                            <span>{t('allowMultipleChoices')}</span>
+                          </label>
+                        </div>
                       </div>
                     )}
-                  </div>
-                )}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setNewEmojiOpen((prev) => !prev)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
-                        newEmojiOpen
-                          ? 'border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <Smile className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                      <span>{t('emojiBtn')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setLinkBuilderOpen((prev) => !prev)}
-                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
-                        linkBuilderOpen
-                          ? 'border-teal-300 dark:border-teal-700 bg-teal-50/70 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                      <span>{t('addLinkToggle')}</span>
-                    </button>
-                    {!pollEnabled && (
-                      <button
-                        type="button"
-                        onClick={() => setPollEnabled(true)}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-teal-50/40 dark:hover:bg-teal-950/30 cursor-pointer transition-colors"
-                      >
-                        <BarChart2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                        <span>{t('attachPollBtn')}</span>
-                      </button>
+                    {newEmojiOpen && (
+                      <CommunityEmojiPicker
+                        onSelect={(emoji) =>
+                          insertEmojiAtCursor(emoji, postContentRef.current, newContent, setNewContent)
+                        }
+                      />
                     )}
 
-                    <div className="inline-flex items-center rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/50 dark:bg-teal-950/25 overflow-hidden">
-                      <select
-                        value={aiTone}
-                        onChange={(e) => setAiTone(e.target.value as AiRewriteTone)}
-                        aria-label={t('aiToneAria')}
-                        className="px-2.5 py-2 bg-transparent text-[11px] font-medium text-teal-800 dark:text-teal-200 border-r border-teal-200 dark:border-teal-800/70 focus:outline-none cursor-pointer"
-                      >
-                        <option value="clear">{t('toneClear')}</option>
-                        <option value="concise">{t('toneConcise')}</option>
-                        <option value="formal">{t('toneFormal')}</option>
-                      </select>
-                      <button
-                        type="button"
-                        disabled={rewritingNewPost}
-                        onClick={() => void handleRewriteNewPost()}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100/60 dark:hover:bg-teal-900/40 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-                        <span>{rewritingNewPost ? t('rewriting') : t('aiRewrite')}</span>
-                      </button>
+                    {(linkBuilderOpen || newLinks.length > 0) && (
+                      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                            <span>
+                              {t('shareLinksCount', { count: newLinks.length, max: MAX_COMMUNITY_POST_LINKS })}
+                            </span>
+                          </span>
+                          {linkBuilderOpen && (
+                            <button
+                              type="button"
+                              onClick={() => setLinkBuilderOpen(false)}
+                              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                            >
+                              {tCommon('hide')}
+                            </button>
+                          )}
+                        </div>
+
+                        {newLinks.length > 0 && (
+                          <div className="space-y-1.5">
+                            {newLinks.map((item) => {
+                              const isFlagged = Boolean(
+                                newPostBlocked && newSpamCheckResult?.flaggedLinks.includes(item.url)
+                              );
+                              return (
+                                <div
+                                  key={item.url}
+                                  className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
+                                    isFlagged
+                                      ? 'border-rose-300 dark:border-rose-800 bg-rose-50/70 dark:bg-rose-950/35'
+                                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+                                  }`}
+                                >
+                                  <div className="min-w-0">
+                                    <span className="font-medium text-slate-900 dark:text-white">
+                                      {item.label || getCommunityLinkHost(item.url)}
+                                    </span>
+                                    <span className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+                                    <span
+                                      className={
+                                        isFlagged
+                                          ? 'text-rose-700 dark:text-rose-300 font-medium'
+                                          : 'text-teal-700 dark:text-teal-400'
+                                      }
+                                    >
+                                      {isFlagged
+                                        ? t('flaggedLink')
+                                        : getLocalizedLinkKindLabel(item.kind)}
+                                    </span>
+                                    <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                      {item.url}
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setNewLinks((prev) => prev.filter((l) => l.url !== item.url))
+                                    }
+                                    aria-label={t('removeLinkAria')}
+                                    className="p-1 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 cursor-pointer shrink-0"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {linkBuilderOpen && newLinks.length < MAX_COMMUNITY_POST_LINKS && (
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_180px_120px_auto] gap-2">
+                            <input
+                              type="url"
+                              value={newLinkUrl}
+                              onChange={(e) => setNewLinkUrl(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddLink('new');
+                                }
+                              }}
+                              placeholder={t('placeholderLinkUrl')}
+                              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                            />
+                            <input
+                              type="text"
+                              maxLength={80}
+                              value={newLinkLabel}
+                              onChange={(e) => setNewLinkLabel(e.target.value)}
+                              placeholder={t('placeholderLinkLabel')}
+                              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                            />
+                            <select
+                              value={newLinkKind}
+                              onChange={(e) =>
+                                setNewLinkKind(e.target.value as 'auto' | CommunityPostLinkKind)
+                              }
+                              aria-label={t('linkKindAria')}
+                              className="px-2.5 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                            >
+                              <option value="auto">{t('linkTypeAuto')}</option>
+                              <option value="photo">{t('linkTypePhoto')}</option>
+                              <option value="video">{t('linkTypeVideo')}</option>
+                              <option value="document">{t('linkTypeDoc')}</option>
+                              <option value="link">{t('linkTypeWeb')}</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => handleAddLink('new')}
+                              disabled={!newLinkUrl.trim()}
+                              className="px-3 py-2 rounded-lg bg-slate-900 dark:bg-teal-600 hover:bg-slate-800 dark:hover:bg-teal-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer"
+                            >
+                              {t('addLinkBtn')}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {(newRewriteFeedback || checkingNewSpam || newSpamCheckResult) && (
+                      <div className="space-y-2">
+                        {newRewriteFeedback && (
+                          <div className="flex items-start gap-2 px-3 py-2 rounded-lg border border-teal-200 dark:border-teal-900/60 bg-teal-50/70 dark:bg-teal-950/30 text-xs text-teal-800 dark:text-teal-200">
+                            <Sparkles className="w-3.5 h-3.5 mt-0.5 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                            <span>{t('aiRewriteApplied', { feedback: newRewriteFeedback })}</span>
+                          </div>
+                        )}
+                        {checkingNewSpam && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/70 text-xs text-slate-700 dark:text-slate-300">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                            <span>{t('checkingSpamNotice')}</span>
+                          </div>
+                        )}
+                        {!checkingNewSpam && newSpamCheckResult && (
+                          <div
+                            className={`flex items-start justify-between gap-3 px-3 py-2.5 rounded-lg border text-xs ${
+                              newPostBlocked
+                                ? 'border-rose-200 dark:border-rose-900/70 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200'
+                                : newSpamCheckResult.riskLevel === 'caution'
+                                  ? 'border-amber-200 dark:border-amber-900/70 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200'
+                                  : 'border-emerald-200 dark:border-emerald-900/70 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200'
+                            }`}
+                          >
+                            <div className="flex items-start gap-2 min-w-0">
+                              {newSpamCheckResult.riskLevel === 'safe' ? (
+                                <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                              ) : (
+                                <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+                              )}
+                              <div className="space-y-1 min-w-0">
+                                <div className="font-semibold">
+                                  {newPostBlocked
+                                    ? t('spamBlockedTitle')
+                                    : newSpamCheckResult.riskLevel === 'caution'
+                                      ? t('spamCautionTitle')
+                                      : t('spamSafeTitle')}
+                                  <span className="ml-1.5 font-mono text-[10px] opacity-75">
+                                    ({newSpamCheckResult.checkedWith === 'groq' ? t('checkedWithGroq') : t('checkedWithGuard')})
+                                  </span>
+                                </div>
+                                <div>{newSpamCheckResult.reason}</div>
+                                {newSpamCheckResult.flaggedLinks.length > 0 && (
+                                  <div className="font-mono text-[11px] break-all">
+                                    {t('flaggedListPrefix', { list: newSpamCheckResult.flaggedLinks.join(', ') })}
+                                  </div>
+                                )}
+                                {newPostBlocked && (
+                                  <div className="text-[11px] font-medium">
+                                    {t('removeFlaggedHint')}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            {newPostBlocked &&
+                              (newSpamCheckResult.flaggedLinks.length > 0 || newLinks.length > 0) && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeFlaggedLinksFromDraft('new')}
+                                  className="px-2.5 py-1.5 rounded-md border border-rose-300 dark:border-rose-800 bg-white/95 dark:bg-slate-900/90 hover:bg-rose-100/70 dark:hover:bg-rose-900/50 text-[11px] font-medium text-rose-700 dark:text-rose-200 whitespace-nowrap cursor-pointer shrink-0"
+                                >
+                                  {t('removeFlaggedBtn')}
+                                </button>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setNewEmojiOpen((prev) => !prev)}
+                          className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+                            newEmojiOpen
+                              ? 'border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
+                              : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <Smile className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                          <span>{t('emojiBtn')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLinkBuilderOpen((prev) => !prev)}
+                          className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer ${
+                            linkBuilderOpen
+                              ? 'border-teal-300 dark:border-teal-700 bg-teal-50/70 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300'
+                              : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          <Link2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+                          <span>{t('addLinkToggle')}</span>
+                        </button>
+                        {!pollEnabled && (
+                          <button
+                            type="button"
+                            onClick={() => setPollEnabled(true)}
+                            className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-teal-50/40 dark:hover:bg-teal-950/30 cursor-pointer transition-colors"
+                          >
+                            <BarChart2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                            <span>{t('attachPollBtn')}</span>
+                          </button>
+                        )}
+
+                        <div className="inline-flex items-center rounded-xl border border-teal-200 dark:border-teal-800/70 bg-teal-50/50 dark:bg-teal-950/25 overflow-hidden">
+                          <select
+                            value={aiTone}
+                            onChange={(e) => setAiTone(e.target.value as AiRewriteTone)}
+                            aria-label={t('aiToneAria')}
+                            className="px-2.5 py-2 bg-transparent text-[11px] font-medium text-teal-800 dark:text-teal-200 border-r border-teal-200 dark:border-teal-800/70 focus:outline-none cursor-pointer"
+                          >
+                            <option value="clear">{t('toneClear')}</option>
+                            <option value="concise">{t('toneConcise')}</option>
+                            <option value="formal">{t('toneFormal')}</option>
+                          </select>
+                          <button
+                            type="button"
+                            disabled={rewritingNewPost}
+                            onClick={() => void handleRewriteNewPost()}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-teal-700 dark:text-teal-300 hover:bg-teal-100/60 dark:hover:bg-teal-900/40 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{rewritingNewPost ? t('rewriting') : t('aiRewrite')}</span>
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={checkingNewSpam}
+                          onClick={() => void handleCheckNewSpam()}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-700 dark:text-emerald-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>{checkingNewSpam ? t('scanning') : t('spamLinkCheck')}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setComposerOpen(false)}
+                          className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+                        >
+                          {tCommon('cancel')}
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={creatingPost || checkingNewSpam || newPostBlocked}
+                          title={
+                            newPostBlocked
+                              ? t('blockedTitleTooltip')
+                              : checkingNewSpam
+                                ? t('checkingLinksTooltip')
+                                : undefined
+                          }
+                          className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-sm shadow-emerald-700/20 active:scale-[0.98] cursor-pointer transition-all"
+                        >
+                          {creatingPost
+                            ? t('publishing')
+                            : checkingNewSpam
+                              ? t('checkingLinksBtn')
+                              : newPostBlocked
+                                ? t('linkBlockedBtn')
+                                : t('publishPostBtn')}
+                        </button>
+                      </div>
                     </div>
-
-                    <button
-                      type="button"
-                      disabled={checkingNewSpam}
-                      onClick={() => void handleCheckNewSpam()}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800/70 bg-emerald-50/50 dark:bg-emerald-950/25 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 text-xs font-medium text-emerald-700 dark:text-emerald-300 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{checkingNewSpam ? t('scanning') : t('spamLinkCheck')}</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setComposerOpen(false)}
-                      className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-                    >
-                      {tCommon('cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={creatingPost || checkingNewSpam || newPostBlocked}
-                      title={
-                        newPostBlocked
-                          ? t('blockedTitleTooltip')
-                          : checkingNewSpam
-                            ? t('checkingLinksTooltip')
-                            : undefined
-                      }
-                      className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-medium shadow-sm shadow-emerald-700/20 active:scale-[0.98] cursor-pointer transition-all"
-                    >
-                      {creatingPost
-                        ? t('publishing')
-                        : checkingNewSpam
-                          ? t('checkingLinksBtn')
-                          : newPostBlocked
-                            ? t('linkBlockedBtn')
-                            : t('publishPostBtn')}
-                    </button>
-                  </div>
-                </div>
-              </motion.form>
-            )}
-          </AnimatePresence>
-
-          {/* Filter Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth max-w-full pb-1">
-              {(
-                [
-                  { id: 'all', label: t('filterAllTopics') },
-                  { id: 'pinned', label: t('filterPinned') },
-                  ...CATEGORIES.map((c) => ({ id: c, label: t(`categories.${c}`) })),
-                  ...(isAdmin ? [{ id: 'hidden' as const, label: t('filterHiddenAdmin') }] : []),
-                ] as Array<{ id: typeof feedCategory; label: string }>
-              ).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={(e) => {
-                    setFeedCategory(item.id);
-                    scrollFilterButtonWithNeighbors(e.currentTarget);
-                  }}
-                  className={`min-h-[40px] sm:min-h-0 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap shrink-0 cursor-pointer ${
-                    feedCategory === item.id
-                      ? 'bg-emerald-700 dark:bg-emerald-600 text-white shadow-sm shadow-emerald-700/20'
-                      : 'bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/85 dark:border-slate-800/85 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
+                  </motion.form>
+                </AnimatePresence>
+              )}
             </div>
-
-            <div className="relative w-full lg:w-72 shrink-0">
-              <Search
-                className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-                aria-hidden="true"
-              />
-              <input
-                type="search"
-                value={feedSearch}
-                onChange={(e) => setFeedSearch(e.target.value)}
-                placeholder={t('searchFeedPlaceholder')}
-                className="w-full min-h-[44px] sm:min-h-0 pl-8 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-              />
-            </div>
-          </div>
+          )}
 
           {/* Posts Feed */}
           {postsLoading ? (
@@ -1948,7 +2162,7 @@ export function CommunityView({
                   className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3"
                 >
                   <div className="flex items-center gap-3">
-                    <Skeleton width={36} height={36} borderRadius={8} />
+                    <Skeleton circle width={44} height={44} />
                     <div className="space-y-1 flex-1">
                       <Skeleton width={160} height={14} />
                       <Skeleton width={210} height={12} />
@@ -1994,11 +2208,18 @@ export function CommunityView({
                 const canDeletePost = isAuthor || isAdmin;
                 const myReaction = post.reactions.find((r) => r.userId === user.id)?.type;
                 const isEditingThis = editingPostId === post.id;
+                const isMenuOpen = openMenuPostId === post.id;
+                const activeReactionTypes = REACTION_OPTIONS.filter((opt) =>
+                  post.reactions.some((r) => r.type === opt.type)
+                );
+                const hasMenuItems = Boolean(
+                  onViewMemberProfile || (isAuthor && !isEditingThis) || isAdmin || canDeletePost
+                );
 
                 return (
                   <article
                     key={post.id}
-                    className={`backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200 ${
+                    className={`backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200 ${
                       post.status === 'hidden'
                         ? 'border-amber-300/80 dark:border-amber-800/80 bg-amber-50/75 dark:bg-amber-950/25'
                         : post.isPinned
@@ -2008,23 +2229,34 @@ export function CommunityView({
                             : 'amanah-card-emerald'
                     }`}
                   >
-                    {/* Author Header & Clean Unboxed Metadata */}
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
+                    {/* Facebook-style Post Header */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         {onViewMemberProfile ? (
                           <button
                             type="button"
                             onClick={() => onViewMemberProfile(post.authorId)}
                             title={t('viewAuthorProfileTitle', { name: post.authorName })}
-                            className="shrink-0 cursor-pointer rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                            className="shrink-0 cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-600"
                           >
-                            <AvatarBadge name={post.authorName} photoUrl={post.authorPhotoUrl} />
+                            <AvatarBadge
+                              name={post.authorName}
+                              photoUrl={post.authorPhotoUrl}
+                              size="lg"
+                              shape="circle"
+                            />
                           </button>
                         ) : (
-                          <AvatarBadge name={post.authorName} photoUrl={post.authorPhotoUrl} />
+                          <AvatarBadge
+                            name={post.authorName}
+                            photoUrl={post.authorPhotoUrl}
+                            size="lg"
+                            shape="circle"
+                          />
                         )}
+
                         <div className="min-w-0 space-y-0.5">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm">
                             {onViewMemberProfile ? (
                               <button
                                 type="button"
@@ -2038,34 +2270,35 @@ export function CommunityView({
                                 {post.authorName}
                               </span>
                             )}
-                            <span className="font-mono text-slate-500 dark:text-slate-400">
+                            <span className="font-mono text-xs text-slate-500 dark:text-slate-400">
                               {post.authorCode}
                             </span>
-                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700 text-xs">
                               ·
                             </span>
-                            <span className="capitalize text-slate-600 dark:text-slate-400">
+                            <span className="capitalize text-xs text-slate-600 dark:text-slate-400">
                               {translateRoleLabel(post.authorRole, locale)}
                             </span>
                             {post.authorMuted && isAdmin && (
                               <>
-                                <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
+                                <span aria-hidden="true" className="text-slate-300 dark:text-slate-700 text-xs">
                                   ·
                                 </span>
-                                <span className="text-amber-700 dark:text-amber-400 font-medium inline-flex items-center gap-1">
+                                <span className="text-xs text-amber-700 dark:text-amber-400 font-medium inline-flex items-center gap-1">
                                   <VolumeX className="w-3 h-3" />
                                   {t('mutedBadge')}
                                 </span>
                               </>
                             )}
                           </div>
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
-                            <span className={`font-medium ${getTopicToneClass(post.category)}`}>
-                              {t(`categories.${post.category}`)}
-                            </span>
-                            <span aria-hidden="true">·</span>
+
+                          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-slate-500 dark:text-slate-400">
                             <span className="font-mono tabular-nums">
                               {formatDateTime(post.createdAt)}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span className={`font-medium ${getTopicToneClass(post.category)}`}>
+                              {t(`categories.${post.category}`)}
                             </span>
                             {post.updatedAt && (
                               <>
@@ -2104,156 +2337,184 @@ export function CommunityView({
                         </div>
                       </div>
 
-                      {/* Author / Admin Controls */}
-                      <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                        {onViewMemberProfile && (
+                      {/* Facebook-style Top-Right ••• Options Menu */}
+                      {hasMenuItems && (
+                        <div className="relative shrink-0" data-post-menu={post.id}>
                           <button
                             type="button"
-                            onClick={() => onViewMemberProfile(post.authorId)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:border-emerald-300 dark:hover:border-emerald-700 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                            aria-haspopup="menu"
+                            aria-expanded={isMenuOpen}
+                            aria-label={t('postOptionsAria')}
+                            onClick={() =>
+                              setOpenMenuPostId((prev) => (prev === post.id ? null : post.id))
+                            }
+                            className="w-9 h-9 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 flex items-center justify-center transition-colors cursor-pointer"
                           >
-                            <User className="w-3 h-3" />
-                            <span>{t('profileBtn')}</span>
+                            <MoreHorizontal className="w-4 h-4" />
                           </button>
-                        )}
 
-                        {isAuthor && !isEditingThis && (
-                          <button
-                            type="button"
-                            onClick={() => startEditPost(post)}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>{tCommon('edit')}</span>
-                          </button>
-                        )}
-
-                        {isAdmin && (
-                          <>
-                            <button
-                              type="button"
-                              disabled={moderationBusyId === post.id}
-                              onClick={() =>
-                                requestModeratePost(post, post.isPinned ? 'unpin' : 'pin')
-                              }
-                              title={post.isPinned ? t('unpinTitle') : t('pinTitle')}
-                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                          {isMenuOpen && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 mt-1.5 w-48 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-lg py-1.5 z-30 text-xs"
                             >
-                              {post.isPinned ? (
+                              {onViewMemberProfile && (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenMenuPostId(null);
+                                    onViewMemberProfile(post.authorId);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 cursor-pointer"
+                                >
+                                  <User className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                  <span>{t('profileBtn')}</span>
+                                </button>
+                              )}
+
+                              {isAuthor && !isEditingThis && (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => {
+                                    setOpenMenuPostId(null);
+                                    startEditPost(post);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 cursor-pointer"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                  <span>{tCommon('edit')}</span>
+                                </button>
+                              )}
+
+                              {isAdmin && (
                                 <>
-                                  <PinOff className="w-3 h-3" />
-                                  <span>{t('unpinBtn')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Pin className="w-3 h-3" />
-                                  <span>{t('pinBtn')}</span>
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    disabled={moderationBusyId === post.id}
+                                    onClick={() => {
+                                      setOpenMenuPostId(null);
+                                      requestModeratePost(post, post.isPinned ? 'unpin' : 'pin');
+                                    }}
+                                    className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {post.isPinned ? (
+                                      <>
+                                        <PinOff className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                        <span>{t('unpinBtn')}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Pin className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                        <span>{t('pinBtn')}</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    disabled={moderationBusyId === post.id}
+                                    onClick={() => {
+                                      setOpenMenuPostId(null);
+                                      requestModeratePost(
+                                        post,
+                                        post.commentsLocked ? 'unlock' : 'lock'
+                                      );
+                                    }}
+                                    className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {post.commentsLocked ? (
+                                      <>
+                                        <Unlock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                        <span>{t('unlockBtn')}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Lock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                        <span>{t('lockBtn')}</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    role="menuitem"
+                                    disabled={moderationBusyId === post.id}
+                                    onClick={() => {
+                                      setOpenMenuPostId(null);
+                                      requestModeratePost(
+                                        post,
+                                        post.status === 'hidden' ? 'restore' : 'hide'
+                                      );
+                                    }}
+                                    className="w-full px-3.5 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                  >
+                                    {post.status === 'hidden' ? (
+                                      <>
+                                        <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                        <span>{t('restoreBtn')}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <EyeOff className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                                        <span>{t('hideBtn')}</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  {post.authorRole !== 'admin' && post.authorId !== user.id && (
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      disabled={moderationBusyId === post.authorId}
+                                      onClick={() => {
+                                        setOpenMenuPostId(null);
+                                        requestToggleMuteAuthor(
+                                          post.authorId,
+                                          post.authorName,
+                                          Boolean(post.authorMuted)
+                                        );
+                                      }}
+                                      className="w-full px-3.5 py-2 text-left text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                    >
+                                      {post.authorMuted ? (
+                                        <>
+                                          <Volume2 className="w-3.5 h-3.5" />
+                                          <span>{t('unmuteBtn')}</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <VolumeX className="w-3.5 h-3.5" />
+                                          <span>{t('muteAuthorBtn')}</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
                                 </>
                               )}
-                            </button>
 
-                            <button
-                              type="button"
-                              disabled={moderationBusyId === post.id}
-                              onClick={() =>
-                                requestModeratePost(
-                                  post,
-                                  post.commentsLocked ? 'unlock' : 'lock'
-                                )
-                              }
-                              title={
-                                post.commentsLocked ? t('unlockTitle') : t('lockTitle')
-                              }
-                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
-                            >
-                              {post.commentsLocked ? (
-                                <>
-                                  <Unlock className="w-3 h-3" />
-                                  <span>{t('unlockBtn')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Lock className="w-3 h-3" />
-                                  <span>{t('lockBtn')}</span>
-                                </>
+                              {canDeletePost && (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  disabled={moderationBusyId === post.id}
+                                  onClick={() => {
+                                    setOpenMenuPostId(null);
+                                    requestDeletePost(post);
+                                  }}
+                                  className="w-full px-3.5 py-2 text-left text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5 cursor-pointer disabled:opacity-50"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>{tCommon('delete')}</span>
+                                </button>
                               )}
-                            </button>
-
-                            <button
-                              type="button"
-                              disabled={moderationBusyId === post.id}
-                              onClick={() =>
-                                requestModeratePost(
-                                  post,
-                                  post.status === 'hidden' ? 'restore' : 'hide'
-                                )
-                              }
-                              title={
-                                post.status === 'hidden'
-                                  ? t('restoreTitle')
-                                  : t('hideTitle')
-                              }
-                              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
-                            >
-                              {post.status === 'hidden' ? (
-                                <>
-                                  <Eye className="w-3 h-3" />
-                                  <span>{t('restoreBtn')}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff className="w-3 h-3" />
-                                  <span>{t('hideBtn')}</span>
-                                </>
-                              )}
-                            </button>
-
-                            {post.authorRole !== 'admin' && post.authorId !== user.id && (
-                              <button
-                                type="button"
-                                disabled={moderationBusyId === post.authorId}
-                                onClick={() =>
-                                  requestToggleMuteAuthor(
-                                    post.authorId,
-                                    post.authorName,
-                                    Boolean(post.authorMuted)
-                                  )
-                                }
-                                title={
-                                  post.authorMuted
-                                    ? t('unmuteTitle')
-                                    : t('muteTitle')
-                                }
-                                className="px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-900/60 text-xs font-medium text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer"
-                              >
-                                {post.authorMuted ? (
-                                  <>
-                                    <Volume2 className="w-3 h-3" />
-                                    <span>{t('unmuteBtn')}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <VolumeX className="w-3 h-3" />
-                                    <span>{t('muteAuthorBtn')}</span>
-                                  </>
-                                )}
-                              </button>
-                            )}
-                          </>
-                        )}
-
-                        {canDeletePost && (
-                          <button
-                            type="button"
-                            disabled={moderationBusyId === post.id}
-                            onClick={() => requestDeletePost(post)}
-                            className="px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors inline-flex items-center gap-1 whitespace-nowrap cursor-pointer disabled:opacity-50"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            <span>{tCommon('delete')}</span>
-                          </button>
-                        )}
-                      </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Post Body or Inline Edit Form */}
@@ -2522,7 +2783,7 @@ export function CommunityView({
                         </h3>
                         <FormattedCommunityText
                           text={post.content}
-                          className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify"
+                          className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
                         />
                         <CommunityPostLinksList
                           links={post.links}
@@ -2652,88 +2913,171 @@ export function CommunityView({
                       </div>
                     )}
 
-                    {/* Reactions Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full sm:w-auto [&>button]:min-h-[40px] sm:[&>button]:min-h-0 [&>button]:justify-center">
-                        {REACTION_OPTIONS.map(({ type, Icon, activeClass }) => {
-                          const count = post.reactions.filter((r) => r.type === type).length;
-                          const active = myReaction === type;
-                          return (
-                            <button
-                              key={type}
-                              type="button"
-                              onClick={() => void handleToggleReaction(post.id, type)}
-                              aria-pressed={active}
-                              className={`px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                                active
-                                  ? activeClass
-                                  : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                              }`}
-                            >
-                              <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                              <span>{t(`reactions.${type}`)}</span>
-                              {count > 0 && (
-                                <span className="font-mono tabular-nums text-[11px]">{count}</span>
-                              )}
-                            </button>
-                          );
-                        })}
+                    {/* Facebook-style Engagement Summary Row */}
+                    {(post.reactions.length > 0 || post.comments.length > 0) && (
+                      <div className="flex items-center justify-between gap-3 pt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="flex items-center gap-2 min-h-[20px]">
+                          {post.reactions.length > 0 && (
+                            <>
+                              <div className="flex items-center -space-x-1">
+                                {activeReactionTypes.map(({ type, Icon, activeClass }) => (
+                                  <span
+                                    key={type}
+                                    className={`w-5 h-5 rounded-full border flex items-center justify-center ${activeClass}`}
+                                  >
+                                    <Icon className="w-2.5 h-2.5" aria-hidden="true" />
+                                  </span>
+                                ))}
+                              </div>
+                              <span className="font-mono tabular-nums">
+                                {t('reactionsTotalLabel', { count: post.reactions.length })}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => commentInputRefs.current[post.id]?.focus()}
+                          className="font-mono tabular-nums hover:underline cursor-pointer"
+                        >
+                          {t('commentsCount', { count: post.comments.length })}
+                        </button>
                       </div>
+                    )}
 
-                      <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
-                        {t('commentsCount', { count: post.comments.length })}
-                      </div>
+                    {/* Facebook-style Equal Action Bar */}
+                    <div className="border-y border-slate-200/75 dark:border-slate-800/75 py-1 grid grid-cols-2 sm:grid-cols-5 gap-1">
+                      {REACTION_OPTIONS.map(({ type, Icon, activeClass }) => {
+                        const count = post.reactions.filter((r) => r.type === type).length;
+                        const active = myReaction === type;
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => void handleToggleReaction(post.id, type)}
+                            aria-pressed={active}
+                            className={`min-h-[38px] sm:min-h-[34px] px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                              active
+                                ? activeClass
+                                : 'border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span>{t(`reactions.${type}`)}</span>
+                            {count > 0 && (
+                              <span className="font-mono tabular-nums text-[11px]">{count}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                      <button
+                        type="button"
+                        onClick={() => commentInputRefs.current[post.id]?.focus()}
+                        className="col-span-2 sm:col-span-1 min-h-[38px] sm:min-h-[34px] px-2 py-1.5 rounded-lg border border-transparent text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                        <span>{t('commentAction')}</span>
+                      </button>
                     </div>
 
-                    {/* Comments Thread */}
-                    <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    {/* Facebook-style Comments Thread & Input */}
+                    <div className="space-y-3 pt-0.5">
                       {post.comments.length > 0 && (
                         <div className="space-y-2.5">
                           {post.comments.map((comment) => {
                             const isCommentAuthor = comment.authorId === user.id;
                             const canDeleteComment = isCommentAuthor || isAdmin;
                             const isEditingComment = editingCommentId === comment.id;
+                            const commentPhoto = memberPhotoById.get(comment.authorId);
 
                             return (
-                              <div
-                                key={comment.id}
-                                className="rounded-lg bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800/80 px-3.5 py-2.5 space-y-1.5"
-                              >
-                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                                    {onViewMemberProfile ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => onViewMemberProfile(comment.authorId)}
-                                        className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
-                                      >
-                                        {comment.authorName}
-                                      </button>
-                                    ) : (
-                                      <span className="font-semibold text-slate-900 dark:text-white">
-                                        {comment.authorName}
-                                      </span>
-                                    )}
-                                    <span className="font-mono text-slate-500 dark:text-slate-400">
-                                      {comment.authorCode}
-                                    </span>
-                                    <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-                                      ·
-                                    </span>
-                                    <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
-                                      {formatDateTime(comment.createdAt)}
-                                    </span>
-                                    {comment.updatedAt && (
-                                      <>
-                                        <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">
-                                          ·
+                              <div key={comment.id} className="flex items-start gap-2.5">
+                                {onViewMemberProfile ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => onViewMemberProfile(comment.authorId)}
+                                    title={t('viewAuthorProfileTitle', { name: comment.authorName })}
+                                    className="shrink-0 mt-0.5 cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                                  >
+                                    <AvatarBadge
+                                      name={comment.authorName}
+                                      photoUrl={commentPhoto}
+                                      size="sm"
+                                      shape="circle"
+                                    />
+                                  </button>
+                                ) : (
+                                  <div className="shrink-0 mt-0.5">
+                                    <AvatarBadge
+                                      name={comment.authorName}
+                                      photoUrl={commentPhoto}
+                                      size="sm"
+                                      shape="circle"
+                                    />
+                                  </div>
+                                )}
+
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="rounded-2xl bg-slate-100/85 dark:bg-slate-800/65 border border-slate-200/60 dark:border-slate-700/60 px-3.5 py-2 space-y-1">
+                                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
+                                      {onViewMemberProfile ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => onViewMemberProfile(comment.authorId)}
+                                          className="font-semibold text-slate-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline cursor-pointer"
+                                        >
+                                          {comment.authorName}
+                                        </button>
+                                      ) : (
+                                        <span className="font-semibold text-slate-900 dark:text-white">
+                                          {comment.authorName}
                                         </span>
-                                        <span className="text-slate-500 dark:text-slate-400">{t('edited')}</span>
-                                      </>
+                                      )}
+                                      <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                                        {comment.authorCode}
+                                      </span>
+                                    </div>
+
+                                    {isEditingComment ? (
+                                      <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                                        <input
+                                          type="text"
+                                          value={editCommentText}
+                                          onChange={(e) => setEditCommentText(e.target.value)}
+                                          className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
+                                        />
+                                        <div className="flex items-center gap-1.5">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              void handleSaveCommentEdit(post.id, comment.id)
+                                            }
+                                            className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium cursor-pointer"
+                                          >
+                                            {tCommon('save')}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingCommentId(null)}
+                                            className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
+                                          >
+                                            {tCommon('cancel')}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <FormattedCommunityText
+                                        text={comment.content}
+                                        className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed"
+                                      />
                                     )}
                                   </div>
 
-                                  <div className="flex items-center gap-2 text-xs">
+                                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 px-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                    <span className="font-mono tabular-nums">
+                                      {formatDateTime(comment.createdAt)}
+                                    </span>
+                                    {comment.updatedAt && <span>{t('edited')}</span>}
                                     {isCommentAuthor && !isEditingComment && (
                                       <button
                                         type="button"
@@ -2741,7 +3085,7 @@ export function CommunityView({
                                           setEditingCommentId(comment.id);
                                           setEditCommentText(comment.content);
                                         }}
-                                        className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+                                        className="font-medium hover:text-slate-900 dark:hover:text-white hover:underline cursor-pointer"
                                       >
                                         {tCommon('edit')}
                                       </button>
@@ -2756,47 +3100,13 @@ export function CommunityView({
                                             comment.authorName
                                           )
                                         }
-                                        className="text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                        className="font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
                                       >
                                         {isAdmin && !isCommentAuthor ? tCommon('remove') : tCommon('delete')}
                                       </button>
                                     )}
                                   </div>
                                 </div>
-
-                                {isEditingComment ? (
-                                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                                    <input
-                                      type="text"
-                                      value={editCommentText}
-                                      onChange={(e) => setEditCommentText(e.target.value)}
-                                      className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100"
-                                    />
-                                    <div className="flex items-center gap-1.5">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          void handleSaveCommentEdit(post.id, comment.id)
-                                        }
-                                        className="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium cursor-pointer"
-                                      >
-                                        {tCommon('save')}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => setEditingCommentId(null)}
-                                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 cursor-pointer"
-                                      >
-                                        {tCommon('cancel')}
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <FormattedCommunityText
-                                    text={comment.content}
-                                    className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify"
-                                  />
-                                )}
                               </div>
                             );
                           })}
@@ -2809,7 +3119,7 @@ export function CommunityView({
                           <span>{t('repliesLockedNotice')}</span>
                         </div>
                       ) : user.communityMuted ? null : (
-                        <div className="space-y-1.5 pt-1">
+                        <div className="space-y-1.5 pt-0.5">
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
@@ -2819,54 +3129,69 @@ export function CommunityView({
                             }}
                             className="flex items-center gap-2"
                           >
-                            <input
-                              type="text"
-                              maxLength={2000}
-                              value={commentDrafts[post.id] || ''}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setCommentDrafts((prev) => ({
-                                  ...prev,
-                                  [post.id]: val,
-                                }));
-                                const q = extractTrailingMentionQuery(val);
-                                setCommentMentionTarget(
-                                  q !== null ? { postId: post.id, query: q } : null
-                                );
-                              }}
-                              placeholder={
-                                post.commentsLocked
-                                  ? t('placeholderCommentLocked')
-                                  : t('placeholderComment')
-                              }
-                              className="flex-1 min-h-[44px] sm:min-h-0 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+                            <AvatarBadge
+                              name={user.name}
+                              photoUrl={user.photoUrl}
+                              size="sm"
+                              shape="circle"
                             />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setCommentEmojiPostId((prev) =>
-                                  prev === post.id ? null : post.id
-                                )
-                              }
-                              title={t('insertEmojiTitle')}
-                              aria-label={t('insertEmojiAria')}
-                              className={`min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 p-2 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
-                                commentEmojiPostId === post.id
-                                  ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'
-                                  : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                              }`}
-                            >
-                              <Smile className="w-4 h-4" aria-hidden="true" />
-                            </button>
+                            <div className="flex-1 flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100/75 dark:bg-slate-950/90 px-3 py-1 focus-within:ring-2 focus-within:ring-emerald-600/30">
+                              <input
+                                ref={(el) => {
+                                  commentInputRefs.current[post.id] = el;
+                                }}
+                                type="text"
+                                maxLength={2000}
+                                value={commentDrafts[post.id] || ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCommentDrafts((prev) => ({
+                                    ...prev,
+                                    [post.id]: val,
+                                  }));
+                                  const q = extractTrailingMentionQuery(val);
+                                  setCommentMentionTarget(
+                                    q !== null ? { postId: post.id, query: q } : null
+                                  );
+                                }}
+                                placeholder={
+                                  post.commentsLocked
+                                    ? t('placeholderCommentLocked')
+                                    : t('placeholderComment')
+                                }
+                                className="flex-1 min-h-[34px] sm:min-h-[30px] bg-transparent text-xs sm:text-sm text-slate-900 dark:text-slate-100 focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCommentEmojiPostId((prev) =>
+                                    prev === post.id ? null : post.id
+                                  )
+                                }
+                                title={t('insertEmojiTitle')}
+                                aria-label={t('insertEmojiAria')}
+                                className={`p-1.5 rounded-full transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
+                                  commentEmojiPostId === post.id
+                                    ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300'
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-800'
+                                }`}
+                              >
+                                <Smile className="w-4 h-4" aria-hidden="true" />
+                              </button>
+                            </div>
                             <button
                               type="submit"
+                              aria-label={t('postComment')}
                               disabled={
                                 !(commentDrafts[post.id] || '').trim() ||
                                 submittingCommentPostId === post.id
                               }
-                              className="min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl bg-slate-900 dark:bg-emerald-600 hover:bg-slate-800 dark:hover:bg-emerald-700 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors"
+                              className="min-w-[38px] min-h-[38px] px-3 py-2 rounded-full bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-45 text-white text-xs font-medium whitespace-nowrap cursor-pointer transition-colors inline-flex items-center justify-center gap-1.5"
                             >
-                              {submittingCommentPostId === post.id ? t('postingComment') : t('postComment')}
+                              <Send className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span className="hidden sm:inline">
+                                {submittingCommentPostId === post.id ? t('postingComment') : t('postComment')}
+                              </span>
                             </button>
                           </form>
                           {commentEmojiPostId === post.id && (
@@ -2921,6 +3246,7 @@ export function CommunityView({
               })}
             </div>
           )}
+        </div>
       </div>
 
       <ActionModal

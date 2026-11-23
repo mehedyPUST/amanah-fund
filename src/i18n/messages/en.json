@@ -4400,7 +4400,17 @@
     "youTag": "(You)",
     "joinedShort": "Joined {date}",
     "contributedLabel": "Contributed",
-    "viewProfileBtn": "View Profile"
+    "viewProfileBtn": "View Profile",
+    "whatsOnYourMind": "What's on your mind, {name}?",
+    "timelineIntroTitle": "Community Intro",
+    "timelineStatsPosts": "{count, plural, one {# discussion} other {# discussions}}",
+    "timelineStatsPinned": "{count, plural, one {# pinned post} other {# pinned posts}}",
+    "timelineStatsMembers": "{count, plural, one {# verified member} other {# verified members}}",
+    "timelineMembersTitle": "Members",
+    "timelineMembersSubtitle": "{count} verified",
+    "postOptionsAria": "Post options",
+    "commentAction": "Comment",
+    "reactionsTotalLabel": "{count}"
   },
   "HalalProjects": {
     "defaultPeriodLabel": "Q1 Dividend",

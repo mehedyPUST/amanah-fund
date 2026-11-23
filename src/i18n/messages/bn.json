@@ -4400,7 +4400,17 @@
     "youTag": "(আপনি)",
     "joinedShort": "যোগদান {date}",
     "contributedLabel": "মোট জমা",
-    "viewProfileBtn": "প্রোফাইল দেখুন"
+    "viewProfileBtn": "প্রোফাইল দেখুন",
+    "whatsOnYourMind": "{name}, আপনার মনে কী আছে?",
+    "timelineIntroTitle": "কমিউনিটি পরিচিতি",
+    "timelineStatsPosts": "{count}টি আলোচনা",
+    "timelineStatsPinned": "{count}টি পিন করা পোস্ট",
+    "timelineStatsMembers": "{count} জন যাচাইকৃত সদস্য",
+    "timelineMembersTitle": "সদস্যবৃন্দ",
+    "timelineMembersSubtitle": "{count} জন যাচাইকৃত",
+    "postOptionsAria": "পোস্টের অপশনসমূহ",
+    "commentAction": "মন্তব্য",
+    "reactionsTotalLabel": "{count}"
   },
   "HalalProjects": {
     "defaultPeriodLabel": "১ম প্রান্তিক লভ্যাংশ",
