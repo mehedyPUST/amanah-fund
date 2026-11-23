@@ -9,6 +9,7 @@ import {
   Clock,
   Download,
   ExternalLink,
+  Eye,
   FileCheck2,
   FileText,
   Globe,
@@ -233,6 +234,14 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         title: string;
         description: string;
         details?: ActionModalDetailItem[];
+        customContent?: ReactNode;
+        maxWidthClass?: string;
+        secondaryAction?: {
+          label: string;
+          onClick: () => void;
+          loading?: boolean;
+        };
+        confirmLabel?: string;
       }
     | null
   >(null);
@@ -1824,7 +1833,51 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           </p>
                         )}
 
-                        <div className="flex justify-end pt-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!reg) return;
+                              setModal({
+                                mode: 'notice',
+                                tone: 'slate',
+                                maxWidthClass: 'max-w-4xl',
+                                title: t('digitalAgreementTitle'),
+                                description: t('previewAgreementModalDesc'),
+                                customContent: (
+                                  <MemberAgreementPaperPreview
+                                    applicantName={profile.name}
+                                    email={profile.email}
+                                    memberCode={profile.memberCode}
+                                    status={profile.status}
+                                    submittedAt={profile.joinedAt}
+                                    registrationDetails={reg}
+                                    footerRightText={t('legalFormatFooter')}
+                                  />
+                                ),
+                                secondaryAction: {
+                                  label: t('downloadApplicationPdf'),
+                                  onClick: () => {
+                                    void downloadMembershipApplicationPdf({
+                                      applicantName: profile.name,
+                                      email: profile.email,
+                                      memberCode: profile.memberCode,
+                                      status: profile.status,
+                                      submittedAt: profile.joinedAt,
+                                      registrationDetails: reg,
+                                      locale,
+                                    });
+                                  },
+                                },
+                                confirmLabel: tCommon('close'),
+                              });
+                            }}
+                            className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                          >
+                            <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{t('previewDigitalAgreement')}</span>
+                          </button>
+
                           <button
                             type="button"
                             disabled={downloadingAppPdf}
@@ -3724,10 +3777,12 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         title={modal?.title || ''}
         description={modal?.description || ''}
         details={modal?.details}
-        customContent={modal?.mode === 'confirm' ? modal.customContent : undefined}
-        maxWidthClass={modal?.mode === 'confirm' ? modal.maxWidthClass : undefined}
-        secondaryAction={modal?.mode === 'confirm' ? modal.secondaryAction : undefined}
-        confirmLabel={modal?.mode === 'confirm' ? modal.confirmLabel : tCommon('okGotIt')}
+        customContent={modal?.customContent}
+        maxWidthClass={modal?.maxWidthClass}
+        secondaryAction={modal?.secondaryAction}
+        confirmLabel={
+          modal?.confirmLabel || (modal?.mode === 'confirm' ? undefined : tCommon('okGotIt'))
+        }
         busy={modalBusy}
         onConfirm={
           modal?.mode === 'confirm'

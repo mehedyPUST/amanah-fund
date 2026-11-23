@@ -23,6 +23,7 @@ export interface MemberAgreementPaperPreviewProps {
   registrationDetails: UserRegistrationDetails;
   changedFields?: Set<string>;
   statusNote?: string;
+  footerRightText?: string;
 }
 
 function formatStatusEnglish(status?: UserStatus): string {
@@ -152,6 +153,7 @@ export function MemberAgreementPaperPreview({
   registrationDetails: reg,
   changedFields,
   statusNote,
+  footerRightText,
 }: MemberAgreementPaperPreviewProps) {
   const isChanged = (key: string) => Boolean(changedFields?.has(key));
 
@@ -641,7 +643,9 @@ export function MemberAgreementPaperPreview({
           <span>
             {fundName} · Official Digital Membership Agreement · Confidential KYC Dossier
           </span>
-          <span className="font-mono">Preview · All Updates Included</span>
+          <span className="font-mono">
+            {footerRightText || 'Preview · All Updates Included'}
+          </span>
         </div>
       </div>
     </div>
