@@ -13,6 +13,7 @@ import {
   CalendarSync,
   ChartColumn,
   CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   CircleUserRound,
   ClipboardCheck,
@@ -24,8 +25,6 @@ import {
   Menu,
   MessagesSquare,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
   ReceiptText,
   RefreshCw,
   Settings2,
@@ -2119,7 +2118,7 @@ export function DashboardShell() {
         </aside>
 
         {/* Sidebar Scrollbar-Edge Collapse / Expand Control */}
-        <div className="group/sidebar-toggle absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex items-center">
+        <div className="absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex items-center">
           <button
             type="button"
             onClick={toggleSidebarCollapsed}
@@ -2134,23 +2133,23 @@ export function DashboardShell() {
                   ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
                   : 'Collapse sidebar (icons only)'
             }
-            className="w-6 h-10 rounded-xl border border-slate-200/95 dark:border-[#163948] bg-white/95 dark:bg-[#02232D] text-slate-500 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-[#00684A]/35 hover:border-emerald-300 dark:hover:border-[#00ED64]/55 hover:text-emerald-700 dark:hover:text-[#00ED64] active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer shadow-sm shadow-slate-900/10 dark:shadow-black/45"
+            className="peer group/sidebar-btn w-6 h-10 rounded-xl border border-slate-200/95 dark:border-[#163948] bg-white/95 dark:bg-[#02232D] text-slate-500 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-[#00684A]/35 hover:border-emerald-300 dark:hover:border-[#00ED64]/55 hover:text-emerald-700 dark:hover:text-[#00ED64] active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer shadow-sm shadow-slate-900/10 dark:shadow-black/45"
           >
             {sidebarCollapsed ? (
-              <PanelLeftOpen
-                className="w-3.5 h-3.5 transition-transform duration-150 group-hover/sidebar-toggle:translate-x-0.5"
+              <ChevronRight
+                className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-btn:translate-x-0.5"
                 aria-hidden="true"
               />
             ) : (
-              <PanelLeftClose
-                className="w-3.5 h-3.5 transition-transform duration-150 group-hover/sidebar-toggle:-translate-x-0.5"
+              <ChevronLeft
+                className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-btn:-translate-x-0.5"
                 aria-hidden="true"
               />
             )}
           </button>
           <span
             role="tooltip"
-            className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg border border-slate-800 dark:border-slate-700 opacity-0 -translate-x-1 group-hover/sidebar-toggle:opacity-100 group-hover/sidebar-toggle:translate-x-0 group-focus-within/sidebar-toggle:opacity-100 group-focus-within/sidebar-toggle:translate-x-0 transition-all duration-150"
+            className="pointer-events-none invisible opacity-0 peer-hover:visible peer-hover:opacity-100 -translate-x-1 peer-hover:translate-x-0 absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg border border-slate-800 dark:border-slate-700 transition-all duration-150"
           >
             {sidebarCollapsed
               ? locale === 'bn'
