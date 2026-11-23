@@ -110,9 +110,11 @@ export function MobileVisitorGate() {
     pathname === '/login' ||
     pathname === '/signup' ||
     pathname === '/rules' ||
+    pathname === '/verify' ||
     pathname.startsWith('/login/') ||
     pathname.startsWith('/signup/') ||
-    pathname.startsWith('/rules/');
+    pathname.startsWith('/rules/') ||
+    pathname.startsWith('/verify/');
 
   const shouldRedirectAuthenticatedMobileHome =
     isMobile &&

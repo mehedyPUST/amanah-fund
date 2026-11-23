@@ -904,6 +904,9 @@ export async function downloadMembershipApplicationPdf(
     doc.setLineWidth(0.5);
     doc.roundedRect(qrX, qrY, qrBoxSize, qrBoxSize, 2.5, 2.5, 'FD');
     doc.addImage(qrDataUrl, 'PNG', qrX + 1.5, qrY + 1.5, qrBoxSize - 3, qrBoxSize - 3, undefined, 'FAST');
+    if (/^https?:\/\//i.test(qrPayload)) {
+      doc.link(qrX, qrY, qrBoxSize, qrBoxSize, { url: qrPayload });
+    }
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(5.5);

@@ -116,6 +116,20 @@ export interface DigitalAgreementRecord {
   storageFormat: 'encrypted_json';
 }
 
+export interface PublicAgreementVerification {
+  found: boolean;
+  projectHeading: string;
+  name: string;
+  nameBn?: string;
+  memberCode: string;
+  agreementId?: string;
+  joiningDate: string;
+  approvalDate: string | null;
+  verified: boolean;
+  active: boolean;
+  status: UserStatus;
+}
+
 export interface UserRegistrationDetails {
   nameBn?: string;
   fatherName?: string;

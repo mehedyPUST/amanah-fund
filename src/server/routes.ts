@@ -92,6 +92,7 @@ import {
   hydrateProfileChangeRequestsForViewer,
   queueEmailNotification,
   validateAndNormalizeNominees,
+  verifyDigitalAgreementByToken,
 } from './coopService.ts';
 import {
   computeSha256Hash,
@@ -289,6 +290,13 @@ const groqAiRateLimiter = createRateLimiter({
   maxRequests: 30,
   keyPrefix: 'groq-ai',
   message: 'AI assistant rate limit reached. Please wait a few seconds before trying again.',
+});
+
+const publicVerifyRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 60,
+  keyPrefix: 'public-verify',
+  message: 'Too many agreement verification requests. Please wait a minute and try again.',
 });
 
 async function assertStepUpTotp(req: AuthenticatedRequest, res: Response): Promise<boolean> {
@@ -896,6 +904,41 @@ apiRouter.get('/constitution', async (_req, res) => {
   } catch (err) {
     console.error('Constitution fetch error:', err);
     res.status(500).json({ error: 'Failed to load constitution document details.' });
+  }
+});
+
+apiRouter.get('/public/verify-agreement/:token', publicVerifyRateLimiter, async (req, res) => {
+  try {
+    const rawToken = typeof req.params.token === 'string' ? req.params.token.trim() : '';
+    if (!rawToken || rawToken.length > 128) {
+      res.status(400).json({
+        found: false,
+        error: 'A valid Agreement ID or Member ID is required.',
+      });
+      return;
+    }
+
+    const state = await loadVaultState();
+    const verification = verifyDigitalAgreementByToken(state, rawToken);
+    if (!verification) {
+      res.status(404).json({
+        found: false,
+        projectHeading: state.fundConfig?.fundName?.trim() || 'Amanah Cooperative',
+        error: 'No digital membership agreement record matched this verification code.',
+      });
+      return;
+    }
+
+    res.json({
+      found: true,
+      verification,
+    });
+  } catch (err) {
+    console.error('Public agreement verify error:', err);
+    res.status(500).json({
+      found: false,
+      error: 'Unable to verify digital agreement record at this moment.',
+    });
   }
 });
 

@@ -14,6 +14,7 @@ import type {
   HalalProject,
   LoanRequest,
   ProfileChangeRequest,
+  PublicAgreementVerification,
   PublicUser,
 } from '../types/coop.ts';
 import { sortFaqItems } from '../utils/faqDefaults.ts';
@@ -26,6 +27,7 @@ import {
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
   hydrateProfileChangeRequestsForViewer,
+  verifyDigitalAgreementByToken,
 } from './coopService.ts';
 import {
   getStorageDiagnostic,
@@ -373,3 +375,27 @@ export async function prefetchDashboardPageState(): Promise<DehydratedState> {
   }
   return dehydrate(queryClient);
 }
+
+export async function getPublicAgreementVerification(
+  token: string
+): Promise<{ verification: PublicAgreementVerification | null; projectHeading: string }> {
+  try {
+    const state = await loadVaultState();
+    const projectHeading = state.fundConfig?.fundName?.trim() || 'Amanah Cooperative';
+    const verification = verifyDigitalAgreementByToken(state, token);
+    return { verification, projectHeading };
+  } catch (err) {
+    console.warn('[SSR] Public agreement verification lookup failed:', err);
+    return { verification: null, projectHeading: 'Amanah Cooperative' };
+  }
+}
+
+export async function getPublicFundHeading(): Promise<string> {
+  try {
+    const cfg = await loadFundConfigOnly();
+    return cfg.fundName?.trim() || 'Amanah Cooperative';
+  } catch {
+    return 'Amanah Cooperative';
+  }
+}
+

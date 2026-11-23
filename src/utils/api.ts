@@ -44,6 +44,7 @@ import type {
   PasswordResetRequest,
   ProfileChangePayload,
   ProfileChangeRequest,
+  PublicAgreementVerification,
   PublicUser,
   PushNotificationStatusResponse,
   PushTestResponse,
@@ -1285,7 +1286,11 @@ export const api = {
       method: 'DELETE',
     }),
 
-  // Frequently Asked Questions (Public read; Admin add/edit/delete)
+  // Frequently Asked Questions & Public Verification
+  verifyAgreement: (token: string) =>
+    apiRequest<{ found: boolean; verification: PublicAgreementVerification }>(
+      `/api/public/verify-agreement/${encodeURIComponent(token.trim())}`
+    ),
   getFaqs: () => apiRequest<{ faqs: FaqItem[] }>('/api/faqs'),
   createFaq: (payload: {
     category: FaqCategory;

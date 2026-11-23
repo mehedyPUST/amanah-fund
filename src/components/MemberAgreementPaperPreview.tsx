@@ -6,9 +6,11 @@ import type {
   UserRegistrationDetails,
   UserStatus,
 } from '../types/coop.ts';
+import { ExternalLink } from 'lucide-react';
 import {
   buildDigitalAgreementQrPayload,
   generateAgreementQrDataUrl,
+  resolveAgreementVerifyToken,
 } from '../utils/agreementQr.ts';
 import { formatDateTime } from '../utils/format.ts';
 import {
@@ -183,6 +185,21 @@ export function MemberAgreementPaperPreview({
   const addressSecNum = `0${sectionNum++}`;
   const nomineeSecNum = `0${sectionNum++}`;
   const agreementSecNum = `0${sectionNum}`;
+
+  const verifyToken = useMemo(
+    () =>
+      resolveAgreementVerifyToken({
+        applicantName,
+        memberCode,
+        status,
+        submittedAt,
+        fundName,
+        registrationDetails: reg,
+      }),
+    [applicantName, memberCode, status, submittedAt, fundName, reg]
+  );
+
+  const verifyPath = `/verify/${encodeURIComponent(verifyToken)}`;
 
   const qrPayload = useMemo(
     () =>
@@ -627,13 +644,22 @@ export function MemberAgreementPaperPreview({
                   <div className="w-full h-full rounded bg-slate-100 animate-pulse" />
                 )}
               </div>
-              <div className="text-left sm:text-center leading-tight">
+              <div className="text-left sm:text-center leading-tight space-y-0.5">
                 <div className="text-[9px] font-bold uppercase tracking-wider text-slate-700">
                   Scan to Verify
                 </div>
                 <div className="text-[8.5px] font-mono text-slate-500">
                   {agreement?.agreementId ? agreement.agreementId.slice(0, 18) : memberCode || 'Digital Seal'}
                 </div>
+                <a
+                  href={verifyPath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[9.5px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                >
+                  <span>Verify Link</span>
+                  <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
+                </a>
               </div>
             </div>
           </div>

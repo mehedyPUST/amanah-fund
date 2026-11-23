@@ -26,11 +26,13 @@ import type {
   NotificationType,
   ProfileChangePayload,
   ProfileChangeRequest,
+  PublicAgreementVerification,
   PublicUser,
   RepaymentReceiptDetails,
   UserRegistrationDetails,
   UserRole,
 } from '../types/coop.ts';
+import { computeAgreementFallbackId } from '../utils/agreementQr.ts';
 import {
   containsBanglaScript,
   isValidBanglaName,
@@ -2301,6 +2303,139 @@ export function hydrateProfileChangeRequestsForViewer(
       };
     });
 }
+
+function safeDecodeToken(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+function resolveMemberApprovalDate(
+  state: VaultState,
+  user: StoredUser,
+  reg?: UserRegistrationDetails
+): string | null {
+  if (user.status === 'pending_approval') {
+    return null;
+  }
+
+  if (user.activationMeta?.issuedAt) {
+    return user.activationMeta.issuedAt;
+  }
+
+  const matchingAudit = (state.auditLogs || []).find(
+    (entry) =>
+      entry.resourceId === user.id &&
+      (entry.action === 'MEMBER_ACTIVATION_CODES_ISSUED' ||
+        entry.action === 'MEMBER_SIGNUP_APPROVED' ||
+        entry.action === 'BOOTSTRAP_ADMIN_CREATED')
+  );
+  if (matchingAudit?.timestamp) {
+    return matchingAudit.timestamp;
+  }
+
+  if (reg?.digitalAgreement?.activatedAt) {
+    return reg.digitalAgreement.activatedAt;
+  }
+
+  return user.joinedAt || null;
+}
+
+/**
+ * Resolves a public QR verification token (Digital Agreement ID, Member ID, or deterministic fallback seal ID)
+ * to non-sensitive membership verification metadata suitable for public display.
+ */
+export function verifyDigitalAgreementByToken(
+  state: VaultState,
+  rawToken: string
+): PublicAgreementVerification | null {
+  const cleaned = safeDecodeToken(String(rawToken || '')).trim();
+  if (!cleaned || cleaned.length > 128) {
+    return null;
+  }
+
+  const needle = cleaned.toUpperCase();
+  const projectHeading = state.fundConfig?.fundName?.trim() || 'Amanah Cooperative';
+
+  for (const user of state.users || []) {
+    let reg: UserRegistrationDetails | undefined;
+    if (user.encryptedRegistrationDetails) {
+      try {
+        reg = decryptSensitiveObject<UserRegistrationDetails>(user.encryptedRegistrationDetails);
+      } catch {
+        reg = undefined;
+      }
+    }
+
+    const effectiveMemberCode = (user.activationMeta?.memberCode || user.memberCode || '').trim();
+    const hasAssignedMemberCode =
+      Boolean(effectiveMemberCode) && effectiveMemberCode.toUpperCase() !== 'PENDING';
+
+    const candidates = new Set<string>();
+    if (hasAssignedMemberCode) {
+      candidates.add(effectiveMemberCode.toUpperCase());
+    }
+    if (user.memberCode && user.memberCode.trim().toUpperCase() !== 'PENDING') {
+      candidates.add(user.memberCode.trim().toUpperCase());
+    }
+    if (reg?.digitalAgreement?.agreementId) {
+      candidates.add(reg.digitalAgreement.agreementId.trim().toUpperCase());
+    }
+
+    if (reg) {
+      candidates.add(
+        computeAgreementFallbackId({
+          applicantName: user.name,
+          memberCode: user.memberCode,
+          submittedAt: user.joinedAt,
+          fundName: projectHeading,
+          signedAt: reg.digitalAgreement?.signedAt,
+        }).toUpperCase()
+      );
+      candidates.add(
+        computeAgreementFallbackId({
+          applicantName: user.name,
+          memberCode: user.memberCode,
+          submittedAt: user.joinedAt,
+          fundName: 'Amanah Cooperative',
+          signedAt: reg.digitalAgreement?.signedAt,
+        }).toUpperCase()
+      );
+    }
+
+    if (!candidates.has(needle)) {
+      continue;
+    }
+
+    const approvalDate = resolveMemberApprovalDate(state, user, reg);
+    const verified =
+      user.status === 'active' ||
+      (user.status === 'suspended' &&
+        Boolean(user.activationMeta?.activatedAt || reg?.digitalAgreement?.activatedAt));
+    const active = user.status === 'active';
+
+    return {
+      found: true,
+      projectHeading,
+      name: user.name,
+      ...(reg?.nameBn ? { nameBn: reg.nameBn } : {}),
+      memberCode: hasAssignedMemberCode ? effectiveMemberCode : 'Pending',
+      ...(reg?.digitalAgreement?.agreementId
+        ? { agreementId: reg.digitalAgreement.agreementId }
+        : {}),
+      joiningDate: user.joinedAt,
+      approvalDate,
+      verified,
+      active,
+      status: user.status,
+    };
+  }
+
+  return null;
+}
+
 
 
 

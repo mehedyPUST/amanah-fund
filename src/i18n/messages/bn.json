@@ -5093,6 +5093,40 @@
       "managerLoans": "ডেস্ক: কর্জে হাসানা",
       "managerInstallments": "ডেস্ক: কিস্তি যাচাই"
     }
+  },
+  "Verify": {
+    "eyebrow": "ডিজিটাল সদস্যপদ চুক্তিপত্র যাচাই",
+    "credentialSubtitle": "আনুষ্ঠানিক সমবায় সদস্যপদ সনদ",
+    "agreementRef": "চুক্তি সূত্র: {id}",
+    "lookupTitle": "সদস্যপদ চুক্তিপত্র যাচাই করুন",
+    "lookupSubtitle": "সদস্যপদের অবস্থা দেখতে আপনার চুক্তি আইডি বা আনুষ্ঠানিক সদস্য আইডি লিখুন।",
+    "lookupPlaceholder": "যেমন: AGR-20261122-AB12CD34 বা AC001",
+    "lookupLabel": "চুক্তি আইডি বা সদস্য আইডি",
+    "lookupButton": "যাচাই করুন",
+    "notFoundTitle": "চুক্তিপত্রের তথ্য পাওয়া যায়নি",
+    "notFoundDesc": "\"{token}\" এর সাথে কোনো ডিজিটাল সদস্যপদ চুক্তিপত্র মেলেনি। আইডিটি পুনরায় পরীক্ষা করে চেষ্টা করুন।",
+    "fieldProjectHeading": "প্রকল্পের শিরোনাম",
+    "fieldName": "সদস্যের নাম",
+    "fieldMemberId": "সদস্য আইডি",
+    "fieldJoiningDate": "যোগদানের তারিখ",
+    "fieldApprovalDate": "অনুমোদনের তারিখ",
+    "fieldVerified": "যাচাইকরণ অবস্থা",
+    "fieldActive": "সক্রিয়তা অবস্থা",
+    "pendingApprovalValue": "অনুমোদনের অপেক্ষায়",
+    "verifiedTrue": "যাচাইকৃত",
+    "verifiedFalse": "যাচাইকৃত নয়",
+    "verifiedTrueHint": "পরিচয় ও চুক্তিপত্র নিশ্চিতকৃত",
+    "verifiedFalseAwaitingActivation": "অনুমোদিত; অ্যাক্টিভেশন ওটিপি অপেক্ষমাণ",
+    "verifiedFalsePendingReview": "অ্যাডমিন পর্যালোচনার অপেক্ষায়",
+    "verifiedFalseSuspended": "যাচাইকৃত নয়",
+    "activeTrue": "সক্রিয়",
+    "activeFalse": "সক্রিয় নয়",
+    "activeTrueHint": "কার্যকর সদস্যপদ",
+    "activeFalseSuspended": "স্থগিত",
+    "activeFalsePending": "সক্রিয়করণের অপেক্ষায়",
+    "privacyNote": "এই পাবলিক যাচাই পাতায় কেবল প্রাথমিক সদস্যপদ তথ্য দেখানো হয়। ব্যক্তিগত কেওয়াইসি নথি সম্পূর্ণ এনক্রিপ্টেড থাকে।",
+    "backToHome": "হোম পেজে ফিরে যান"
   }
 }
+
 

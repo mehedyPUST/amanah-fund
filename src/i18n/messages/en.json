@@ -5093,6 +5093,40 @@
       "managerLoans": "Desk: Qard Hasan",
       "managerInstallments": "Desk: Installments"
     }
+  },
+  "Verify": {
+    "eyebrow": "Digital Membership Agreement Verification",
+    "credentialSubtitle": "Official Cooperative Membership Credential",
+    "agreementRef": "Agreement Ref: {id}",
+    "lookupTitle": "Verify a Membership Agreement",
+    "lookupSubtitle": "Enter an Agreement ID or official Member ID to inspect verified cooperative membership status.",
+    "lookupPlaceholder": "e.g. AGR-20261122-AB12CD34 or AC001",
+    "lookupLabel": "Agreement ID or Member ID",
+    "lookupButton": "Verify Record",
+    "notFoundTitle": "Agreement Record Not Found",
+    "notFoundDesc": "No digital membership agreement matched \"{token}\". Check the Agreement ID or Member ID and try again.",
+    "fieldProjectHeading": "Project Heading",
+    "fieldName": "Member Name",
+    "fieldMemberId": "Member ID",
+    "fieldJoiningDate": "Joining Date",
+    "fieldApprovalDate": "Approval Date",
+    "fieldVerified": "Verification Status",
+    "fieldActive": "Membership Status",
+    "pendingApprovalValue": "Pending Approval",
+    "verifiedTrue": "Verified",
+    "verifiedFalse": "Not Verified",
+    "verifiedTrueHint": "Identity and agreement confirmed",
+    "verifiedFalseAwaitingActivation": "Approved; awaiting activation OTP",
+    "verifiedFalsePendingReview": "Pending administrator review",
+    "verifiedFalseSuspended": "Not verified",
+    "activeTrue": "Active",
+    "activeFalse": "Not Active",
+    "activeTrueHint": "In good standing",
+    "activeFalseSuspended": "Suspended",
+    "activeFalsePending": "Awaiting activation",
+    "privacyNote": "Public verification displays strictly non-sensitive credential status. Personal KYC documents remain encrypted.",
+    "backToHome": "Back to Home"
   }
 }
+
 
