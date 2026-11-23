@@ -2117,8 +2117,12 @@ export function DashboardShell() {
         </div>
         </aside>
 
-        {/* Sidebar Scrollbar-Edge Collapse / Expand Control */}
-        <div className="absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex items-center">
+        {/* Sidebar Scrollbar-Edge Seam Guide & Collapse/Expand Handle */}
+        <div className="group/seam absolute -right-3.5 inset-y-4 w-7 z-30 flex items-center justify-center pointer-events-none">
+          <div
+            aria-hidden="true"
+            className="w-[1.5px] h-20 rounded-full bg-gradient-to-b from-transparent via-emerald-500/45 to-transparent dark:via-[#00ED64]/45 opacity-0 group-hover/seam:opacity-100 transition-opacity duration-200"
+          />
           <button
             type="button"
             onClick={toggleSidebarCollapsed}
@@ -2133,23 +2137,19 @@ export function DashboardShell() {
                   ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
                   : 'Collapse sidebar (icons only)'
             }
-            className="peer group/sidebar-btn w-6 h-10 rounded-xl border border-slate-200/95 dark:border-[#163948] bg-white/95 dark:bg-[#02232D] text-slate-500 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-[#00684A]/35 hover:border-emerald-300 dark:hover:border-[#00ED64]/55 hover:text-emerald-700 dark:hover:text-[#00ED64] active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer shadow-sm shadow-slate-900/10 dark:shadow-black/45"
+            className="peer pointer-events-auto absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-slate-200/95 dark:border-[#1c4657] bg-white dark:bg-[#02232D] ring-1 ring-inset ring-white/80 dark:ring-white/5 text-slate-500 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-[#00ED64] hover:border-emerald-400/75 dark:hover:border-[#00ED64]/55 hover:bg-emerald-50/95 dark:hover:bg-[#03323e] hover:scale-105 active:scale-95 transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center cursor-pointer shadow-[0_2px_8px_-2px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.65)] hover:shadow-[0_4px_14px_-3px_rgba(5,150,105,0.28)]"
           >
-            {sidebarCollapsed ? (
-              <ChevronRight
-                className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-btn:translate-x-0.5"
-                aria-hidden="true"
-              />
-            ) : (
-              <ChevronLeft
-                className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-btn:-translate-x-0.5"
-                aria-hidden="true"
-              />
-            )}
+            <ChevronLeft
+              strokeWidth={2.1}
+              className={`w-3.5 h-3.5 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                sidebarCollapsed ? 'rotate-180' : 'rotate-0'
+              }`}
+              aria-hidden="true"
+            />
           </button>
           <span
             role="tooltip"
-            className="pointer-events-none invisible opacity-0 peer-hover:visible peer-hover:opacity-100 -translate-x-1 peer-hover:translate-x-0 absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg border border-slate-800 dark:border-slate-700 transition-all duration-150"
+            className="pointer-events-none invisible opacity-0 peer-hover:visible peer-hover:opacity-100 -translate-x-1.5 peer-hover:translate-x-0 absolute left-full ml-1.5 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-lg bg-slate-900/95 dark:bg-[#041f2a]/95 backdrop-blur-md text-white text-[11px] font-medium tracking-tight whitespace-nowrap shadow-lg shadow-slate-950/25 border border-slate-700/80 dark:border-[#1b4658] transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]"
           >
             {sidebarCollapsed
               ? locale === 'bn'
