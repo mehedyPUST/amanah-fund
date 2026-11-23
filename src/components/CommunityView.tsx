@@ -1370,16 +1370,8 @@ export function CommunityView({
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2.5 shrink-0 w-full sm:w-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 text-xs font-medium text-slate-700 dark:text-slate-200">
-            <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-            <span>{t('tabFeed')}</span>
-            <span className="font-mono tabular-nums text-[11px] text-slate-500 dark:text-slate-400">
-              {posts.filter((p) => p.status === 'active').length}
-            </span>
-          </span>
-
-          {!user.communityMuted && (
+        {!user.communityMuted && (
+          <div className="flex items-center justify-end shrink-0 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => {
@@ -1390,8 +1382,8 @@ export function CommunityView({
               {composerOpen ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
               <span>{composerOpen ? t('closeComposer') : t('newPost')}</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-5">
