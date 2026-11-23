@@ -356,9 +356,9 @@ export function SignInForm() {
         </div>
 
         {/* Right Sign-In / Activation Column */}
-        <div className="lg:col-span-6 lg:border-l lg:border-slate-200/75 lg:dark:border-slate-800 lg:pl-10 space-y-5">
+        <div className="lg:col-span-6 lg:border-l lg:border-slate-200/75 lg:dark:border-[#163948] lg:pl-10 space-y-5">
           {activationChallenge ? (
-            <div className="space-y-4">
+            <div className="space-y-4 animate__animated animate__fadeInUp animate__faster">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
@@ -480,17 +480,19 @@ export function SignInForm() {
               </div>
             </div>
           ) : hasRegisteredPinAccount && !usePasswordMode ? (
-            <MobilePinLoginPanel
-              onSuccess={(loggedInUser) => {
-                redirectingRef.current = true;
-                setMobileBrowseMode(false);
-                setUser(loggedInUser);
-                router.replace(isMobileViewport() ? '/dashboard' : '/');
-              }}
-              onUsePassword={() => setUsePasswordMode(true)}
-            />
+            <div className="animate__animated animate__fadeInUp animate__faster">
+              <MobilePinLoginPanel
+                onSuccess={(loggedInUser) => {
+                  redirectingRef.current = true;
+                  setMobileBrowseMode(false);
+                  setUser(loggedInUser);
+                  router.replace(isMobileViewport() ? '/dashboard' : '/');
+                }}
+                onUsePassword={() => setUsePasswordMode(true)}
+              />
+            </div>
           ) : (
-            <>
+            <div className="space-y-5 animate__animated animate__fadeInUp animate__faster">
               <div className="space-y-1">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                   {tAuth('signInPage.credentialsTitle')}
@@ -639,7 +641,7 @@ export function SignInForm() {
                   <span>{tAuth('useDevicePin')}</span>
                 </button>
               )}
-            </>
+            </div>
           )}
 
           <div className="pt-4 border-t border-slate-200/75 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
@@ -703,7 +705,7 @@ export function SignInForm() {
               {forgotError && (
                 <div
                   role="alert"
-                  className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300"
+                  className="p-3 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/40 text-xs text-rose-700 dark:text-rose-300 animate__animated animate__headShake animate__faster"
                 >
                   {forgotError}
                 </div>

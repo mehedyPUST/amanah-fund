@@ -279,9 +279,9 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
       }`}
     >
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-slate-800">
-        <div className="max-w-2xl space-y-1.5">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-[#163948]">
+        <div className="max-w-2xl space-y-1.5 animate__animated animate__fadeInUp animate__faster">
+          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
             <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{tFaq('eyebrow')}</span>
           </div>
@@ -571,7 +571,10 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start">
+        <div
+          key={activeCategory}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-3.5 items-start animate__animated animate__fadeIn animate__faster"
+        >
           {filteredItems.map((item, idx) => {
             const isOpen = Boolean(openIds[item.id]);
             const panelId = `${item.id}-panel`;

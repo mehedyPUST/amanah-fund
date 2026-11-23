@@ -241,24 +241,27 @@ function playSubtleAlertChime() {
 const DASHBOARD_VIEW_VARIANTS = {
   enter: (dir: number) => ({
     opacity: 0,
-    x: dir !== 0 ? dir * 10 : 0,
-    y: dir === 0 ? 5 : 0,
+    x: dir !== 0 ? dir * 14 : 0,
+    y: dir === 0 ? 8 : 0,
+    scale: 0.992,
   }),
   center: {
     opacity: 1,
     x: 0,
     y: 0,
+    scale: 1,
     transition: {
-      duration: 0.18,
+      duration: 0.22,
       ease: [0.16, 1, 0.3, 1] as const,
     },
   },
   exit: (dir: number) => ({
     opacity: 0,
-    x: dir !== 0 ? dir * -8 : 0,
+    x: dir !== 0 ? dir * -10 : 0,
     y: dir === 0 ? -4 : 0,
+    scale: 0.995,
     transition: {
-      duration: 0.11,
+      duration: 0.13,
       ease: [0.4, 0, 1, 1] as const,
     },
   }),

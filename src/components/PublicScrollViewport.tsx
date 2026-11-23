@@ -42,7 +42,12 @@ export function PublicScrollViewport({ children }: { children: ReactNode }) {
         className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain scrollbar-subtle pr-0.5 sm:pr-1.5 py-1 sm:py-1.5"
       >
         <PullToRefreshIndicator {...pullToRefresh} />
-        <div className="w-full space-y-6 sm:space-y-8 pb-4">{children}</div>
+        <div
+          key={pathname}
+          className="w-full space-y-6 sm:space-y-8 pb-4 animate__animated animate__fadeInUp animate__faster"
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

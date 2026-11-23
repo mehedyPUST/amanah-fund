@@ -507,7 +507,7 @@ export function ActionModal({
                       />
                     )}
                     {inputError && (
-                      <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                      <p className="text-[11px] font-medium text-red-600 dark:text-red-400 animate__animated animate__headShake animate__faster">
                         {inputError}
                       </p>
                     )}

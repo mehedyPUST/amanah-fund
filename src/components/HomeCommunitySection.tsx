@@ -61,8 +61,8 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
     >
       <div className={embedded ? 'space-y-5' : 'w-full py-6 sm:py-8 space-y-6'}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-          <div className="max-w-3xl space-y-1">
-            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="max-w-3xl space-y-1 animate__animated animate__fadeInUp animate__faster">
+            <div className="text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
               {t('eyebrow')}
             </div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white text-balance">

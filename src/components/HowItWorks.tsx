@@ -168,7 +168,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
     >
       <section className="space-y-6 sm:space-y-7">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200/75 dark:border-[#163948]">
-          <div className="max-w-2xl space-y-1.5 animate__animated animate__fadeIn">
+          <div className="max-w-2xl space-y-1.5 animate__animated animate__fadeInUp animate__faster">
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
               <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t('eyebrow')}</span>
@@ -182,7 +182,10 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             >
               {t('heading')}
             </HeadingTag>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p
+              key={currentGuide.key}
+              className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed animate__animated animate__fadeIn animate__faster"
+            >
               {currentGuide.headline}
             </p>
           </div>

@@ -201,7 +201,7 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#163948] shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,10,15,0.68)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 animate__animated animate__fadeIn">
+      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#163948] shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,10,15,0.68)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 animate__animated animate__fadeInDown animate__faster">
         {/* Mobile Left Hamburger Toggle */}
         <button
           type="button"

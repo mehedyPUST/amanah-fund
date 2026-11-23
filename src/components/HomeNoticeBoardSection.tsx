@@ -324,8 +324,8 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
     >
       <div className={embedded ? 'space-y-5' : 'w-full py-10 sm:py-12 space-y-6'}>
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
-          <div className="space-y-1">
-            <div className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="space-y-1 animate__animated animate__fadeInUp animate__faster">
+            <div className="text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
               {t('eyebrow')}
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">

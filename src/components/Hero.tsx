@@ -80,7 +80,7 @@ export function Hero({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-stretch">
           <div className="lg:col-span-7 flex flex-col justify-between gap-5 sm:gap-6 py-0.5 sm:py-1">
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium animate__animated animate__fadeIn">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium animate__animated animate__fadeInDown animate__faster">
                 <span className="font-semibold text-emerald-700 dark:text-[#00ED64]">
                   {tHero('kickerTreasury')}
                 </span>
@@ -90,16 +90,16 @@ export function Hero({
                 <span>{tHero('kickerCap')}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.35rem,3.4vw,3.15rem)] font-bold tracking-[-0.025em] text-slate-900 dark:text-white leading-[1.12] text-balance max-w-2xl animate__animated animate__fadeInUp">
+              <h1 className="text-3xl sm:text-4xl lg:text-[clamp(2.35rem,3.4vw,3.15rem)] font-bold tracking-[-0.025em] text-slate-900 dark:text-white leading-[1.12] text-balance max-w-2xl animate__animated animate__fadeInUp amanah-stagger-1">
                 {tHero('headline')}
               </h1>
 
-              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl animate__animated animate__fadeIn">
+              <p className="text-[15px] sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl animate__animated animate__fadeInUp amanah-stagger-2">
                 {tHero('subheadline')}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-1 animate__animated animate__fadeInUp amanah-stagger-3">
               <Link
                 href={user ? '/dashboard' : '/signup'}
                 className="group min-h-[44px] px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 dark:from-[#00684A] dark:to-[#05875C] dark:hover:from-[#05875C] dark:hover:to-[#13AA52] text-white text-sm font-semibold shadow-md shadow-emerald-600/20 active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-2 whitespace-nowrap shrink-0"
@@ -155,8 +155,8 @@ export function Hero({
             </div>
           </div>
 
-          <div className="lg:col-span-5 flex">
-            <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-2xl overflow-hidden border border-slate-200/85 dark:border-slate-800/80 ring-1 ring-inset ring-white/25 dark:ring-white/10 bg-slate-100 dark:bg-slate-950 shadow-[0_12px_32px_-16px_rgba(15,23,42,0.22)]">
+          <div className="lg:col-span-5 flex animate__animated animate__zoomIn amanah-stagger-2">
+            <div className="relative w-full aspect-[16/10] lg:aspect-auto lg:h-full min-h-[240px] rounded-2xl overflow-hidden border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/25 dark:ring-white/10 bg-slate-100 dark:bg-[#00151F] shadow-[0_12px_32px_-16px_rgba(15,23,42,0.22)]">
               {heroImgFailed ? (
                 <div className="w-full h-full p-8 bg-gradient-to-br from-emerald-950/15 via-slate-100 to-teal-950/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center text-center gap-3">
                   <AmanahLogo size="lg" decorative className="shadow-md" />
@@ -279,7 +279,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
         </div>
 
         <div className="lg:col-span-7 flex flex-col justify-between gap-6">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 animate__animated animate__fadeInUp animate__faster">
             <div className="text-xs font-semibold text-teal-700 dark:text-teal-300">
               {tLife('eyebrow')}
             </div>
@@ -288,9 +288,9 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-200/80 dark:border-slate-800/75">
-            <div className="space-y-2">
-              <div className="font-mono text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-200/80 dark:border-[#163948]">
+            <div className="space-y-2 animate__animated animate__fadeInUp amanah-stagger-1">
+              <div className="font-mono text-xs font-semibold text-emerald-700 dark:text-[#00ED64]">
                 {tLife('stage1Index')}
               </div>
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -301,7 +301,7 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
               </p>
             </div>
 
-            <div className="space-y-2 sm:border-l sm:border-slate-200/80 sm:dark:border-slate-800/75 sm:pl-6">
+            <div className="space-y-2 sm:border-l sm:border-slate-200/80 sm:dark:border-[#163948] sm:pl-6 animate__animated animate__fadeInUp amanah-stagger-2">
               <div className="font-mono text-xs font-semibold text-blue-700 dark:text-blue-400">
                 {tLife('stage2Index')}
               </div>

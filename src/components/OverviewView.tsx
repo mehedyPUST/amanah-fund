@@ -212,7 +212,7 @@ export function OverviewView({
         return (
           <section
             aria-label={t('alerts.activeLoanRequest')}
-            className="amanah-card-teal border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4 transition-all duration-200"
+            className="amanah-card-teal border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4 transition-all duration-200 animate__animated animate__fadeInUp animate__faster"
           >
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="space-y-1.5 min-w-0">
@@ -808,7 +808,7 @@ export function OverviewView({
                     ? onOpenManagerDeskTab('qard-hasan')
                     : onNavigate(isStaff ? 'manager-desk' : 'quard-hasan')
                 }
-                className="group amanah-card-amber rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-amber rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2 animate__animated animate__fadeInUp amanah-stagger-1 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-amber-700 dark:text-amber-400 font-medium">
                   <span>{t('sheets.pendingLoanReviews')}</span>
@@ -831,7 +831,7 @@ export function OverviewView({
               <button
                 type="button"
                 onClick={() => onNavigate('ballot')}
-                className="group amanah-card-violet rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-violet rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2 animate__animated animate__fadeInUp amanah-stagger-2 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-purple-700 dark:text-purple-400 font-medium">
                   <span>{t('sheets.openTwoThirdsBallots')}</span>
@@ -862,7 +862,7 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group amanah-card-emerald rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-emerald rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2 animate__animated animate__fadeInUp amanah-stagger-3 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-emerald-700 dark:text-[#00ED64] font-medium">
                   <span>{t('sheets.pendingDeposits')}</span>
@@ -894,7 +894,7 @@ export function OverviewView({
                     onNavigate(isStaff ? 'manager-desk' : 'ballot');
                   }
                 }}
-                className="group amanah-card-sky rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2"
+                className="group amanah-card-sky rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer flex flex-col justify-between gap-2 animate__animated animate__fadeInUp amanah-stagger-4 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-blue-700 dark:text-blue-400 font-medium">
                   <span>{t('sheets.awaitingDisbursement')}</span>
@@ -932,7 +932,7 @@ export function OverviewView({
                     );
                   }
                 }}
-                className="group amanah-card-teal rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2"
+                className="group amanah-card-teal rounded-xl border text-left p-4 transition-all duration-150 cursor-pointer sm:col-span-2 lg:col-span-2 flex flex-col justify-between gap-2 animate__animated animate__fadeInUp amanah-stagger-5 hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-2 text-xs text-teal-700 dark:text-teal-400 font-medium">
                   <span>{t('sheets.pendingRepayments')}</span>
