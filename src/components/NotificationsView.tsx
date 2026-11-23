@@ -551,7 +551,7 @@ export function NotificationsView({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="space-y-6"
+      className="space-y-3 sm:space-y-4"
     >
       {upcomingMeetings.length > 0 && (
         <section className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-3 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)]">
@@ -598,20 +598,20 @@ export function NotificationsView({
         </section>
       )}
 
-      {/* Header & Reminder / Gmail Actions */}
-      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-4 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] hover:shadow-md transition-all duration-200">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
-              <Mail className="w-4 h-4" aria-hidden="true" />
-              <span>{t('eyebrow')}</span>
+      {/* Compact Header, Quick Controls & Filters */}
+      <section className="amanah-card-emerald backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 dark:text-teal-400">
+              <Mail className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{t('eyebrow')}</span>
             </div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+            <h2 className="hidden sm:block text-sm font-semibold text-slate-900 dark:text-white truncate mt-0.5">
               {t('heading')}
             </h2>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
             {pushCaps.supported && (
               <button
                 type="button"
@@ -621,7 +621,7 @@ export function NotificationsView({
                     ? void handleSendTestPush()
                     : void handleEnablePushAlerts(false)
                 }
-                className={`min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50 ${
+                className={`h-8 px-2.5 rounded-lg border text-[11.5px] font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-50 ${
                   pushCaps.permission === 'granted' && (pushStatus?.devicesCount || 0) > 0
                     ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-100/80 dark:hover:bg-emerald-950/60'
                     : 'border-amber-300 dark:border-amber-800 bg-amber-50/85 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 hover:bg-amber-100/85 dark:hover:bg-amber-950/60'
@@ -643,7 +643,7 @@ export function NotificationsView({
               onClick={() => setShowSettings((prev) => !prev)}
               aria-expanded={showSettings}
               aria-controls="notification-settings-panel"
-              className={`min-h-[44px] sm:min-h-0 px-3.5 py-2 rounded-xl border text-xs font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`h-8 px-2.5 rounded-lg border text-[11.5px] font-medium inline-flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 showSettings
                   ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-950/50 text-teal-800 dark:text-teal-200 shadow-xs'
                   : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 hover:border-teal-300 dark:hover:border-teal-700 hover:bg-teal-50/40 dark:hover:bg-teal-950/25'
@@ -664,6 +664,7 @@ export function NotificationsView({
 
             {isStaff && (
               <GoogleSignInButton
+                compact
                 workspace={workspace}
                 connecting={connectingGoogle}
                 onConnect={() => void onConnectGoogle()}
@@ -673,8 +674,8 @@ export function NotificationsView({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 w-full sm:w-fit max-w-full">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2 pt-2 border-t border-slate-200/70 dark:border-slate-800/80">
+          <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-0.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 w-full sm:w-fit max-w-full">
             {(
               [
                 { id: 'all', label: t('filterAll', { count: groupedNotifications.length }) },
@@ -696,7 +697,7 @@ export function NotificationsView({
                     setFilterType(tab.id);
                     scrollFilterButtonWithNeighbors(e.currentTarget);
                   }}
-                  className={`relative px-3 py-1.5 min-h-[38px] sm:min-h-0 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  className={`relative px-2.5 py-1 rounded-lg text-[11.5px] font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                     active
                       ? 'text-white'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
@@ -716,15 +717,16 @@ export function NotificationsView({
           </div>
 
           {isStaff && (
-            <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full lg:w-auto">
               <button
                 type="button"
                 disabled={generatingReminders}
                 onClick={handleGenerateReminders}
-                className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-800 dark:text-slate-200 hover:bg-amber-50/50 dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-700 disabled:opacity-50 transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                title={t('triggerRemindersBtn')}
+                className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-[11.5px] font-medium text-slate-800 dark:text-slate-200 hover:bg-amber-50/50 dark:hover:bg-slate-800 hover:border-amber-300 dark:hover:border-amber-700 disabled:opacity-50 transition-all duration-150 active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer min-w-0"
               >
                 <Bell className="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
-                <span>
+                <span className="truncate">
                   {generatingReminders ? t('generatingReminders') : t('triggerRemindersBtn')}
                 </span>
               </button>
@@ -733,16 +735,19 @@ export function NotificationsView({
                 type="button"
                 disabled={!workspace.connected || queuedItems.length === 0 || sendingGmail}
                 onClick={() => requestGmailSend(undefined)}
-                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md transition-all duration-150 active:scale-[0.98] inline-flex items-center gap-1.5 cursor-pointer"
+                title={t('sendQueuedGmail', { count: Math.min(queuedItems.length, 15) })}
+                className="h-8 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-50 text-white text-[11.5px] font-medium shadow-xs transition-all duration-150 active:scale-[0.98] inline-flex items-center justify-center gap-1.5 cursor-pointer min-w-0"
               >
                 <Send className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>{t('sendQueuedGmail', { count: Math.min(queuedItems.length, 15) })}</span>
+                <span className="truncate">
+                  {t('sendQueuedGmail', { count: Math.min(queuedItems.length, 15) })}
+                </span>
               </button>
             </div>
           )}
         </div>
 
-        <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 w-full sm:w-fit max-w-full">
+        <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth items-center gap-1 p-0.5 rounded-xl bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 w-full sm:w-fit max-w-full">
           {(
             [
               { id: 'all', label: t('topicAll') },
@@ -762,7 +767,7 @@ export function NotificationsView({
                   setCategoryFilter(cat.id);
                   scrollFilterButtonWithNeighbors(e.currentTarget);
                 }}
-                className={`relative px-2.5 py-1.5 min-h-[38px] sm:min-h-0 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                className={`relative px-2.5 py-1 rounded-lg text-[11.5px] font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   active
                     ? 'text-slate-900 dark:text-white'
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'

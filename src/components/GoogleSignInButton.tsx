@@ -53,14 +53,23 @@ export function GoogleSignInButton({
       whileTap={{ scale: 0.98 }}
       onClick={onConnect}
       disabled={connecting}
-      className="inline-flex items-center justify-center gap-2.5 h-10 px-4 rounded-xl border border-[#747775] dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-[#f8fafd] dark:hover:bg-slate-800 text-[#1f1f1f] dark:text-slate-100 text-sm font-medium tracking-[0.01em] shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-60 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-1"
+      className={`inline-flex items-center justify-center border border-[#747775] dark:border-slate-600 bg-white dark:bg-slate-900 hover:bg-[#f8fafd] dark:hover:bg-slate-800 text-[#1f1f1f] dark:text-slate-100 font-medium tracking-[0.01em] shadow-xs hover:shadow-sm transition-all cursor-pointer disabled:opacity-60 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-1 ${
+        compact
+          ? 'gap-1.5 h-8 px-2.5 rounded-lg text-[11.5px]'
+          : 'gap-2.5 h-10 px-4 rounded-xl text-sm'
+      }`}
     >
       {connecting ? (
-        <Loader2 className="w-4 h-4 text-[#1a73e8] animate-spin shrink-0" aria-hidden="true" />
+        <Loader2
+          className={`${compact ? 'w-3.5 h-3.5' : 'w-4 h-4'} text-[#1a73e8] animate-spin shrink-0`}
+          aria-hidden="true"
+        />
       ) : (
         <span
           aria-hidden="true"
-          className="w-5 h-5 rounded-full bg-white border border-slate-200 dark:border-slate-700 inline-flex items-center justify-center text-[13px] font-bold leading-none select-none shrink-0"
+          className={`${
+            compact ? 'w-4 h-4 text-[11px]' : 'w-5 h-5 text-[13px]'
+          } rounded-full bg-white border border-slate-200 dark:border-slate-700 inline-flex items-center justify-center font-bold leading-none select-none shrink-0`}
           style={{
             backgroundImage:
               'linear-gradient(135deg, #4285F4 0%, #34A853 40%, #FBBC05 70%, #EA4335 100%)',

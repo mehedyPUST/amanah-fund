@@ -391,22 +391,22 @@ export function TransactionHistory({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
       aria-label={t('memberTxHistoryAria')}
-      className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-6 space-y-5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
+      className="amanah-card-teal backdrop-blur-xl border ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-3 sm:p-4 space-y-2.5 shadow-[0_6px_28px_-14px_rgba(15,23,42,0.09)] dark:shadow-[0_10px_30px_-14px_rgba(0,0,0,0.45)] transition-all duration-200"
     >
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-teal-700 dark:text-teal-400">
-            <History className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{t('generalTreasuryLedger')}</span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 dark:text-teal-400">
+            <History className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{t('generalTreasuryLedger')}</span>
           </div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">
+          <h2 className="hidden sm:block text-sm font-semibold text-slate-900 dark:text-white truncate mt-0.5">
             {t('ledgerHeading')}
           </h2>
         </div>
 
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto shrink-0 [&>button]:min-h-[44px] sm:[&>button]:min-h-0 [&>button]:justify-center">
+        <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto shrink-0">
           {!compact && isStaff && !isAdmin && (
-            <div className="col-span-2 sm:col-span-1 flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl">
+            <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-0.5 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl flex-1 sm:flex-none">
               {(
                 [
                   { id: 'mine', label: t('myTransactions') },
@@ -422,7 +422,7 @@ export function TransactionHistory({
                       setScope(item.id);
                       scrollFilterButtonWithNeighbors(e.currentTarget);
                     }}
-                    className={`relative flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`relative flex-1 sm:flex-none px-2.5 py-1 text-[11.5px] font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                       active
                         ? 'text-slate-900 dark:text-white'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -446,9 +446,9 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleExportCsv}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
+              className="h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-teal-300 text-[11.5px] font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
             >
-              <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
+              <Download className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 shrink-0" aria-hidden="true" />
               <span>{tCommon('exportCsv')}</span>
             </button>
           )}
@@ -457,9 +457,9 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={handleDownloadPdf}
-              className={`px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-medium shadow-sm shadow-emerald-700/20 hover:shadow-md active:scale-[0.98] transition-all duration-150 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer ${!compact && filteredRows.length === 0 ? 'col-span-2 sm:col-span-1' : ''}`}
+              className="h-8 px-3 rounded-lg bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-[11.5px] font-medium shadow-xs active:scale-[0.98] transition-all duration-150 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
             >
-              <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+              <FileDown className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span>{tCommon('downloadPdf')}</span>
             </button>
           )}
@@ -468,7 +468,7 @@ export function TransactionHistory({
             <button
               type="button"
               onClick={() => onNavigate('transaction-history')}
-              className="col-span-2 sm:col-span-1 group px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
+              className="group h-8 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/85 hover:bg-slate-50 dark:hover:bg-slate-800 text-[11.5px] font-medium text-slate-700 dark:text-slate-200 inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer transition-all duration-150 active:scale-[0.98]"
             >
               <span>{t('openTransactions')}</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" aria-hidden="true" />
@@ -477,15 +477,15 @@ export function TransactionHistory({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 py-3 sm:py-3.5 border-y border-slate-100 dark:border-slate-800">
-        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
-          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-3 py-2 border-y border-slate-200/70 dark:border-slate-800/80">
+        <div className="px-2.5 py-1.5 sm:px-0 sm:py-0 rounded-lg bg-white/60 dark:bg-slate-900/45 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
             {t('approvedContributions')}
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
+          <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">
             {formatMoney(counts.approvedContribTotal, ccy)}
           </div>
-          <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+          <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 truncate">
             {t('submissionsCount', {
               count: counts.contribCount,
               label: counts.contribCount === 1 ? t('submissionSingular') : t('submissionPlural'),
@@ -493,14 +493,14 @@ export function TransactionHistory({
           </div>
         </div>
 
-        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
-          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+        <div className="px-2.5 py-1.5 sm:px-0 sm:py-0 rounded-lg bg-white/60 dark:bg-slate-900/45 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
             {t('loanRepaymentsPaid')}
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
+          <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-teal-700 dark:text-teal-400">
             {formatMoney(counts.paidRepayTotal, ccy)}
           </div>
-          <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+          <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 truncate">
             {t('verifiedAndActiveLoans', {
               paid: counts.paidRepayCount,
               active: activeLoans.length,
@@ -509,75 +509,89 @@ export function TransactionHistory({
           </div>
         </div>
 
-        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
-          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+        <div className="px-2.5 py-1.5 sm:px-0 sm:py-0 rounded-lg bg-white/60 dark:bg-slate-900/45 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
             {t('activeLoanRemaining')}
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+          <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {formatMoney(counts.activeLoanRemaining, ccy)}
           </div>
-          <div className="text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400">
+          <div className="text-[10px] sm:text-[11px] font-mono tabular-nums text-slate-500 dark:text-slate-400 truncate">
             {activeLoans.length > 0 ? t('zeroInterestPrincipal') : t('noActiveLoanBalance')}
           </div>
         </div>
 
-        <div className="p-2.5 sm:p-0 rounded-lg bg-white/60 dark:bg-slate-900/40 sm:bg-transparent sm:dark:bg-transparent">
-          <div className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+        <div className="px-2.5 py-1.5 sm:px-0 sm:py-0 rounded-lg bg-white/60 dark:bg-slate-900/45 sm:bg-transparent sm:dark:bg-transparent">
+          <div className="text-[10.5px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
             {t('pendingReview')}
           </div>
-          <div className="mt-1 text-base sm:text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
+          <div className="mt-0.5 text-sm sm:text-base font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">
             {counts.pendingCount}
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+          <div className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 truncate">
             {t('awaitingManagerRecon')}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-3">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 w-full lg:w-auto">
-          <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl w-full lg:w-fit">
-            {(
-              [
-                { id: 'all', label: t('allCount', { count: counts.total }) },
-                { id: 'contribution', label: t('contributionsCount', { count: counts.contribCount }) },
-                { id: 'loan_disbursement', label: t('disbursementsCount', { count: counts.disburseCount }) },
-                { id: 'loan_repayment', label: t('repaymentsCount', { count: counts.repayCount }) },
-              ] as const
-            ).map((tab) => {
-              const active = typeFilter === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={(e) => {
-                    setTypeFilter(tab.id);
-                    scrollFilterButtonWithNeighbors(e.currentTarget);
-                  }}
-                  className={`relative px-3 py-1.5 min-h-[36px] sm:min-h-0 text-xs font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                    active
-                      ? 'text-slate-900 dark:text-white'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  {active && (
-                    <motion.span
-                      layoutId="tx-type-pill"
-                      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                      className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
-                    />
-                  )}
-                  <span className="relative z-10">{tab.label}</span>
-                </button>
-              );
-            })}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
+        <div className="flex flex-nowrap overflow-x-auto no-scrollbar scroll-smooth max-w-full items-center gap-1 p-0.5 bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/75 dark:border-slate-700/75 rounded-xl w-full lg:w-fit">
+          {(
+            [
+              { id: 'all', label: t('allCount', { count: counts.total }) },
+              { id: 'contribution', label: t('contributionsCount', { count: counts.contribCount }) },
+              { id: 'loan_disbursement', label: t('disbursementsCount', { count: counts.disburseCount }) },
+              { id: 'loan_repayment', label: t('repaymentsCount', { count: counts.repayCount }) },
+            ] as const
+          ).map((tab) => {
+            const active = typeFilter === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={(e) => {
+                  setTypeFilter(tab.id);
+                  scrollFilterButtonWithNeighbors(e.currentTarget);
+                }}
+                className={`relative px-2.5 py-1 text-[11.5px] font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  active
+                    ? 'text-slate-900 dark:text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="tx-type-pill"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    className="absolute inset-0 rounded-lg bg-white dark:bg-slate-900 shadow-xs ring-1 ring-teal-500/20"
+                  />
+                )}
+                <span className="relative z-10">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] sm:flex items-center gap-1.5 w-full lg:w-auto">
+          <div className="relative min-w-0 flex-1 lg:w-60">
+            <Search
+              className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              className="w-full h-8 pl-8 pr-2.5 text-[11.5px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
+            />
           </div>
 
           <select
             aria-label={t('filterByStatusAria')}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-            className="w-full sm:w-auto min-h-[44px] sm:min-h-0 px-3 py-2 sm:py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/30"
+            className="h-8 px-2.5 text-[11.5px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-500/30 shrink-0"
           >
             <option value="all">{t('allStatuses')}</option>
             <option value="completed">{t('statusCompletedGroup')}</option>
@@ -586,29 +600,15 @@ export function TransactionHistory({
             <option value="attention">{t('statusAttentionGroup')}</option>
           </select>
         </div>
-
-        <div className="relative w-full lg:w-72">
-          <Search
-            className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-            aria-hidden="true"
-          />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="w-full pl-8 pr-3 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30"
-          />
-        </div>
       </div>
 
       {!compact && availableMonths.length > 0 && (
-        <div className="p-3.5 rounded-xl bg-slate-50/90 dark:bg-slate-950/75 border border-slate-200/80 dark:border-slate-800 space-y-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2 font-medium text-slate-800 dark:text-slate-200">
+        <div className="px-2.5 py-2 rounded-xl bg-slate-50/90 dark:bg-slate-950/75 border border-slate-200/80 dark:border-slate-800 space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11.5px]">
+            <div className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200 min-w-0">
               <CalendarRange className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
-              <span>{t('monthSlidingFilter')}</span>
-              <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400">
+              <span className="truncate">{t('monthSlidingFilter')}</span>
+              <span className="font-mono text-[11px] text-emerald-700 dark:text-emerald-400 truncate">
                 {monthRangeActive && activeStartMonth && activeEndMonth
                   ? `${formatBillingMonth(activeStartMonth)} — ${formatBillingMonth(activeEndMonth)}`
                   : t('allMonthsRange', {
@@ -618,29 +618,27 @@ export function TransactionHistory({
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!monthRangeActive) {
-                    setStartMonthIdx(0);
-                    setEndMonthIdx(maxMonthIdx);
-                    setMonthRangeActive(true);
-                  } else {
-                    setMonthRangeActive(false);
-                  }
-                }}
-                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-              >
-                {monthRangeActive ? t('showAllMonths') : t('enableMonthRange')}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!monthRangeActive) {
+                  setStartMonthIdx(0);
+                  setEndMonthIdx(maxMonthIdx);
+                  setMonthRangeActive(true);
+                } else {
+                  setMonthRangeActive(false);
+                }
+              }}
+              className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+            >
+              {monthRangeActive ? t('showAllMonths') : t('enableMonthRange')}
+            </button>
           </div>
 
-          {availableMonths.length > 1 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
-              <label className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <span className="w-16 shrink-0 font-medium">{t('fromLabel')}</span>
+          {monthRangeActive && availableMonths.length > 1 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 border-t border-slate-200/70 dark:border-slate-800/80 text-[11px]">
+              <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <span className="w-12 shrink-0 font-medium">{t('fromLabel')}</span>
                 <input
                   type="range"
                   aria-label={t('filterStartMonthAria')}
@@ -664,8 +662,8 @@ export function TransactionHistory({
                 </span>
               </label>
 
-              <label className="flex items-center gap-2.5 text-slate-600 dark:text-slate-400">
-                <span className="w-16 shrink-0 font-medium">{t('toLabel')}</span>
+              <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                <span className="w-12 shrink-0 font-medium">{t('toLabel')}</span>
                 <input
                   type="range"
                   aria-label={t('filterEndMonthAria')}
