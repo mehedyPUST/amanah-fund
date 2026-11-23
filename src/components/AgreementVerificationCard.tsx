@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   BadgeCheck,
-  CheckCircle2,
   Clock,
   FileCheck2,
   LogIn,
@@ -14,7 +13,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   UserPlus,
-  XCircle,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { PublicAgreementVerification } from '../types/coop.ts';
@@ -92,14 +90,6 @@ export function AgreementVerificationCard({
     if (!trimmed) return;
     router.push(`/verify/${encodeURIComponent(trimmed)}`);
   }
-
-  const activeHint = verification
-    ? verification.active
-      ? t('activeTrueHint')
-      : verification.status === 'suspended'
-        ? t('activeFalseSuspended')
-        : t('activeFalsePending')
-    : '';
 
   const isApprovedReached = Boolean(
     verification &&
@@ -211,10 +201,38 @@ export function AgreementVerificationCard({
 
         {verification ? (
           <>
+            {/* Name & Member ID */}
+            <div className="px-5 sm:px-6 py-1.5 border-b border-slate-100 dark:border-slate-800">
+              <dl className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
+                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {t('fieldName')}
+                  </dt>
+                  <dd className="sm:col-span-7 text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 break-words">
+                    <div>{verification.name}</div>
+                    {verification.nameBn && (
+                      <div className="mt-0.5 text-xs font-normal text-slate-600 dark:text-slate-400">
+                        {verification.nameBn}
+                      </div>
+                    )}
+                  </dd>
+                </div>
+
+                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
+                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {t('fieldMemberId')}
+                  </dt>
+                  <dd className="sm:col-span-7 text-sm font-mono font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                    {verification.memberCode}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
             {/* Membership Milestone Timeline */}
             <div
               aria-label={t('timelineHeading')}
-              className="px-5 sm:px-6 py-4 bg-slate-50/70 dark:bg-slate-950/35 border-b border-slate-100 dark:border-slate-800"
+              className="px-5 sm:px-6 py-4 bg-slate-50/75 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800"
             >
               <p className="text-[10.5px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">
                 {t('timelineHeading')}
@@ -302,92 +320,6 @@ export function AgreementVerificationCard({
                 })}
               </ol>
             </div>
-
-            {/* Verified Member Details */}
-            <div className="px-5 sm:px-6 py-1.5">
-              <dl className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {/* Name */}
-                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
-                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {t('fieldName')}
-                  </dt>
-                  <dd className="sm:col-span-7 text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 break-words">
-                    <div>{verification.name}</div>
-                    {verification.nameBn && (
-                      <div className="mt-0.5 text-xs font-normal text-slate-600 dark:text-slate-400">
-                        {verification.nameBn}
-                      </div>
-                    )}
-                  </dd>
-                </div>
-
-                {/* Member ID */}
-                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
-                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {t('fieldMemberId')}
-                  </dt>
-                  <dd className="sm:col-span-7 text-sm font-mono font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                    {verification.memberCode}
-                  </dd>
-                </div>
-
-                {/* Joining Date */}
-                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
-                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {t('fieldJoiningDate')}
-                  </dt>
-                  <dd className="sm:col-span-7 text-sm font-mono tabular-nums text-slate-800 dark:text-slate-200">
-                    {formatShortDate(verification.joiningDate)}
-                  </dd>
-                </div>
-
-                {/* Approving Date */}
-                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
-                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {t('fieldApprovalDate')}
-                  </dt>
-                  <dd
-                    className={`sm:col-span-7 text-sm ${
-                      verification.approvalDate
-                        ? 'font-mono tabular-nums text-slate-800 dark:text-slate-200'
-                        : 'font-medium text-amber-700 dark:text-amber-400'
-                    }`}
-                  >
-                    {verification.approvalDate
-                      ? formatShortDate(verification.approvalDate)
-                      : t('pendingApprovalValue')}
-                  </dd>
-                </div>
-
-                {/* Active or Not */}
-                <div className="py-3 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-start">
-                  <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400 sm:pt-0.5">
-                    {t('fieldActive')}
-                  </dt>
-                  <dd className="sm:col-span-7">
-                    <div
-                      className={`inline-flex items-center gap-1.5 text-sm font-semibold ${
-                        verification.active
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : verification.status === 'suspended'
-                            ? 'text-rose-700 dark:text-rose-400'
-                            : 'text-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {verification.active ? (
-                        <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      ) : (
-                        <XCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      )}
-                      <span>{verification.active ? t('activeTrue') : t('activeFalse')}</span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                      {activeHint}
-                    </p>
-                  </dd>
-                </div>
-              </dl>
-            </div>
           </>
         ) : (
           <div className="px-5 sm:px-6 py-5 space-y-4">
@@ -435,26 +367,26 @@ export function AgreementVerificationCard({
           </div>
         )}
 
-        {/* Modal CTA Footer: Join or Sign In to see more details */}
-        <div className="px-5 sm:px-6 py-4 bg-slate-50/85 dark:bg-slate-950/55 border-t border-slate-100 dark:border-slate-800 space-y-3">
+        {/* Modal CTA Footer: Join Amanah or Sign In */}
+        <div className="px-5 sm:px-6 py-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 space-y-3">
           <p className="text-xs font-medium text-slate-600 dark:text-slate-300 text-center">
             {t('moreDetailsPrompt')}
           </p>
 
           <div className="grid grid-cols-2 gap-2.5">
             <Link
-              href="/login"
-              className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
-            >
-              <LogIn className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-              <span>{t('signInCta')}</span>
-            </Link>
-            <Link
               href="/signup"
               className="min-h-[42px] px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
             >
               <UserPlus className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span>{t('joinCta')}</span>
+            </Link>
+            <Link
+              href="/login"
+              className="min-h-[42px] px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors"
+            >
+              <LogIn className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>{t('signInCta')}</span>
             </Link>
           </div>
         </div>
