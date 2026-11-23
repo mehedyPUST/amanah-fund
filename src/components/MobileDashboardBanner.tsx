@@ -22,7 +22,8 @@ import type {
 import { formatMoney, formatShortDate } from '../utils/format.ts';
 import { triggerHaptic } from '../utils/haptics.ts';
 
-import halalCampusImg from '../assets/images/halal_investment_campus_1795279894577.jpg';
+const TWO_STAGE_INVEST_IMAGE_URL =
+  'https://miro.medium.com/v2/1*m-SggRQCFQnJv3TL65I6zQ.jpeg';
 
 type BannerHue = 'emerald' | 'teal' | 'amber' | 'sky';
 
@@ -614,8 +615,9 @@ export function MobileDashboardBanner({
                       (!investmentImgFailed ? (
                         <div className="w-[96px] sm:w-[122px] h-[66px] sm:h-[74px] rounded-xl overflow-hidden border border-teal-300/70 dark:border-teal-700/60 bg-slate-100 dark:bg-slate-900 shadow-xs pointer-events-none select-none shrink-0">
                           <img
-                            src={halalCampusImg.src}
+                            src={TWO_STAGE_INVEST_IMAGE_URL}
                             alt={tLife('caption')}
+                            referrerPolicy="no-referrer"
                             onError={() => setInvestmentImgFailed(true)}
                             className="w-full h-full object-cover"
                           />

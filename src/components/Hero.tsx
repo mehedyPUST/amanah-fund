@@ -8,8 +8,10 @@ import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MotionCard, type CardHue } from './MotionCard.tsx';
 
-import heroTreasuryImg from '../assets/images/hero_cooperative_treasury_1795279894765.jpg';
-import halalCampusImg from '../assets/images/halal_investment_campus_1795279894577.jpg';
+const HERO_BANNER_IMAGE_URL =
+  'https://i.ibb.co.com/cc8kRKR3/Qard-Hasan-Banking-can-be-an-alternative.png';
+const TWO_STAGE_INVEST_IMAGE_URL =
+  'https://miro.medium.com/v2/1*m-SggRQCFQnJv3TL65I6zQ.jpeg';
 
 export function Hero({
   includeLifecycle = true,
@@ -170,13 +172,13 @@ export function Hero({
               ) : (
                 <>
                   <img
-                    src={heroTreasuryImg.src}
+                    src={HERO_BANNER_IMAGE_URL}
                     alt={tHero('fallbackTitle')}
                     referrerPolicy="no-referrer"
                     onError={() => setHeroImgFailed(true)}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
-                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-emerald-950/85 via-emerald-900/40 to-transparent flex items-end justify-between gap-3">
+                  <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-emerald-950/90 via-emerald-950/45 to-transparent flex items-end justify-between gap-3">
                     <div className="text-xs text-white/95 font-medium leading-snug">
                       {tHero('bannerCaption')}
                     </div>
@@ -262,13 +264,13 @@ export function HeroLifecycle({ embedded = false }: { embedded?: boolean }) {
             ) : (
               <>
                 <img
-                  src={halalCampusImg.src}
+                  src={TWO_STAGE_INVEST_IMAGE_URL}
                   alt={tLife('caption')}
                   referrerPolicy="no-referrer"
                   onError={() => setLifecycleImgFailed(true)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-center"
                 />
-                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-emerald-950/80 via-emerald-900/35 to-transparent">
+                <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-emerald-950/88 via-emerald-950/42 to-transparent">
                   <span className="text-xs font-medium text-white/95">
                     {tLife('caption')}
                   </span>
