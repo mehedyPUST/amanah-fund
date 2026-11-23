@@ -678,6 +678,7 @@ export function AdminReportsView({
             loans={loans}
             monthlySeries={monthlySeries}
             currency={ccy}
+            projectStartDate={config?.projectStartDate}
             loading={loading && monthlySeries.length === 0}
           />
 

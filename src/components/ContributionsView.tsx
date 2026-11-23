@@ -29,6 +29,10 @@ import {
   shortHash,
 } from '../utils/format.ts';
 import { isTopModal, registerTopModal, useBodyScrollLock } from '../utils/modalLock.ts';
+import {
+  isContributionOnOrAfterProjectStart,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { ContributionGoalTracker } from './ContributionGoalTracker.tsx';
 import { MotionCard } from './MotionCard.tsx';
@@ -437,13 +441,22 @@ export function ContributionsView({
     }, 180);
   }
 
+  const effectiveProjectStartDate = resolveProjectStartDate(config);
+  const scopedContributions = useMemo(
+    () =>
+      contributions.filter((c) =>
+        isContributionOnOrAfterProjectStart(c, effectiveProjectStartDate)
+      ),
+    [contributions, effectiveProjectStartDate]
+  );
+
   const myContributions = useMemo(
-    () => contributions.filter((c) => c.userId === user.id),
-    [contributions, user.id]
+    () => scopedContributions.filter((c) => c.userId === user.id),
+    [scopedContributions, user.id]
   );
   const otherContributions = useMemo(
-    () => contributions.filter((c) => c.userId !== user.id),
-    [contributions, user.id]
+    () => scopedContributions.filter((c) => c.userId !== user.id),
+    [scopedContributions, user.id]
   );
 
   const ownApprovedTotal = myContributions
@@ -457,9 +470,9 @@ export function ContributionsView({
     .reduce((sum, c) => sum + c.amount, 0);
   const othersApprovedCount = otherContributions.filter((c) => c.status === 'approved').length;
 
-  const activeCount = contributions.filter((c) => c.status === 'pending').length;
-  const deniedCount = contributions.filter((c) => c.status === 'rejected').length;
-  const historyCount = contributions.filter((c) => c.status === 'approved').length;
+  const activeCount = scopedContributions.filter((c) => c.status === 'pending').length;
+  const deniedCount = scopedContributions.filter((c) => c.status === 'rejected').length;
+  const historyCount = scopedContributions.filter((c) => c.status === 'approved').length;
 
   const filtered = contributions.filter((c) => {
     if (filter !== 'all' && c.status !== filter) return false;

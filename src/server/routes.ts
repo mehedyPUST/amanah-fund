@@ -168,6 +168,7 @@ import {
   verifyRegisteredDevicePinLogin,
 } from './deviceAuthService.ts';
 import { normalizeAndValidatePostLinks } from '../utils/communityLinks.ts';
+import { DEFAULT_PROJECT_START_DATE, isValidIsoDateYmd } from '../utils/projectDates.ts';
 import {
   isValidEmailTemplateKey,
   mergeEmailTemplateCollections,
@@ -6660,10 +6661,22 @@ apiRouter.patch(
         res.status(400).json({ error: 'Unsupported currency code.' });
         return;
       }
-      if (body.maturityDate !== undefined) {
-        const parsedDate = Date.parse(`${body.maturityDate}T00:00:00Z`);
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(body.maturityDate) || Number.isNaN(parsedDate)) {
-          res.status(400).json({ error: 'Maturity date must be a valid YYYY-MM-DD date.' });
+      if (body.projectStartDate !== undefined && !isValidIsoDateYmd(body.projectStartDate)) {
+        res.status(400).json({ error: 'Project start date must be a valid YYYY-MM-DD date.' });
+        return;
+      }
+      if (body.maturityDate !== undefined && !isValidIsoDateYmd(body.maturityDate)) {
+        res.status(400).json({ error: 'Maturity date must be a valid YYYY-MM-DD date.' });
+        return;
+      }
+      if (body.projectStartDate !== undefined || body.maturityDate !== undefined) {
+        const currentCfg = await loadFundConfigOnly();
+        const nextProjectStart = body.projectStartDate ?? (currentCfg.projectStartDate || DEFAULT_PROJECT_START_DATE);
+        const nextMaturity = body.maturityDate ?? currentCfg.maturityDate;
+        if (isValidIsoDateYmd(nextProjectStart) && isValidIsoDateYmd(nextMaturity) && nextProjectStart > nextMaturity) {
+          res.status(400).json({
+            error: 'Project start date cannot be later than the Halal maturity date.',
+          });
           return;
         }
       }
@@ -6797,6 +6810,16 @@ apiRouter.patch(
             to: requiredGuarantorsCount,
           };
           cfg.requiredGuarantorsCount = requiredGuarantorsCount;
+        }
+        if (
+          body.projectStartDate !== undefined &&
+          body.projectStartDate !== cfg.projectStartDate
+        ) {
+          changes.projectStartDate = {
+            from: cfg.projectStartDate ?? DEFAULT_PROJECT_START_DATE,
+            to: body.projectStartDate,
+          };
+          cfg.projectStartDate = body.projectStartDate;
         }
         if (body.maturityDate !== undefined && body.maturityDate !== cfg.maturityDate) {
           changes.maturityDate = { from: cfg.maturityDate, to: body.maturityDate };
@@ -6990,8 +7013,9 @@ apiRouter.patch(
           action: 'FUND_POLICY_UPDATED',
           resourceType: 'config',
           resourceId: cfg.id,
-          summary: `${viewer.name} updated cooperative policy (max ${cfg.maxLoansPerYear} loans/year, maturity ${cfg.maturityDate}, quorum ${cfg.voteThresholdNumerator}/${cfg.voteThresholdDenominator}, manager cycle ${cfg.managerCycleMonths ?? 3}m)`,
+          summary: `${viewer.name} updated cooperative policy (start ${cfg.projectStartDate ?? DEFAULT_PROJECT_START_DATE}, max ${cfg.maxLoansPerYear} loans/year, maturity ${cfg.maturityDate}, quorum ${cfg.voteThresholdNumerator}/${cfg.voteThresholdDenominator}, manager cycle ${cfg.managerCycleMonths ?? 3}m)`,
           payload: {
+            projectStartDate: cfg.projectStartDate ?? DEFAULT_PROJECT_START_DATE,
             maxLoansPerYear: cfg.maxLoansPerYear,
             maturityDate: cfg.maturityDate,
             managerCycleMonths: cfg.managerCycleMonths ?? 3,
@@ -7012,6 +7036,7 @@ apiRouter.patch(
       });
 
       broadcastRealtimeEvent('config:updated', {
+        projectStartDate: nextState.fundConfig.projectStartDate,
         maxLoansPerYear: nextState.fundConfig.maxLoansPerYear,
         maturityDate: nextState.fundConfig.maturityDate,
       });

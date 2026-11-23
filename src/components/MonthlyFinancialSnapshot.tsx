@@ -16,6 +16,11 @@ import {
   formatMoney,
   getDhakaCurrentYearMonth,
 } from '../utils/format.ts';
+import {
+  isContributionOnOrAfterProjectStart,
+  isLoanOnOrAfterProjectStart,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 
 export type SnapshotNavTarget = DashboardSectionId;
 
@@ -39,9 +44,12 @@ export function MonthlyFinancialSnapshot({
 
   const snapshot = useMemo(() => {
     const { monthKey: currentMonth } = getDhakaCurrentYearMonth();
+    const effectiveStartDate = resolveProjectStartDate(config);
 
     const monthContribs = contributions.filter(
-      (c) => (c.billingMonth || c.submittedAt.slice(0, 7)) === currentMonth
+      (c) =>
+        isContributionOnOrAfterProjectStart(c, effectiveStartDate) &&
+        (c.billingMonth || c.submittedAt.slice(0, 7)) === currentMonth
     );
     const approvedContribs = monthContribs.filter((c) => c.status === 'approved');
     const pendingContribs = monthContribs.filter((c) => c.status === 'pending');
@@ -51,12 +59,14 @@ export function MonthlyFinancialSnapshot({
 
     const monthWithdrawnLoans = loans.filter((l) => {
       if (l.status !== 'active' && l.status !== 'repaid') return false;
+      if (!isLoanOnOrAfterProjectStart(l, effectiveStartDate)) return false;
       const loanMonth = (l.disbursedAt || l.approvedAt || l.requestedAt).slice(0, 7);
       return loanMonth === currentMonth;
     });
 
     const monthAwaitingRelease = loans.filter((l) => {
       if (l.status !== 'approved_pending_disbursement') return false;
+      if (!isLoanOnOrAfterProjectStart(l, effectiveStartDate)) return false;
       const approvedMonth = (l.approvedAt || l.requestedAt).slice(0, 7);
       return approvedMonth === currentMonth;
     });
@@ -85,7 +95,7 @@ export function MonthlyFinancialSnapshot({
       contribSharePct,
       loanSharePct,
     };
-  }, [contributions, loans]);
+  }, [contributions, loans, config]);
 
   if (loading) {
     return (

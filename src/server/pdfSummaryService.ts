@@ -1,10 +1,15 @@
 import { jsPDF } from 'jspdf';
 import type { PublicUser } from '../types/coop.ts';
+import {
+  isContributionOnOrAfterProjectStart,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 import { buildDashboardOverview, buildManagerCycleSchedule } from './coopService.ts';
 import type { VaultState } from './db.ts';
 
 export interface MonthlyFundSummaryData {
   monthKey: string;
+  projectStartDate: string;
   fundName: string;
   currency: string;
   generatedAt: string;
@@ -73,16 +78,24 @@ export function buildMonthlyFundSummaryData(
     joinedAt: new Date().toISOString(),
   };
 
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
   const overview = buildDashboardOverview(state, syntheticViewer);
   const contributingMembers = state.users.filter(
     (u) => u.status === 'active' && u.role !== 'admin'
   );
-  const monthContribs = state.contributions.filter((c) => c.billingMonth === targetMonth);
+  const monthContribs = state.contributions.filter(
+    (c) =>
+      c.billingMonth === targetMonth &&
+      isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
   const approvedForMonth = monthContribs.filter((c) => c.status === 'approved');
 
   const clearedSet = new Set(approvedForMonth.map((c) => c.userId));
   const collected = approvedForMonth.reduce((sum, c) => sum + c.amount, 0);
-  const target = contributingMembers.length * state.fundConfig.monthlyContributionAmount;
+  const target =
+    targetMonth >= projectStartDate.slice(0, 7)
+      ? contributingMembers.length * state.fundConfig.monthlyContributionAmount
+      : 0;
 
   const activeLoans = (overview.treasury.activeBorrowers || []).map((item) => ({
     id: item.loanId,
@@ -97,6 +110,7 @@ export function buildMonthlyFundSummaryData(
 
   return {
     monthKey: targetMonth,
+    projectStartDate,
     fundName: state.fundConfig.fundName,
     currency: state.fundConfig.currency,
     generatedAt: new Date().toISOString(),
@@ -156,7 +170,11 @@ export function generateMonthlyFundSummaryPdfBuffer(
   doc.setFontSize(9.5);
   doc.text(`Monthly Fund Audit & Activity Summary — Period: ${summary.monthKey}`, margin, 18.5);
   doc.setFontSize(8);
-  doc.text(`Generated UTC: ${summary.generatedAt.slice(0, 19).replace('T', ' ')}`, margin, 24);
+  doc.text(
+    `Project Start: ${summary.projectStartDate}   |   Generated UTC: ${summary.generatedAt.slice(0, 19).replace('T', ' ')}`,
+    margin,
+    24
+  );
 
   y = 36;
   doc.setTextColor(15, 23, 42);

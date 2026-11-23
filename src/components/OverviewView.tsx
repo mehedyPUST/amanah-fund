@@ -23,6 +23,7 @@ import type {
   PublicUser,
 } from '../types/coop.ts';
 import { formatMoney, formatShortDate } from '../utils/format.ts';
+import { resolveProjectStartDate } from '../utils/projectDates.ts';
 import type { ManagerDeskTab } from './ManagerDeskView.tsx';
 import { MotionCard } from './MotionCard.tsx';
 import { StatusText } from './StatusText.tsx';
@@ -153,6 +154,10 @@ export function OverviewView({
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
             <span className="font-semibold text-emerald-700 dark:text-emerald-400">
               {phase === 'qard_hasan' ? t('phase1Title') : t('phase2Title')}
+            </span>
+            <span aria-hidden="true">·</span>
+            <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">
+              {t('projectStart', { date: formatShortDate(resolveProjectStartDate(config)) })}
             </span>
             <span aria-hidden="true">·</span>
             <span className="font-mono tabular-nums text-slate-700 dark:text-slate-300">

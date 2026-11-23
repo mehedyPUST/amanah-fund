@@ -28,6 +28,7 @@ import type {
 } from '../types/coop.ts';
 import { createDefaultFaqs, sortFaqItems } from '../utils/faqDefaults.ts';
 import { sanitizeMobileMemberOverviewIcons } from '../utils/mobileOverviewTiles.ts';
+import { DEFAULT_PROJECT_START_DATE, isValidIsoDateYmd } from '../utils/projectDates.ts';
 
 export interface StoredRegisteredDevice {
   deviceId: string;
@@ -288,7 +289,7 @@ function extractSafeErrorCode(err: unknown): string {
 /** Empty cooperative vault — no demo users, loans, or sample content.
  *  Fund defaults are starting values only; admins change them in Site Settings.
  *  The first registered account becomes the bootstrap admin (see /auth/register). */
-function createEmptyVaultState(): VaultState {
+export function createEmptyVaultState(): VaultState {
   const now = new Date().toISOString();
   const fundConfig: FundConfig = {
     id: 'default-config',
@@ -302,6 +303,7 @@ function createEmptyVaultState(): VaultState {
     requiredGuarantorsCount: 1,
     voteThresholdNumerator: 2,
     voteThresholdDenominator: 3,
+    projectStartDate: DEFAULT_PROJECT_START_DATE,
     maturityDate: '2036-12-31',
     maxMembersCap: 20,
     membershipIntakeDeadline: '2027-07-31',
@@ -369,7 +371,7 @@ function purgeOrphanRecords(state: VaultState): { state: VaultState; changed: bo
   return { state, changed };
 }
 
-function normalizeVaultState(state: VaultState): VaultState {
+export function normalizeVaultState(state: VaultState): VaultState {
   purgeOrphanRecords(state);
   state.emailNotifications = Array.isArray(state.emailNotifications)
     ? state.emailNotifications
@@ -427,6 +429,9 @@ function normalizeVaultState(state: VaultState): VaultState {
     }
     if (!state.fundConfig.managerCycleStartDate) {
       state.fundConfig.managerCycleStartDate = '2026-01-01';
+    }
+    if (!isValidIsoDateYmd(state.fundConfig.projectStartDate)) {
+      state.fundConfig.projectStartDate = DEFAULT_PROJECT_START_DATE;
     }
     if (state.fundConfig.monthlyReportAutoEmail === undefined) {
       state.fundConfig.monthlyReportAutoEmail = true;

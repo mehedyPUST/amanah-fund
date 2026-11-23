@@ -97,6 +97,7 @@ export function StatisticsView({
         currency={ccy}
         currentUserId={user.id}
         centralBalance={overview?.treasury.centralBalance || 0}
+        projectStartDate={overview?.config.projectStartDate}
         loading={loading}
         onSubmitContribution={() => onNavigate('monthly-contribution')}
       />
@@ -106,6 +107,7 @@ export function StatisticsView({
         loans={loans}
         monthlySeries={monthlySeries}
         currency={ccy}
+        projectStartDate={overview?.config.projectStartDate}
         loading={loading && monthlySeries.length === 0}
       />
 

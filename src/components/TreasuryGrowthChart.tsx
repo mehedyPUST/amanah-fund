@@ -25,6 +25,12 @@ import type {
   MonthlyCashflowPoint,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
+import {
+  isContributionOnOrAfterProjectStart,
+  isIsoRecordOnOrAfterProjectStart,
+  isLoanOnOrAfterProjectStart,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 
 interface TreasuryGrowthChartProps {
   contributions: Contribution[];
@@ -33,6 +39,7 @@ interface TreasuryGrowthChartProps {
   currency: FundConfig['currency'];
   currentUserId: string;
   centralBalance: number;
+  projectStartDate?: string;
   loading?: boolean;
   onSubmitContribution?: () => void;
 }
@@ -104,6 +111,7 @@ export function TreasuryGrowthChart({
   currency,
   currentUserId,
   centralBalance,
+  projectStartDate,
   loading = false,
   onSubmitContribution,
 }: TreasuryGrowthChartProps) {
@@ -123,6 +131,9 @@ export function TreasuryGrowthChart({
   };
 
   const fullSeries = useMemo<TreasuryPoint[]>(() => {
+    const effectiveStartDate = resolveProjectStartDate({ projectStartDate });
+    const effectiveStartYm = effectiveStartDate.slice(0, 7);
+
     const buckets = new Map<
       string,
       {
@@ -148,6 +159,7 @@ export function TreasuryGrowthChart({
     };
 
     monthlySeries.forEach((pt) => {
+      if (pt.month < effectiveStartYm) return;
       const b = ensureBucket(pt.month);
       b.approvedContributions = pt.contributions;
       b.loanOutflow = pt.disbursed;
@@ -161,6 +173,7 @@ export function TreasuryGrowthChart({
         b.myContributions = 0;
       });
       contributions.forEach((c) => {
+        if (!isContributionOnOrAfterProjectStart(c, effectiveStartDate)) return;
         const ym = c.billingMonth || c.submittedAt.slice(0, 7);
         const b = ensureBucket(ym);
         if (c.status === 'approved') {
@@ -181,15 +194,20 @@ export function TreasuryGrowthChart({
       });
       loans.forEach((l) => {
         if (
-          l.status === 'approved_pending_disbursement' ||
-          l.status === 'active' ||
-          l.status === 'repaid'
+          (l.status === 'approved_pending_disbursement' ||
+            l.status === 'active' ||
+            l.status === 'repaid') &&
+          isLoanOnOrAfterProjectStart(l, effectiveStartDate)
         ) {
           const ym = (l.disbursedAt || l.approvedAt || l.requestedAt).slice(0, 7);
           ensureBucket(ym).loanOutflow += l.amount;
         }
         l.installments.forEach((inst) => {
-          if (inst.status === 'paid' && inst.paidAt) {
+          if (
+            inst.status === 'paid' &&
+            inst.paidAt &&
+            isIsoRecordOnOrAfterProjectStart(inst.paidAt, effectiveStartDate)
+          ) {
             ensureBucket(inst.paidAt.slice(0, 7)).repaid += inst.paidAmount;
           }
         });
@@ -217,7 +235,7 @@ export function TreasuryGrowthChart({
         treasuryBalance: runningTreasury,
       };
     });
-  }, [contributions, loans, monthlySeries, currentUserId]);
+  }, [contributions, loans, monthlySeries, currentUserId, projectStartDate]);
 
   const visibleSeries = useMemo(() => {
     if (range === '6m') return fullSeries.slice(-6);

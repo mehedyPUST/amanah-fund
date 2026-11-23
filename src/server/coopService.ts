@@ -38,6 +38,13 @@ import {
 } from '../utils/inputLanguage.ts';
 import { computeSha256Hash, decryptSensitiveObject, encryptSensitiveObject } from './crypto.ts';
 import { isNotificationForUser } from '../utils/notificationAlerts.ts';
+import {
+  computeEffectiveMemberStartMonth,
+  isContributionOnOrAfterProjectStart,
+  isIsoRecordOnOrAfterProjectStart,
+  isLoanOnOrAfterProjectStart,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 import { getStorageEngine, type StoredUser, type VaultState } from './db.ts';
 
 export function queueEmailNotification(
@@ -174,9 +181,14 @@ export function extractMentionedUsers(
   return matched;
 }
 
-export function evaluateLoanEligibility(state: VaultState, userId: string): EligibilityCheck {
-  const currentYear = new Date().getFullYear();
+export function evaluateLoanEligibility(
+  state: VaultState,
+  userId: string,
+  referenceDate = new Date()
+): EligibilityCheck {
+  const currentYear = referenceDate.getUTCFullYear();
   const maxLoansPerYear = state.fundConfig.maxLoansPerYear;
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
   const targetUser = state.users.find((u) => u.id === userId);
 
   if (targetUser?.role === 'admin') {
@@ -195,8 +207,11 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
     };
   }
 
-  const userLoans = state.loans.filter((l) => l.borrowerId === userId);
-  const activeOrPendingLoan = userLoans.find((l) =>
+  const allUserLoans = state.loans.filter((l) => l.borrowerId === userId);
+  const projectUserLoans = allUserLoans.filter((l) =>
+    isLoanOnOrAfterProjectStart(l, projectStartDate)
+  );
+  const activeOrPendingLoan = allUserLoans.find((l) =>
     [
       'pending_guarantor',
       'pending_manager_review',
@@ -207,7 +222,7 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
   );
   const noActiveLoan = !activeOrPendingLoan;
 
-  const overdueCount = userLoans.reduce(
+  const overdueCount = allUserLoans.reduce(
     (sum, l) =>
       sum +
       l.installments.filter(
@@ -217,20 +232,25 @@ export function evaluateLoanEligibility(state: VaultState, userId: string): Elig
   );
   const noOverdueInstallments = overdueCount === 0;
 
-  // Count non-rejected loans requested in the current calendar year
-  const loansUsedThisYear = userLoans.filter((l) => {
-    const reqYear = new Date(l.requestedAt).getFullYear();
+  // Count non-rejected loans requested on or after projectStartDate in the current calendar year
+  const loansUsedThisYear = projectUserLoans.filter((l) => {
+    const reqYear = new Date(l.requestedAt).getUTCFullYear();
     return reqYear === currentYear && l.status !== 'rejected';
   }).length;
 
   const quotaAvailable = loansUsedThisYear < maxLoansPerYear;
 
-  const now = new Date();
+  const now = referenceDate;
   const maturity = new Date(`${state.fundConfig.maturityDate}T23:59:59.999Z`);
   const beforeMaturityDate = now <= maturity;
 
   const memberTotalSavings = state.contributions
-    .filter((c) => c.userId === userId && c.status === 'approved')
+    .filter(
+      (c) =>
+        c.userId === userId &&
+        c.status === 'approved' &&
+        isContributionOnOrAfterProjectStart(c, projectStartDate)
+    )
     .reduce((sum, c) => sum + c.amount, 0);
 
   const savingsCapPct = state.fundConfig.loanSavingsCapPct;
@@ -368,19 +388,34 @@ function listBillingMonthsBetween(startYm: string, endYm: string): string[] {
   return out;
 }
 
-export function buildDashboardOverview(state: VaultState, currentUser: PublicUser): DashboardOverview {
-  const approvedContributions = state.contributions.filter((c) => c.status === 'approved');
-  const pendingContributions = state.contributions.filter((c) => c.status === 'pending');
+export function buildDashboardOverview(
+  state: VaultState,
+  currentUser: PublicUser,
+  referenceDate = new Date()
+): DashboardOverview {
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
+  const projectStartYm = projectStartDate.slice(0, 7);
+
+  const approvedContributions = state.contributions.filter(
+    (c) => c.status === 'approved' && isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
+  const pendingContributions = state.contributions.filter(
+    (c) => c.status === 'pending' && isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
 
   const totalContributionsPool = approvedContributions.reduce((sum, c) => sum + c.amount, 0);
   const pendingContributionsAmount = pendingContributions.reduce((sum, c) => sum + c.amount, 0);
 
+  const projectLoans = state.loans.filter((l) =>
+    isLoanOnOrAfterProjectStart(l, projectStartDate)
+  );
+
   // Only confirmed / disbursed loans ('active' or 'repaid') deduct from central fund balance
-  const disbursedLoans = state.loans.filter((l) => l.status === 'active' || l.status === 'repaid');
+  const disbursedLoans = projectLoans.filter((l) => l.status === 'active' || l.status === 'repaid');
   const approvedLoansDeducted = disbursedLoans.reduce((sum, l) => sum + l.amount, 0);
   const totalLoansDisbursed = approvedLoansDeducted;
   const totalRepaid = disbursedLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
-  const activeLoansList = state.loans.filter((l) => l.status === 'active');
+  const activeLoansList = projectLoans.filter((l) => l.status === 'active');
   const activeLoansOutstanding = activeLoansList.reduce((sum, l) => sum + l.remainingBalance, 0);
 
   // Central balance: + Approved Contributions - Disbursed Loans + Verified Loan Repayments
@@ -389,18 +424,18 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   const amanahHeight = totalContributionsPool;
   const quardHasanTotalCurrent = activeLoansOutstanding;
 
-  const pendingLoansReviewCount = state.loans.filter(
+  const pendingLoansReviewCount = projectLoans.filter(
     (l) => l.status === 'pending_manager_review'
   ).length;
-  const pendingVotesCount = state.loans.filter((l) => l.status === 'pending_vote').length;
-  const pendingDisbursementsCount = state.loans.filter(
+  const pendingVotesCount = projectLoans.filter((l) => l.status === 'pending_vote').length;
+  const pendingDisbursementsCount = projectLoans.filter(
     (l) => l.status === 'approved_pending_disbursement'
   ).length;
-  const pendingRepaymentsCount = state.loans.reduce(
+  const pendingRepaymentsCount = projectLoans.reduce(
     (sum, l) => sum + l.installments.filter((i) => i.status === 'pending_verification').length,
     0
   );
-  const overdueInstallmentsCount = state.loans.reduce(
+  const overdueInstallmentsCount = projectLoans.reduce(
     (sum, l) =>
       sum + (l.status === 'active' ? l.installments.filter((i) => i.status === 'overdue').length : 0),
     0
@@ -410,13 +445,17 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     Math.round(
       state.halalProjects.reduce(
         (sum, proj) =>
-          sum + (proj.distributions || []).reduce((dSum, dist) => dSum + dist.distributablePool, 0),
+          sum +
+          (proj.distributions || [])
+            .filter((dist) => isIsoRecordOnOrAfterProjectStart(dist.distributedAt, projectStartDate))
+            .reduce((dSum, dist) => dSum + dist.distributablePool, 0),
         0
       ) * 100
     ) / 100;
 
-  const now = new Date();
+  const now = referenceDate;
   const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const isProjectMonthActive = currentMonthKey >= projectStartYm;
   const monthlyTarget = state.fundConfig.monthlyContributionAmount || 5000;
 
   // Contributing members exclude Admin accounts
@@ -426,7 +465,10 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
 
   const thisMonthMemberClearance: MonthClearanceEntry[] = contributingActiveMembers.map((m) => {
     const memberMonthContribs = state.contributions.filter(
-      (c) => c.userId === m.id && c.billingMonth === currentMonthKey
+      (c) =>
+        c.userId === m.id &&
+        c.billingMonth === currentMonthKey &&
+        isContributionOnOrAfterProjectStart(c, projectStartDate)
     );
     const approvedAmt = memberMonthContribs
       .filter((c) => c.status === 'approved')
@@ -434,7 +476,8 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     const pendingAmt = memberMonthContribs
       .filter((c) => c.status === 'pending')
       .reduce((s, c) => s + c.amount, 0);
-    const cleared = approvedAmt >= monthlyTarget;
+    const targetForMonth = isProjectMonthActive ? monthlyTarget : 0;
+    const cleared = isProjectMonthActive ? approvedAmt >= monthlyTarget : true;
     return {
       userId: m.id,
       memberName: m.name,
@@ -442,14 +485,16 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       role: m.role,
       cleared,
       contributedAmount: approvedAmt,
-      targetAmount: monthlyTarget,
+      targetAmount: targetForMonth,
       status: cleared ? 'cleared' : pendingAmt > 0 ? 'pending' : 'due',
     };
   });
 
   const thisMonthClearanceTotalMembers = contributingActiveMembers.length;
   const thisMonthClearanceClearedMembers = thisMonthMemberClearance.filter((e) => e.cleared).length;
-  const thisMonthContributionTarget = thisMonthClearanceTotalMembers * monthlyTarget;
+  const thisMonthContributionTarget = isProjectMonthActive
+    ? thisMonthClearanceTotalMembers * monthlyTarget
+    : 0;
   const thisMonthContributionCollected = approvedContributions
     .filter((c) => c.billingMonth === currentMonthKey)
     .reduce((s, c) => s + c.amount, 0);
@@ -457,8 +502,15 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   let cumulativeExpectedTarget = 0;
   let cumulativeUnpaidDue = 0;
   contributingActiveMembers.forEach((m) => {
-    const joinedYm = m.joinedAt ? m.joinedAt.slice(0, 7) : currentMonthKey;
-    const months = listBillingMonthsBetween(joinedYm <= currentMonthKey ? joinedYm : currentMonthKey, currentMonthKey);
+    const effectiveStartYm = computeEffectiveMemberStartMonth(
+      m.joinedAt,
+      projectStartYm,
+      currentMonthKey
+    );
+    const months =
+      effectiveStartYm <= currentMonthKey
+        ? listBillingMonthsBetween(effectiveStartYm, currentMonthKey)
+        : [];
     const expected = months.length * monthlyTarget;
     cumulativeExpectedTarget += expected;
     const paidForWindow = approvedContributions
@@ -473,7 +525,11 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   let thisMonthHasanInstallmentNeed = 0;
   let thisMonthHasanInstallmentCollected = 0;
   state.loans
-    .filter((l) => l.status === 'active' || l.status === 'repaid')
+    .filter(
+      (l) =>
+        (l.status === 'active' || l.status === 'repaid') &&
+        isLoanOnOrAfterProjectStart(l, projectStartDate)
+    )
     .forEach((l) => {
       l.installments.forEach((inst) => {
         const dueInCurrentMonth = inst.dueDate.slice(0, 7) === currentMonthKey;
@@ -505,7 +561,9 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     };
   });
 
-  const personalContribs = state.contributions.filter((c) => c.userId === currentUser.id);
+  const personalContribs = state.contributions.filter(
+    (c) => c.userId === currentUser.id && isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
   const personalApproved = personalContribs.filter((c) => c.status === 'approved');
   const personalPending = personalContribs.filter((c) => c.status === 'pending');
 
@@ -536,8 +594,15 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
   let dueContributionMonths = 0;
   let dueContributionAmount = 0;
   if (currentUser.role !== 'admin') {
-    const joinedYm = currentUser.joinedAt ? currentUser.joinedAt.slice(0, 7) : currentMonthKey;
-    const months = listBillingMonthsBetween(joinedYm <= currentMonthKey ? joinedYm : currentMonthKey, currentMonthKey);
+    const effectiveStartYm = computeEffectiveMemberStartMonth(
+      currentUser.joinedAt,
+      projectStartYm,
+      currentMonthKey
+    );
+    const months =
+      effectiveStartYm <= currentMonthKey
+        ? listBillingMonthsBetween(effectiveStartYm, currentMonthKey)
+        : [];
     months.forEach((ym) => {
       const paidForMonth = personalApproved
         .filter((c) => c.billingMonth === ym)
@@ -549,7 +614,7 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
     });
   }
 
-  const personalLoans = state.loans.filter((l) => l.borrowerId === currentUser.id);
+  const personalLoans = projectLoans.filter((l) => l.borrowerId === currentUser.id);
   const personalActiveLoans = personalLoans.filter((l) => l.status === 'active');
   const activeLoanBalance = personalActiveLoans.reduce((sum, l) => sum + l.remainingBalance, 0);
   const activeLoanMainAmount = personalActiveLoans.reduce((sum, l) => sum + l.amount, 0);
@@ -595,14 +660,16 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       state.halalProjects.reduce(
         (sum, proj) =>
           sum +
-          (proj.distributions || []).reduce(
-            (dSum, dist) =>
-              dSum +
-              dist.allocations
-                .filter((a) => a.userId === currentUser.id)
-                .reduce((aSum, a) => aSum + a.payoutAmount, 0),
-            0
-          ),
+          (proj.distributions || [])
+            .filter((dist) => isIsoRecordOnOrAfterProjectStart(dist.distributedAt, projectStartDate))
+            .reduce(
+              (dSum, dist) =>
+                dSum +
+                dist.allocations
+                  .filter((a) => a.userId === currentUser.id)
+                  .reduce((aSum, a) => aSum + a.payoutAmount, 0),
+              0
+            ),
         0
       ) * 100
     ) / 100;
@@ -685,20 +752,24 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
         : paidMonths.has(prevMonthKey)
           ? prevMonthKey
           : '';
-      while (cursor && paidMonths.has(cursor) && streak < 120) {
+      while (cursor && cursor >= projectStartYm && paidMonths.has(cursor) && streak < 120) {
         streak += 1;
         cursor = shiftMonthBack(cursor);
       }
 
-      const joined = new Date(member.joinedAt);
-      const monthsSinceJoined = Number.isNaN(joined.getTime())
-        ? 1
-        : Math.max(
-            1,
-            (now.getUTCFullYear() - joined.getUTCFullYear()) * 12 +
-              (now.getUTCMonth() - joined.getUTCMonth()) +
-              1
-          );
+      const effectiveStartYm = computeEffectiveMemberStartMonth(
+        member.joinedAt,
+        projectStartYm,
+        currentMonthKey
+      );
+      let monthsSinceJoined = 0;
+      if (effectiveStartYm <= currentMonthKey) {
+        const [sy, sm] = effectiveStartYm.split('-').map(Number);
+        monthsSinceJoined = Math.max(
+          1,
+          (now.getUTCFullYear() - sy) * 12 + (now.getUTCMonth() + 1 - sm) + 1
+        );
+      }
       const denominator = Math.max(monthsSinceJoined, approvedMonthsCount, 1);
       const consistencyScore = Math.min(
         100,
@@ -790,7 +861,7 @@ export function buildDashboardOverview(state: VaultState, currentUser: PublicUse
       nextLoanDeadline,
       nextOverallDeadline,
       totalProfitDistributed,
-      eligibility: evaluateLoanEligibility(state, currentUser.id),
+      eligibility: evaluateLoanEligibility(state, currentUser.id, now),
     },
     monthlySeries,
     leaderboard,
@@ -972,15 +1043,21 @@ export function buildMemberSummaries(
   state: VaultState,
   includeRegistrationDetails = false
 ): MemberSummary[] {
-  const currentYear = new Date().getFullYear();
+  const currentYear = new Date().getUTCFullYear();
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
   return state.users.map((u) => {
     const approvedContribs = state.contributions.filter(
-      (c) => c.userId === u.id && c.status === 'approved'
+      (c) =>
+        c.userId === u.id &&
+        c.status === 'approved' &&
+        isContributionOnOrAfterProjectStart(c, projectStartDate)
     );
     const totalContributed = approvedContribs.reduce((s, c) => s + c.amount, 0);
-    const userLoans = state.loans.filter((l) => l.borrowerId === u.id);
+    const userLoans = state.loans.filter(
+      (l) => l.borrowerId === u.id && isLoanOnOrAfterProjectStart(l, projectStartDate)
+    );
     const loansThisYear = userLoans.filter(
-      (l) => new Date(l.requestedAt).getFullYear() === currentYear && l.status !== 'rejected'
+      (l) => new Date(l.requestedAt).getUTCFullYear() === currentYear && l.status !== 'rejected'
     ).length;
     const activeLoanBalance = userLoans
       .filter((l) => l.status === 'active')
@@ -1046,11 +1123,15 @@ export function buildMemberSummaries(
 export function buildMemberPublicProfile(
   state: VaultState,
   targetUserId: string,
-  viewer: PublicUser
+  viewer: PublicUser,
+  referenceDate = new Date()
 ): MemberPublicProfile | null {
   const target = state.users.find((u) => u.id === targetUserId);
   if (!target) return null;
   if (target.status !== 'active' && viewer.role !== 'admin') return null;
+
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
+  const projectStartYm = projectStartDate.slice(0, 7);
 
   let reg: UserRegistrationDetails | undefined;
   if (target.encryptedRegistrationDetails) {
@@ -1061,10 +1142,14 @@ export function buildMemberPublicProfile(
     }
   }
 
-  const allApprovedContribs = state.contributions.filter((c) => c.status === 'approved');
+  const allApprovedContribs = state.contributions.filter(
+    (c) => c.status === 'approved' && isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
   const totalPool = allApprovedContribs.reduce((sum, c) => sum + c.amount, 0);
 
-  const memberContribs = state.contributions.filter((c) => c.userId === target.id);
+  const memberContribs = state.contributions.filter(
+    (c) => c.userId === target.id && isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
   const memberApproved = memberContribs.filter((c) => c.status === 'approved');
   const memberPending = memberContribs.filter((c) => c.status === 'pending');
 
@@ -1072,7 +1157,7 @@ export function buildMemberPublicProfile(
   const paidMonths = new Set(memberApproved.map((c) => c.billingMonth));
   const approvedMonthsCount = paidMonths.size;
 
-  const now = new Date();
+  const now = referenceDate;
   const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
   const prevMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   const prevMonthKey = `${prevMonthDate.getUTCFullYear()}-${String(prevMonthDate.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -1090,20 +1175,24 @@ export function buildMemberPublicProfile(
     : paidMonths.has(prevMonthKey)
       ? prevMonthKey
       : '';
-  while (cursor && paidMonths.has(cursor) && streak < 120) {
+  while (cursor && cursor >= projectStartYm && paidMonths.has(cursor) && streak < 120) {
     streak += 1;
     cursor = shiftMonthBack(cursor);
   }
 
-  const joined = new Date(target.joinedAt);
-  const monthsSinceJoined = Number.isNaN(joined.getTime())
-    ? 1
-    : Math.max(
-        1,
-        (now.getUTCFullYear() - joined.getUTCFullYear()) * 12 +
-          (now.getUTCMonth() - joined.getUTCMonth()) +
-          1
-      );
+  const effectiveStartYm = computeEffectiveMemberStartMonth(
+    target.joinedAt,
+    projectStartYm,
+    currentMonthKey
+  );
+  let monthsSinceJoined = 0;
+  if (effectiveStartYm <= currentMonthKey) {
+    const [sy, sm] = effectiveStartYm.split('-').map(Number);
+    monthsSinceJoined = Math.max(
+      1,
+      (now.getUTCFullYear() - sy) * 12 + (now.getUTCMonth() + 1 - sm) + 1
+    );
+  }
   const denominator = Math.max(monthsSinceJoined, approvedMonthsCount, 1);
   const consistencyScore = Math.min(100, Math.round((approvedMonthsCount / denominator) * 100));
 
@@ -1115,19 +1204,23 @@ export function buildMemberPublicProfile(
       state.halalProjects.reduce(
         (sum, proj) =>
           sum +
-          (proj.distributions || []).reduce(
-            (dSum, dist) =>
-              dSum +
-              dist.allocations
-                .filter((a) => a.userId === target.id)
-                .reduce((aSum, a) => aSum + a.payoutAmount, 0),
-            0
-          ),
+          (proj.distributions || [])
+            .filter((dist) => isIsoRecordOnOrAfterProjectStart(dist.distributedAt, projectStartDate))
+            .reduce(
+              (dSum, dist) =>
+                dSum +
+                dist.allocations
+                  .filter((a) => a.userId === target.id)
+                  .reduce((aSum, a) => aSum + a.payoutAmount, 0),
+              0
+            ),
         0
       ) * 100
     ) / 100;
 
-  const memberLoans = state.loans.filter((l) => l.borrowerId === target.id);
+  const memberLoans = state.loans.filter(
+    (l) => l.borrowerId === target.id && isLoanOnOrAfterProjectStart(l, projectStartDate)
+  );
   const takenLoans = memberLoans.filter((l) =>
     ['approved_pending_disbursement', 'active', 'repaid'].includes(l.status)
   );
@@ -1137,8 +1230,10 @@ export function buildMemberPublicProfile(
   const totalRepaid = takenLoans.reduce((sum, l) => sum + l.totalRepaid, 0);
   const loansRepaidCount = memberLoans.filter((l) => l.status === 'repaid').length;
 
-  const guarantorCount = state.loans.filter((l) =>
-    (l.guarantors || []).some((g) => g.memberId === target.id && g.status === 'accepted')
+  const guarantorCount = state.loans.filter(
+    (l) =>
+      isLoanOnOrAfterProjectStart(l, projectStartDate) &&
+      (l.guarantors || []).some((g) => g.memberId === target.id && g.status === 'accepted')
   ).length;
 
   const recentContributions = [...memberApproved]
@@ -1263,14 +1358,18 @@ export function buildGoogleSheetsBlueprint(
   state: VaultState,
   targetMonth?: string
 ): SheetTabBlueprint[] {
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
   const balanceSheet = buildMonthlySheetData(state, targetMonth);
-  const approvedContribs = state.contributions.filter((c) => c.status === 'approved');
+  const approvedContribs = state.contributions.filter(
+    (c) => c.status === 'approved' && isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
   const totalContrib = approvedContribs.reduce((s, c) => s + c.amount, 0);
   const approvedLoans = state.loans.filter(
     (l) =>
-      l.status === 'approved_pending_disbursement' ||
-      l.status === 'active' ||
-      l.status === 'repaid'
+      isLoanOnOrAfterProjectStart(l, projectStartDate) &&
+      (l.status === 'approved_pending_disbursement' ||
+        l.status === 'active' ||
+        l.status === 'repaid')
   );
   const totalLoansDeducted = approvedLoans.reduce((s, l) => s + l.amount, 0);
   const totalRepaid = approvedLoans.reduce((s, l) => s + l.totalRepaid, 0);
@@ -1331,6 +1430,7 @@ export function buildGoogleSheetsBlueprint(
     ['Metric', 'Value', 'Notes'],
     ['Fund Name', state.fundConfig.fundName, 'Cooperative entity'],
     ['Currency', state.fundConfig.currency, 'Active ledger currency'],
+    ['Project Start Date', projectStartDate, 'Anchor date from which all calculations begin'],
     ['Balance Sheet Period', balanceSheet.month, 'Active monthly sheet period synced'],
     ['Maturity Date', state.fundConfig.maturityDate, 'Pre-specified Halal investment transition date'],
     ['Max Loans Per Member / Year', state.fundConfig.maxLoansPerYear, 'Admin configurable annual quota'],
@@ -1382,21 +1482,24 @@ export function buildGoogleSheetsBlueprint(
       'Submitted At',
       'Reviewed By',
     ],
-    ...state.contributions.map((c) => [
-      c.id,
-      c.memberCode,
-      c.memberName,
-      c.billingMonth,
-      c.amount,
-      c.channel.toUpperCase(),
-      c.providerName,
-      c.maskedReference,
-      c.status,
-      c.submittedAt,
-      c.reviewerName || '',
-    ]),
+    ...state.contributions
+      .filter((c) => isContributionOnOrAfterProjectStart(c, projectStartDate))
+      .map((c) => [
+        c.id,
+        c.memberCode,
+        c.memberName,
+        c.billingMonth,
+        c.amount,
+        c.channel.toUpperCase(),
+        c.providerName,
+        c.maskedReference,
+        c.status,
+        c.submittedAt,
+        c.reviewerName || '',
+      ]),
   ];
 
+  const scopedLoans = state.loans.filter((l) => isLoanOnOrAfterProjectStart(l, projectStartDate));
   const loanRows: (string | number)[][] = [
     [
       'Loan ID',
@@ -1412,7 +1515,7 @@ export function buildGoogleSheetsBlueprint(
       'Status',
       'Requested At',
     ],
-    ...state.loans.map((l) => [
+    ...scopedLoans.map((l) => [
       l.id,
       l.borrowerCode,
       l.borrowerName,
@@ -1440,7 +1543,7 @@ export function buildGoogleSheetsBlueprint(
       'Provider',
       'Paid At',
     ],
-    ...state.loans.flatMap((l) =>
+    ...scopedLoans.flatMap((l) =>
       l.installments.map((inst) => [
         l.id,
         l.borrowerName,
@@ -1527,8 +1630,10 @@ export function buildManagerCycleSchedule(
     1,
     Math.min(36, Math.round(Number(state.fundConfig.managerCycleMonths) || 3))
   );
-  const rawStart = state.fundConfig.managerCycleStartDate || '2026-01-01';
-  const cycleStartDate = /^\d{4}-\d{2}-\d{2}$/.test(rawStart) ? rawStart : '2026-01-01';
+  const rawStart = state.fundConfig.managerCycleStartDate || resolveProjectStartDate(state.fundConfig);
+  const cycleStartDate = /^\d{4}-\d{2}-\d{2}$/.test(rawStart)
+    ? rawStart
+    : resolveProjectStartDate(state.fundConfig);
 
   const eligibleMembers = state.users
     .filter((u) => u.status === 'active' && u.role !== 'admin')
@@ -1773,7 +1878,8 @@ export function validateAndNormalizeNominees(
 
 export function buildMonthlySheetData(
   state: VaultState,
-  requestedMonth?: string
+  requestedMonth?: string,
+  referenceDate = new Date()
 ): MonthlySheetData {
   const round2 = (n: number): number => Math.round(n * 100) / 100;
   const shiftYm = (ym: string, deltaMonths: number): string => {
@@ -1783,20 +1889,31 @@ export function buildMonthlySheetData(
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
   };
 
-  const now = new Date();
+  const projectStartDate = resolveProjectStartDate(state.fundConfig);
+  const projectStartYm = projectStartDate.slice(0, 7);
+
+  const now = referenceDate;
   const currentMonthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  const defaultSheetMonth =
+    currentMonthKey >= projectStartYm ? currentMonthKey : projectStartYm;
   const month =
     requestedMonth && /^\d{4}-\d{2}$/.test(requestedMonth.trim())
       ? requestedMonth.trim()
-      : currentMonthKey;
+      : defaultSheetMonth;
   const previousMonth = shiftYm(month, -1);
   const nextMonth = shiftYm(month, 1);
 
   const monthlyTarget = state.fundConfig.monthlyContributionAmount || 5000;
-  const approvedContribs = state.contributions.filter((c) => c.status === 'approved');
-  const pendingContribs = state.contributions.filter((c) => c.status === 'pending');
+  const scopedContributions = state.contributions.filter((c) =>
+    isContributionOnOrAfterProjectStart(c, projectStartDate)
+  );
+  const approvedContribs = scopedContributions.filter((c) => c.status === 'approved');
+  const pendingContribs = scopedContributions.filter((c) => c.status === 'pending');
 
-  const disbursedLoans = state.loans.filter(
+  const scopedLoans = state.loans.filter((l) =>
+    isLoanOnOrAfterProjectStart(l, projectStartDate)
+  );
+  const disbursedLoans = scopedLoans.filter(
     (l) => l.status === 'active' || l.status === 'repaid'
   );
 
@@ -1834,31 +1951,34 @@ export function buildMonthlySheetData(
     return round2(repaid);
   };
 
-  // Collect all relevant months so users can browse cleanly (including next month to inspect rollover)
+  // Collect all relevant months from projectStartYm onward so users can browse cleanly
   const monthSet = new Set<string>([
-    currentMonthKey,
-    shiftYm(currentMonthKey, 1),
+    projectStartYm,
+    defaultSheetMonth,
+    shiftYm(defaultSheetMonth, 1),
     month,
     nextMonth,
   ]);
-  for (const c of state.contributions) {
+  for (const c of scopedContributions) {
     if (/^\d{4}-\d{2}$/.test(c.billingMonth)) {
       monthSet.add(c.billingMonth);
     }
   }
   for (const l of disbursedLoans) {
     const lm = getLoanMonth(l);
-    if (/^\d{4}-\d{2}$/.test(lm)) {
+    if (/^\d{4}-\d{2}$/.test(lm) && lm >= projectStartYm) {
       monthSet.add(lm);
     }
     for (const inst of l.installments || []) {
       const pm = (inst.paidAt || '').slice(0, 7);
-      if (/^\d{4}-\d{2}$/.test(pm)) {
+      if (/^\d{4}-\d{2}$/.test(pm) && pm >= projectStartYm) {
         monthSet.add(pm);
       }
     }
   }
-  const availableMonths = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+  const availableMonths = Array.from(monthSet)
+    .filter((m) => m >= projectStartYm || m === month)
+    .sort((a, b) => b.localeCompare(a));
 
   // Contributing active members (non-admin), sorted by memberCode ascending
   const activeMembers = state.users
@@ -1881,7 +2001,7 @@ export function buildMonthlySheetData(
       .filter((c) => c.billingMonth < month)
       .reduce((sum, c) => sum + c.amount, 0);
 
-    const memberMonthContribs = state.contributions.filter(
+    const memberMonthContribs = scopedContributions.filter(
       (c) => c.userId === member.id && c.billingMonth === month
     );
     const approvedAmt = memberMonthContribs
@@ -1892,7 +2012,9 @@ export function buildMonthlySheetData(
       .reduce((sum, c) => sum + c.amount, 0);
 
     let contributionStatus: MonthlySheetMemberRow['contributionStatus'] = 'due';
-    if (approvedAmt >= monthlyTarget) {
+    if (month < projectStartYm) {
+      contributionStatus = approvedAmt > 0 ? 'paid' : 'due';
+    } else if (approvedAmt >= monthlyTarget) {
       contributionStatus = 'paid';
     } else if (approvedAmt > 0) {
       contributionStatus = 'partial';
@@ -2050,10 +2172,10 @@ export function buildMonthlySheetData(
     }
   }
 
-  // All-time fund totals matching DashboardOverview
+  // All-time fund totals from project start date matching DashboardOverview
   const fundHeight = approvedContribs.reduce((sum, c) => sum + c.amount, 0);
   const totalQardHasan = disbursedLoans.reduce((sum, l) => sum + l.amount, 0);
-  const totalDueHasana = state.loans
+  const totalDueHasana = scopedLoans
     .filter((l) => l.status === 'active')
     .reduce((sum, l) => sum + l.remainingBalance, 0);
 

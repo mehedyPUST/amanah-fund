@@ -20,6 +20,11 @@ import {
   getDhakaCurrentYearMonth,
   shortHash,
 } from '../utils/format.ts';
+import {
+  isContributionOnOrAfterProjectStart,
+  resolveProjectStartDate,
+  resolveProjectStartMonth,
+} from '../utils/projectDates.ts';
 import { StatusText } from './StatusText.tsx';
 
 interface ContributionGoalTrackerProps {
@@ -100,9 +105,13 @@ export function ContributionGoalTracker({
   const yearlyGoal = customGoal ?? defaultYearlyGoal;
   const monthlyPaceTarget = yearlyGoal / 12;
 
+  const effectiveStartDate = resolveProjectStartDate(config);
+  const effectiveStartYm = resolveProjectStartMonth(config);
+
   const trackerData = useMemo(() => {
     const myYearContribs = contributions.filter((c) => {
       if (c.userId !== user.id) return false;
+      if (!isContributionOnOrAfterProjectStart(c, effectiveStartDate)) return false;
       const ym = c.billingMonth || c.submittedAt.slice(0, 7);
       return ym.startsWith(`${selectedYear}-`);
     });
@@ -153,8 +162,17 @@ export function ContributionGoalTracker({
       (b) => b.approvedAmount < monthlyPaceTarget && b.approvedAmount + b.pendingAmount >= monthlyPaceTarget
     ).length;
 
+    const startYear = Number(effectiveStartYm.slice(0, 4)) || selectedYear;
+    const startMonth = Number(effectiveStartYm.slice(5, 7)) || 1;
+    const firstActiveMonthInSelectedYear =
+      startYear < selectedYear ? 1 : startYear === selectedYear ? startMonth : 13;
+
     const elapsedMonths =
-      selectedYear < currentYear ? 12 : selectedYear > currentYear ? 0 : currentMonthIndex + 1;
+      selectedYear < startYear || selectedYear > currentYear
+        ? 0
+        : selectedYear < currentYear
+          ? Math.max(0, 12 - firstActiveMonthInSelectedYear + 1)
+          : Math.max(0, currentMonthIndex + 1 - firstActiveMonthInSelectedYear + 1);
     const expectedToDate = monthlyPaceTarget * elapsedMonths;
     const paceDelta = approvedTotal - expectedToDate;
 
@@ -181,6 +199,8 @@ export function ContributionGoalTracker({
     monthlyPaceTarget,
     currentYear,
     currentMonthIndex,
+    effectiveStartDate,
+    effectiveStartYm,
   ]);
 
   const nowBillingMonth = `${currentYear}-${String(currentMonthIndex + 1).padStart(2, '0')}`;
@@ -535,9 +555,11 @@ export function ContributionGoalTracker({
                   );
             const isVerifiedComplete = month.approvedAmount >= monthlyPaceTarget;
             const hasPending = month.pendingAmount > 0;
+            const isBeforeProjectStart = month.billingMonth < effectiveStartYm;
             const isPastOrCurrent =
-              selectedYear < currentYear ||
-              (selectedYear === currentYear && month.index <= currentMonthIndex);
+              !isBeforeProjectStart &&
+              (selectedYear < currentYear ||
+                (selectedYear === currentYear && month.index <= currentMonthIndex));
             const isCurrentMonth =
               selectedYear === currentYear && month.index === currentMonthIndex;
 

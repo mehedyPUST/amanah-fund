@@ -25,12 +25,19 @@ import type {
   MonthlyCashflowPoint,
 } from '../types/coop.ts';
 import { formatBillingMonth, formatMoney } from '../utils/format.ts';
+import {
+  isContributionOnOrAfterProjectStart,
+  isIsoRecordOnOrAfterProjectStart,
+  isLoanOnOrAfterProjectStart,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 
 interface AuditTrendsChartsProps {
   contributions: Contribution[];
   loans: LoanRequest[];
   monthlySeries: MonthlyCashflowPoint[];
   currency: FundConfig['currency'];
+  projectStartDate?: string;
   loading?: boolean;
 }
 
@@ -96,6 +103,7 @@ export function AuditTrendsCharts({
   loans,
   monthlySeries,
   currency,
+  projectStartDate,
   loading = false,
 }: AuditTrendsChartsProps) {
   const t = useTranslations('Charts');
@@ -118,6 +126,9 @@ export function AuditTrendsCharts({
   };
 
   const chartData = useMemo<AuditChartPoint[]>(() => {
+    const effectiveStartDate = resolveProjectStartDate({ projectStartDate });
+    const effectiveStartYm = effectiveStartDate.slice(0, 7);
+
     const monthBuckets = new Map<
       string,
       {
@@ -141,6 +152,7 @@ export function AuditTrendsCharts({
     };
 
     monthlySeries.forEach((pt) => {
+      if (pt.month < effectiveStartYm) return;
       const b = ensureBucket(pt.month);
       b.monthlyContributions = Math.max(b.monthlyContributions, pt.contributions);
       b.monthlyRepaid = Math.max(b.monthlyRepaid, pt.repaid);
@@ -152,6 +164,7 @@ export function AuditTrendsCharts({
         b.pendingContributions = 0;
       });
       contributions.forEach((c) => {
+        if (!isContributionOnOrAfterProjectStart(c, effectiveStartDate)) return;
         const ym = c.billingMonth || c.submittedAt.slice(0, 7);
         const b = ensureBucket(ym);
         if (c.status === 'approved') {
@@ -164,6 +177,7 @@ export function AuditTrendsCharts({
 
     loans.forEach((loan) => {
       if (loan.status === 'rejected') return;
+      if (!isLoanOnOrAfterProjectStart(loan, effectiveStartDate)) return;
       const ym = (loan.disbursedAt || loan.approvedAt || loan.requestedAt).slice(0, 7);
       ensureBucket(ym).monthlyLoanVolume += loan.amount;
     });
@@ -174,7 +188,11 @@ export function AuditTrendsCharts({
       });
       loans.forEach((loan) => {
         loan.installments.forEach((inst) => {
-          if (inst.status === 'paid' && inst.paidAt) {
+          if (
+            inst.status === 'paid' &&
+            inst.paidAt &&
+            isIsoRecordOnOrAfterProjectStart(inst.paidAt, effectiveStartDate)
+          ) {
             ensureBucket(inst.paidAt.slice(0, 7)).monthlyRepaid += inst.paidAmount;
           }
         });
@@ -201,7 +219,7 @@ export function AuditTrendsCharts({
         cumulativeLoanVolume: runningLoanVolume,
       };
     });
-  }, [contributions, loans, monthlySeries]);
+  }, [contributions, loans, monthlySeries, projectStartDate]);
 
   const totals = useMemo(() => {
     const totalApprovedContrib = chartData.reduce((s, d) => s + d.monthlyContributions, 0);

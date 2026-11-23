@@ -53,6 +53,11 @@ import {
   DEFAULT_MOBILE_MEMBER_OVERVIEW_ICONS,
   sanitizeMobileMemberOverviewIcons,
 } from '../utils/mobileOverviewTiles.ts';
+import {
+  DEFAULT_PROJECT_START_DATE,
+  isValidIsoDateYmd,
+  resolveProjectStartDate,
+} from '../utils/projectDates.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
 import { AdminEmailQueueView } from './AdminEmailQueueView.tsx';
 import { AdminEmailTemplatesEditor } from './AdminEmailTemplatesEditor.tsx';
@@ -143,6 +148,9 @@ export function AdminSiteSettingsView({
     config?.fundName || t('defaultFundName')
   );
   const [currency, setCurrency] = useState<FundConfig['currency']>(config?.currency || 'BDT');
+  const [projectStartDate, setProjectStartDate] = useState(
+    config?.projectStartDate || DEFAULT_PROJECT_START_DATE
+  );
   const [maturityDate, setMaturityDate] = useState(config?.maturityDate || '2036-12-31');
   const [membershipIntakeDeadline, setMembershipIntakeDeadline] = useState(
     config?.membershipIntakeDeadline || '2027-07-31'
@@ -223,6 +231,7 @@ export function AdminSiteSettingsView({
   const syncFormFromConfig = useCallback((cfg: FundConfig) => {
     setFundName(cfg.fundName || tRef.current('defaultFundName'));
     setCurrency(cfg.currency);
+    setProjectStartDate(resolveProjectStartDate(cfg));
     setMaturityDate(cfg.maturityDate);
     setMembershipIntakeDeadline(cfg.membershipIntakeDeadline || '2027-07-31');
     setMonthlyContributionAmount(String(cfg.monthlyContributionAmount));
@@ -265,6 +274,7 @@ export function AdminSiteSettingsView({
     return (
       fundName.trim() !== (config.fundName || '').trim() ||
       currency !== config.currency ||
+      projectStartDate !== resolveProjectStartDate(config) ||
       maturityDate !== config.maturityDate ||
       membershipIntakeDeadline !== (config.membershipIntakeDeadline || '2027-07-31') ||
       Number(monthlyContributionAmount) !== config.monthlyContributionAmount ||
@@ -293,6 +303,7 @@ export function AdminSiteSettingsView({
     config,
     fundName,
     currency,
+    projectStartDate,
     maturityDate,
     membershipIntakeDeadline,
     monthlyContributionAmount,
@@ -377,6 +388,16 @@ export function AdminSiteSettingsView({
       return;
     }
 
+    if (!isValidIsoDateYmd(projectStartDate) || !isValidIsoDateYmd(maturityDate) || projectStartDate > maturityDate) {
+      setModal({
+        mode: 'notice',
+        tone: 'red',
+        title: t('invalidProjectStartTitle'),
+        description: t('invalidProjectStartDesc'),
+      });
+      return;
+    }
+
     setModal({
       mode: 'confirm',
       tone: 'emerald',
@@ -403,6 +424,7 @@ export function AdminSiteSettingsView({
           }),
         },
         { label: t('detailCycleInterval'), value: t('everyNMonths', { count: cycleMonthsNum }) },
+        { label: t('detailProjectStartDate'), value: formatShortDate(projectStartDate) },
         {
           label: t('detailIntakeMaturity'),
           value: `${formatShortDate(membershipIntakeDeadline)} → ${formatShortDate(maturityDate)}`,
@@ -424,6 +446,7 @@ export function AdminSiteSettingsView({
         await api.updateConfig({
           fundName,
           currency,
+          projectStartDate,
           maturityDate,
           membershipIntakeDeadline,
           monthlyContributionAmount: Number(monthlyContributionAmount),
@@ -797,7 +820,7 @@ export function AdminSiteSettingsView({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  <div className="sm:col-span-2 lg:col-span-1">
+                  <div className="sm:col-span-2 lg:col-span-2">
                     <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                       {t('labelFundName')}
                     </label>
@@ -824,6 +847,22 @@ export function AdminSiteSettingsView({
                       <option value="MYR">{t('currencyOptions.MYR')}</option>
                       <option value="GBP">{t('currencyOptions.GBP')}</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                      {t('labelProjectStartDate')}
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={projectStartDate}
+                      onChange={(e) => setProjectStartDate(e.target.value)}
+                      className="w-full px-3 py-2 text-sm font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600"
+                    />
+                    <p className="mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+                      {t('helperProjectStartDate')}
+                    </p>
                   </div>
 
                   <div>

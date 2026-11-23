@@ -254,6 +254,7 @@ export interface FundConfig {
   requiredGuarantorsCount?: number;
   voteThresholdNumerator: number;
   voteThresholdDenominator: number;
+  projectStartDate?: string; // YYYY-MM-DD — Starting date from which all cooperative calculations are performed
   maturityDate: string; // YYYY-MM-DD
   maxMembersCap?: number;
   membershipIntakeDeadline?: string; // YYYY-MM-DD
