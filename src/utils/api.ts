@@ -352,6 +352,8 @@ export interface RegisterMemberPayload {
   permanentAddressDetails?: StructuredBdAddress;
   socialMedia?: MemberSocialMedia;
   photoUrl: string;
+  nidFrontUrl?: string;
+  nidBackUrl?: string;
   signatureUrl?: string;
   agreementPhotoUrl?: string;
   nominees: NomineeInfo[];

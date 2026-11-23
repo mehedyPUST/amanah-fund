@@ -2788,6 +2788,145 @@ describe('Theme preference persistence sanitization', () => {
   });
 });
 
+describe('Applicant NID & Nominee Identity Document (2 MB) KYC validation', () => {
+  const validPngBytes = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64'
+  );
+
+  it('allows PNG/JPEG identity scans up to 2 MB, routes to /kyc, and rejects oversized or non-raster files', () => {
+    expect(buildImageKitTargetFolder('/coop-docs', 'member-nid-front')).toBe('/coop-docs/kyc');
+    expect(buildImageKitTargetFolder('/coop-docs', 'member-nid-back')).toBe('/coop-docs/kyc');
+    expect(buildImageKitTargetFolder('/coop-docs', 'nominee-identity-front')).toBe('/coop-docs/kyc');
+    expect(buildImageKitTargetFolder('/coop-docs', 'nominee-identity-back')).toBe('/coop-docs/kyc');
+
+    const decodedFront = validateAndDecodeUpload({
+      rawData: `data:image/png;base64,${validPngBytes.toString('base64')}`,
+      rawName: 'nid-front.png',
+      category: 'member-nid-front',
+      subject: 'Bilal Hasan',
+    });
+    expect(decodedFront.isPdf).toBe(false);
+    expect(decodedFront.mimeType).toBe('image/png');
+    expect(decodedFront.category).toBe('member-nid-front');
+
+    // Reject identity doc larger than 2 MB (even with valid PNG header)
+    const oversizedPng = Buffer.concat([
+      validPngBytes,
+      Buffer.alloc(2 * 1024 * 1024 + 64, 0),
+    ]).toString('base64');
+    expect(() =>
+      validateAndDecodeUpload({
+        rawData: `data:image/png;base64,${oversizedPng}`,
+        category: 'nominee-identity-front',
+      })
+    ).toThrow(/2 MB/);
+
+    // Reject PDF for NID/Birth Reg category
+    const validPdfBase64 = Buffer.from('%PDF-1.4\n%%EOF', 'utf8').toString('base64');
+    expect(() =>
+      validateAndDecodeUpload({
+        rawData: `data:application/pdf;base64,${validPdfBase64}`,
+        category: 'member-nid-back',
+      })
+    ).toThrow(/PNG, JPG, or WEBP/i);
+
+    // Reject spoofed PNG header bytes
+    const spoofedPng = Buffer.from('NOT_A_PNG_IMAGE_PAYLOAD', 'utf8').toString('base64');
+    expect(() =>
+      validateAndDecodeUpload({
+        rawData: `data:image/png;base64,${spoofedPng}`,
+        category: 'nominee-identity-back',
+      })
+    ).toThrow(/Invalid image file signature/);
+  });
+
+  it('requires front & back for NID, makes back optional for Birth Registration, and blocks unsafe URLs', () => {
+    const nidValid = validateAndNormalizeNominees(
+      [
+        {
+          name: 'Fatema Begum',
+          dateOfBirth: '1975-04-12',
+          gender: 'female',
+          occupation: 'Homemaker',
+          relation: 'Mother',
+          nidOrBirthReg: '19751234567890123',
+          identityDocType: 'nid',
+          identityFrontUrl: '/api/uploads/kyc-nid-front.png',
+          identityBackUrl: '/api/uploads/kyc-nid-back.png',
+          address: 'Dhanmondi, Dhaka',
+        },
+      ],
+      { requireIdentityDocs: true }
+    );
+    expect(nidValid.ok).toBe(true);
+    if (nidValid.ok) {
+      expect(nidValid.nominees[0].identityDocType).toBe('nid');
+      expect(nidValid.nominees[0].identityFrontUrl).toBe('/api/uploads/kyc-nid-front.png');
+      expect(nidValid.nominees[0].identityBackUrl).toBe('/api/uploads/kyc-nid-back.png');
+    }
+
+    const nidMissingBack = validateAndNormalizeNominees(
+      [
+        {
+          name: 'Fatema Begum',
+          dateOfBirth: '1975-04-12',
+          gender: 'female',
+          occupation: 'Homemaker',
+          relation: 'Mother',
+          nidOrBirthReg: '19751234567890123',
+          identityDocType: 'nid',
+          identityFrontUrl: '/api/uploads/kyc-nid-front.png',
+          address: 'Dhanmondi, Dhaka',
+        },
+      ],
+      { requireIdentityDocs: true }
+    );
+    expect(nidMissingBack.ok).toBe(false);
+
+    const birthRegOptionalBack = validateAndNormalizeNominees(
+      [
+        {
+          name: 'Zayd Hasan',
+          dateOfBirth: '2020-05-01',
+          gender: 'male',
+          occupation: 'Student',
+          relation: 'Son',
+          nidOrBirthReg: 'BR-202099887766',
+          identityDocType: 'birth_reg',
+          identityFrontUrl: '/api/uploads/kyc-birth-front.jpg',
+          photoUrl: '/api/uploads/zayd-portrait.jpg',
+          address: 'Dhanmondi, Dhaka',
+        },
+      ],
+      { requireIdentityDocs: true }
+    );
+    expect(birthRegOptionalBack.ok).toBe(true);
+    if (birthRegOptionalBack.ok) {
+      expect(birthRegOptionalBack.nominees[0].identityDocType).toBe('birth_reg');
+      expect(birthRegOptionalBack.nominees[0].identityBackUrl).toBeUndefined();
+    }
+
+    const unsafeDocUrl = validateAndNormalizeNominees(
+      [
+        {
+          name: 'Fatema Begum',
+          dateOfBirth: '1975-04-12',
+          gender: 'female',
+          occupation: 'Homemaker',
+          relation: 'Mother',
+          nidOrBirthReg: '19751234567890123',
+          identityDocType: 'birth_reg',
+          identityFrontUrl: 'javascript:alert(1)',
+          address: 'Dhanmondi, Dhaka',
+        },
+      ],
+      { requireIdentityDocs: true }
+    );
+    expect(unsafeDocUrl.ok).toBe(false);
+  });
+});
+
 
 
 

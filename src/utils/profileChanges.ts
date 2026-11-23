@@ -1,4 +1,5 @@
 import type {
+  IdentityDocType,
   MemberGender,
   NomineeGender,
   NomineeInfo,
@@ -76,6 +77,11 @@ export interface NomineeDraft {
   customRelation: string;
   sharePercentage: string;
   nidOrBirthReg: string;
+  identityDocType: IdentityDocType;
+  identityFrontUrl: string;
+  identityBackUrl: string;
+  identityFrontUploading: boolean;
+  identityBackUploading: boolean;
   mobile: string;
   address: string;
   sameAsApplicantPresent: boolean;
@@ -95,6 +101,11 @@ export function createEmptyNomineeDraft(sharePercentage = '100', fixedId?: strin
     customRelation: '',
     sharePercentage,
     nidOrBirthReg: '',
+    identityDocType: 'nid',
+    identityFrontUrl: '',
+    identityBackUrl: '',
+    identityFrontUploading: false,
+    identityBackUploading: false,
     mobile: '',
     address: '',
     sameAsApplicantPresent: false,
@@ -131,6 +142,11 @@ export function nomineeInfoToDraft(
         ? String(nominee.sharePercentage)
         : '100',
     nidOrBirthReg: nominee.nidOrBirthReg || '',
+    identityDocType: nominee.identityDocType === 'birth_reg' ? 'birth_reg' : 'nid',
+    identityFrontUrl: nominee.identityFrontUrl || '',
+    identityBackUrl: nominee.identityBackUrl || '',
+    identityFrontUploading: false,
+    identityBackUploading: false,
     mobile: nominee.mobile || '',
     address: addr,
     sameAsApplicantPresent: matchesPresent,
@@ -162,6 +178,8 @@ const PROFILE_FIELD_LABELS: Record<string, string> = {
   permanentAddress: 'Permanent Address',
   nominees: 'Nominees',
   photoUrl: 'Member Photo',
+  nidFrontUrl: 'Applicant NID (Front Side)',
+  nidBackUrl: 'Applicant NID (Back Side)',
   signatureUrl: 'Signature (300 × 80 px)',
 };
 
@@ -235,7 +253,12 @@ export function formatProfileChangeEntries(
       continue;
     }
 
-    if (key === 'photoUrl' || key === 'signatureUrl') {
+    if (
+      key === 'photoUrl' ||
+      key === 'signatureUrl' ||
+      key === 'nidFrontUrl' ||
+      key === 'nidBackUrl'
+    ) {
       const str = String(raw).trim();
       if (!str) {
         if (key === 'photoUrl') {
@@ -399,7 +422,12 @@ export function buildProfileDiffEntries(
       continue;
     }
 
-    if (key === 'photoUrl' || key === 'signatureUrl') {
+    if (
+      key === 'photoUrl' ||
+      key === 'signatureUrl' ||
+      key === 'nidFrontUrl' ||
+      key === 'nidBackUrl'
+    ) {
       const nextImg = String(rawNext || '').trim();
       const prevImg = String(prev[key] || '').trim();
       if (!nextImg) {

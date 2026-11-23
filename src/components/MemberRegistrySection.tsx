@@ -669,6 +669,60 @@ export function MemberRegistrySection({
                       </div>
                     </div>
 
+                    {(reg?.nidFrontUrl || reg?.nidBackUrl) && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
+                          <div className="font-medium text-slate-700 dark:text-slate-300">
+                            {t('nidFront')}
+                          </div>
+                          {reg.nidFrontUrl ? (
+                            <a
+                              href={reg.nidFrontUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 aspect-[16/10]"
+                            >
+                              <img
+                                src={reg.nidFrontUrl}
+                                alt={`${inspectingMember.name} ${t('nidFront')}`}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                          ) : (
+                            <div className="h-28 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                              {t('notUploaded')}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
+                          <div className="font-medium text-slate-700 dark:text-slate-300">
+                            {t('nidBack')}
+                          </div>
+                          {reg.nidBackUrl ? (
+                            <a
+                              href={reg.nidBackUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 aspect-[16/10]"
+                            >
+                              <img
+                                src={reg.nidBackUrl}
+                                alt={`${inspectingMember.name} ${t('nidBack')}`}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover"
+                              />
+                            </a>
+                          ) : (
+                            <div className="h-28 flex items-center justify-center rounded-lg border border-dashed border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                              {t('notUploaded')}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     {reg?.signatureUrl && (
                       <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
                         <div className="font-medium text-slate-700 dark:text-slate-300">

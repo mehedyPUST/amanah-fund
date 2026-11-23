@@ -507,12 +507,16 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
             const act = applicant.activationCredentials;
             const isAwaitingActivation = applicant.status === 'pending_activation';
             const photoUrl = reg?.photoUrl || applicant.photoUrl;
+            const nidFrontUrl = reg?.nidFrontUrl;
+            const nidBackUrl = reg?.nidBackUrl;
             const signatureUrl = reg?.signatureUrl;
             const agreementUrl = reg?.agreementPhotoUrl;
             const social = reg?.socialMedia;
             const hasSocial = Boolean(social?.whatsapp || social?.facebook || social?.linkedin);
             const isBusy = busyAction?.id === applicant.id;
             const photoKey = `photo-${applicant.id}`;
+            const nidFrontKey = `nid-front-${applicant.id}`;
+            const nidBackKey = `nid-back-${applicant.id}`;
             const signatureKey = `signature-${applicant.id}`;
             const agreementKey = `agreement-${applicant.id}`;
             const cardHueClass = isAwaitingActivation
@@ -1035,6 +1039,72 @@ export function PendingRegistrationsView({ user, onRefresh }: PendingRegistratio
                         </div>
                       )}
                     </div>
+
+                    {(nidFrontUrl || nidBackUrl) && (
+                      <>
+                        <div className="space-y-1.5">
+                          <div className="text-slate-500 dark:text-slate-400 font-medium">
+                            {t('nidFront')}
+                          </div>
+                          {nidFrontUrl && !brokenImages[nidFrontKey] ? (
+                            <a
+                              href={nidFrontUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="group relative block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 aspect-[4/3]"
+                            >
+                              <img
+                                src={nidFrontUrl}
+                                alt={`${applicant.name} ${t('nidFront')}`}
+                                referrerPolicy="no-referrer"
+                                onError={() =>
+                                  setBrokenImages((prev) => ({ ...prev, [nidFrontKey]: true }))
+                                }
+                                className="w-full h-full object-cover"
+                              />
+                              <span className="absolute bottom-1.5 right-1.5 p-1 rounded bg-slate-900/75 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                              </span>
+                            </a>
+                          ) : (
+                            <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-center p-2 text-[11px] text-slate-500 dark:text-slate-400">
+                              {t('notUploaded')}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="text-slate-500 dark:text-slate-400 font-medium">
+                            {t('nidBack')}
+                          </div>
+                          {nidBackUrl && !brokenImages[nidBackKey] ? (
+                            <a
+                              href={nidBackUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="group relative block rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 aspect-[4/3]"
+                            >
+                              <img
+                                src={nidBackUrl}
+                                alt={`${applicant.name} ${t('nidBack')}`}
+                                referrerPolicy="no-referrer"
+                                onError={() =>
+                                  setBrokenImages((prev) => ({ ...prev, [nidBackKey]: true }))
+                                }
+                                className="w-full h-full object-cover"
+                              />
+                              <span className="absolute bottom-1.5 right-1.5 p-1 rounded bg-slate-900/75 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                              </span>
+                            </a>
+                          ) : (
+                            <div className="aspect-[4/3] rounded-lg border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-center p-2 text-[11px] text-slate-500 dark:text-slate-400">
+                              {t('notUploaded')}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
 
                     {signatureUrl && !brokenImages[signatureKey] && (
                       <div className="col-span-2 space-y-1.5 pt-1">

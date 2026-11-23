@@ -1745,8 +1745,21 @@ export function buildManagerCycleSchedule(
   };
 }
 
+export function isSafeUploadedUrl(raw: unknown): boolean {
+  const val = String(raw || '').trim();
+  if (!val) return false;
+  if (/^\/api\/uploads\/[a-zA-Z0-9._-]+$/.test(val)) return true;
+  try {
+    const parsed = new URL(val);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export function validateAndNormalizeNominees(
-  rawNominees: unknown
+  rawNominees: unknown,
+  options?: { requireIdentityDocs?: boolean }
 ): { ok: true; nominees: NomineeInfo[] } | { ok: false; error: string } {
   if (!Array.isArray(rawNominees) || rawNominees.length === 0) {
     return { ok: false, error: 'At least one nominee is required for membership registration.' };
@@ -1770,6 +1783,10 @@ export function validateAndNormalizeNominees(
     const occupation = String(raw.occupation || '').trim();
     const relation = normalizeRelationToEnglish(String(raw.relation || '').trim());
     const nidOrBirthReg = String(raw.nidOrBirthReg || '').trim();
+    const rawDocType = String(raw.identityDocType || '').trim().toLowerCase();
+    const identityDocType = rawDocType === 'birth_reg' ? 'birth_reg' : 'nid';
+    const identityFrontUrl = String(raw.identityFrontUrl || '').trim();
+    const identityBackUrl = String(raw.identityBackUrl || '').trim();
     const mobile = String(raw.mobile || '').trim();
     const address = String(raw.address || '').trim();
     const photoUrl = String(raw.photoUrl || '').trim();
@@ -1818,11 +1835,45 @@ export function validateAndNormalizeNominees(
     if (containsBanglaScript(address)) {
       return { ok: false, error: `${label}: Address must be entered in English only.` };
     }
+    if (photoUrl && !isSafeUploadedUrl(photoUrl)) {
+      return { ok: false, error: `${label}: Invalid nominee photo URL.` };
+    }
     if (gender !== 'female' && !photoUrl) {
       return {
         ok: false,
         error: `${label}: Nominee photo is required unless the nominee is female.`,
       };
+    }
+
+    if (identityFrontUrl && !isSafeUploadedUrl(identityFrontUrl)) {
+      return { ok: false, error: `${label}: Invalid identity document front side URL.` };
+    }
+    if (identityBackUrl && !isSafeUploadedUrl(identityBackUrl)) {
+      return { ok: false, error: `${label}: Invalid identity document back side URL.` };
+    }
+
+    const shouldValidateIdentityDocs =
+      Boolean(options?.requireIdentityDocs) ||
+      raw.identityDocType !== undefined ||
+      Boolean(identityFrontUrl) ||
+      Boolean(identityBackUrl);
+
+    if (shouldValidateIdentityDocs) {
+      if (!identityFrontUrl) {
+        return {
+          ok: false,
+          error:
+            identityDocType === 'birth_reg'
+              ? `${label}: Front copy of Birth Registration certificate (max 2 MB) is required.`
+              : `${label}: Front side of National ID (NID) (max 2 MB) is required.`,
+        };
+      }
+      if (identityDocType === 'nid' && !identityBackUrl) {
+        return {
+          ok: false,
+          error: `${label}: Back side of National ID (NID) (max 2 MB) is required.`,
+        };
+      }
     }
 
     let sharePercentage = 100;
@@ -1862,6 +1913,13 @@ export function validateAndNormalizeNominees(
       relation,
       sharePercentage,
       nidOrBirthReg,
+      ...(shouldValidateIdentityDocs || identityFrontUrl || identityBackUrl
+        ? {
+            identityDocType,
+            identityFrontUrl: identityFrontUrl || undefined,
+            identityBackUrl: identityBackUrl || undefined,
+          }
+        : {}),
       mobile: mobile || undefined,
       address,
       photoUrl: photoUrl || undefined,
@@ -2263,6 +2321,12 @@ export function extractPreviousProfileValues(
   }
   if (requestedChanges.photoUrl !== undefined) {
     prev.photoUrl = regDetails?.photoUrl || member.photoUrl || '';
+  }
+  if (requestedChanges.nidFrontUrl !== undefined) {
+    prev.nidFrontUrl = regDetails?.nidFrontUrl || '';
+  }
+  if (requestedChanges.nidBackUrl !== undefined) {
+    prev.nidBackUrl = regDetails?.nidBackUrl || '';
   }
   if (requestedChanges.signatureUrl !== undefined) {
     prev.signatureUrl = regDetails?.signatureUrl || '';

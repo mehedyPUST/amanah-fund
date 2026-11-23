@@ -18,6 +18,7 @@ import {
   FileText,
   Globe,
   ImagePlus,
+  Info,
   Languages,
   Loader2,
   PenTool,
@@ -34,6 +35,7 @@ import Skeleton from 'react-loading-skeleton';
 import type { AppLocale } from '../i18n/config.ts';
 import { queryKeys } from '../lib/queryKeys.ts';
 import type {
+  IdentityDocType,
   MaritalStatus,
   MemberGender,
   NomineeGender,
@@ -117,6 +119,20 @@ function getLogicalRelationOptions(
   return [];
 }
 
+const MAX_IDENTITY_DOC_BYTES = 2 * 1024 * 1024;
+const ALLOWED_IDENTITY_MIME_TYPES = new Set([
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+]);
+
+function isValidIdentityImageFile(file: File): boolean {
+  const mime = (file.type || '').toLowerCase();
+  if (ALLOWED_IDENTITY_MIME_TYPES.has(mime)) return true;
+  return /\.(png|jpe?g|webp)$/i.test(file.name);
+}
+
 interface NomineeDraft {
   id: string;
   name: string;
@@ -128,6 +144,11 @@ interface NomineeDraft {
   customRelation: string;
   sharePercentage: string;
   nidOrBirthReg: string;
+  identityDocType: IdentityDocType;
+  identityFrontUrl: string;
+  identityBackUrl: string;
+  identityFrontUploading: boolean;
+  identityBackUploading: boolean;
   mobile: string;
   address: string;
   sameAsApplicantPresent: boolean;
@@ -147,6 +168,11 @@ function createEmptyNominee(sharePercentage = '100', fixedId?: string): NomineeD
     customRelation: '',
     sharePercentage,
     nidOrBirthReg: '',
+    identityDocType: 'nid',
+    identityFrontUrl: '',
+    identityBackUrl: '',
+    identityFrontUploading: false,
+    identityBackUploading: false,
     mobile: '',
     address: '',
     sameAsApplicantPresent: false,
@@ -219,9 +245,13 @@ export function SignUpForm() {
     createEmptyNominee('100', 'nom-initial-1'),
   ]);
 
-  // ImageKit.io uploaded photo & 300x80 signature URLs + Digital Membership Agreement consent
+  // ImageKit.io uploaded photo, NID front/back, & 300x80 signature URLs + Digital Membership Agreement consent
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [nidFrontUrl, setNidFrontUrl] = useState('');
+  const [nidFrontUploading, setNidFrontUploading] = useState(false);
+  const [nidBackUrl, setNidBackUrl] = useState('');
+  const [nidBackUploading, setNidBackUploading] = useState(false);
   const [signatureUrl, setSignatureUrl] = useState('');
   const [signatureUploading, setSignatureUploading] = useState(false);
   const [pendingSignature, setPendingSignature] = useState<{
@@ -285,6 +315,9 @@ export function SignUpForm() {
   }, [presentAddress]);
 
   const anyNomineePhotoUploading = nominees.some((n) => n.photoUploading);
+  const anyNomineeIdentityUploading = nominees.some(
+    (n) => n.identityFrontUploading || n.identityBackUploading
+  );
   const totalNomineeShare =
     nominees.length === 1
       ? 100
@@ -559,6 +592,99 @@ export function SignUpForm() {
     }
   }
 
+  async function handleApplicantNidUpload(
+    side: 'front' | 'back',
+    e: ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!isValidIdentityImageFile(file)) {
+      setError(t('errIdentityImageType'));
+      return;
+    }
+    if (file.size > MAX_IDENTITY_DOC_BYTES) {
+      setError(t('errIdentitySizeTwoMb'));
+      return;
+    }
+
+    setError(null);
+    if (side === 'front') {
+      setNidFrontUploading(true);
+    } else {
+      setNidBackUploading(true);
+    }
+
+    try {
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: side === 'front' ? 'member-nid-front' : 'member-nid-back',
+        subject: name.trim() || email.trim() || 'applicant',
+      });
+      if (side === 'front') {
+        setNidFrontUrl(res.url);
+      } else {
+        setNidBackUrl(res.url);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errUploadFailed'));
+    } finally {
+      if (side === 'front') {
+        setNidFrontUploading(false);
+      } else {
+        setNidBackUploading(false);
+      }
+    }
+  }
+
+  async function handleNomineeIdentityUpload(
+    index: number,
+    side: 'front' | 'back',
+    e: ChangeEvent<HTMLInputElement>
+  ) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!isValidIdentityImageFile(file)) {
+      setError(t('errIdentityImageType'));
+      return;
+    }
+    if (file.size > MAX_IDENTITY_DOC_BYTES) {
+      setError(t('errIdentitySizeTwoMb'));
+      return;
+    }
+
+    setError(null);
+    const uploadingField =
+      side === 'front' ? 'identityFrontUploading' : 'identityBackUploading';
+    const urlField = side === 'front' ? 'identityFrontUrl' : 'identityBackUrl';
+
+    setNominees((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [uploadingField]: true } : item))
+    );
+
+    try {
+      const nomineeName = nominees[index]?.name.trim();
+      const res = await api.uploadFile(file, {
+        name: file.name,
+        category: side === 'front' ? 'nominee-identity-front' : 'nominee-identity-back',
+        subject: nomineeName || name.trim() || `nominee-${index + 1}`,
+      });
+      setNominees((prev) =>
+        prev.map((item, i) =>
+          i === index ? { ...item, [urlField]: res.url, [uploadingField]: false } : item
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errUploadFailed'));
+      setNominees((prev) =>
+        prev.map((item, i) => (i === index ? { ...item, [uploadingField]: false } : item))
+      );
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
@@ -622,6 +748,14 @@ export function SignUpForm() {
       setError(t('errPermanentAddressIncomplete'));
       return;
     }
+    if (!nidFrontUrl) {
+      setError(t('errApplicantNidFrontRequired'));
+      return;
+    }
+    if (!nidBackUrl) {
+      setError(t('errApplicantNidBackRequired'));
+      return;
+    }
     if (gender !== 'female' && !photoUrl) {
       setError(t('errPhotoRequired'));
       return;
@@ -680,6 +814,17 @@ export function SignUpForm() {
         return;
       }
 
+      const nomineeDocLabel =
+        n.identityDocType === 'birth_reg' ? t('docTypeBirthReg') : t('docTypeNid');
+      if (!n.identityFrontUrl) {
+        setError(t('errNomineeIdentityFrontRequired', { prefix, docType: nomineeDocLabel }));
+        return;
+      }
+      if (n.identityDocType === 'nid' && !n.identityBackUrl) {
+        setError(t('errNomineeIdentityBackRequired', { prefix }));
+        return;
+      }
+
       let sharePercentage = 100;
       if (multipleNominees) {
         const parsed = Number(n.sharePercentage);
@@ -702,6 +847,9 @@ export function SignUpForm() {
         relation: resolvedRelation,
         sharePercentage,
         nidOrBirthReg: n.nidOrBirthReg.trim(),
+        identityDocType: n.identityDocType,
+        identityFrontUrl: n.identityFrontUrl,
+        identityBackUrl: n.identityBackUrl || undefined,
         mobile: n.mobile.trim() || undefined,
         address: n.address.trim(),
         photoUrl: n.gender === 'female' ? undefined : n.photoUrl || undefined,
@@ -763,6 +911,8 @@ export function SignUpForm() {
         permanentAddressDetails: effectivePermanentAddressDetails,
         socialMedia: hasSocialMedia ? cleanedSocial : undefined,
         photoUrl: gender === 'female' ? '' : photoUrl,
+        nidFrontUrl,
+        nidBackUrl,
         signatureUrl,
         nominees: preparedNominees,
       });
@@ -796,6 +946,8 @@ export function SignUpForm() {
           permanentAddressDetails: { ...effectivePermanentAddressDetails },
           socialMedia: hasSocialMedia ? cleanedSocial : undefined,
           photoUrl: gender === 'female' ? '' : photoUrl,
+          nidFrontUrl,
+          nidBackUrl,
           signatureUrl,
           nominees: preparedNominees,
           digitalAgreement: res.digitalAgreement,
@@ -837,6 +989,8 @@ export function SignUpForm() {
       setLinkedin('');
       setShowSocialSection(false);
       setPhotoUrl('');
+      setNidFrontUrl('');
+      setNidBackUrl('');
       setSignatureUrl('');
       setPendingSignature(null);
       setAgreedDigitalAgreement(false);
@@ -896,12 +1050,12 @@ export function SignUpForm() {
   }
 
   return (
-    <div className="text-slate-900 dark:text-slate-100 py-4 sm:py-8">
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden text-slate-900 dark:text-slate-100 py-4 sm:py-8">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-        className="max-w-4xl w-full mx-auto bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-6 sm:p-10 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] space-y-8"
+        className="max-w-4xl w-full min-w-0 mx-auto bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 rounded-2xl p-4 sm:p-10 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.12)] dark:shadow-[0_16px_44px_-16px_rgba(0,0,0,0.6)] space-y-8"
       >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200/80 dark:border-slate-800/80 pb-6">
           <div className="flex items-start sm:items-center gap-3.5">
@@ -2249,6 +2403,221 @@ export function SignUpForm() {
                         )}
                       </div>
                     </div>
+
+                    {/* Nominee Identity Document (NID Front & Back / Birth Registration, max 2 MB) */}
+                    <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-white/80 dark:bg-slate-900/75 space-y-3.5 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="space-y-0.5 min-w-0">
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-100 block">
+                            {t('nomineeIdentityTitle')} <span className="text-red-500">*</span>
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                            {t('maxTwoMbHint')}
+                          </span>
+                        </div>
+
+                        <div
+                          role="group"
+                          aria-label={t('nomineeIdentityTypeLabel')}
+                          className="inline-grid grid-cols-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100/80 dark:bg-slate-950/70 p-0.5 shrink-0 max-w-full"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => updateNomineeField(idx, 'identityDocType', 'nid')}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer truncate ${
+                              nominee.identityDocType === 'nid'
+                                ? 'bg-emerald-700 text-white shadow-xs'
+                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            {t('docTypeNid')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateNomineeField(idx, 'identityDocType', 'birth_reg')}
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer truncate ${
+                              nominee.identityDocType === 'birth_reg'
+                                ? 'bg-emerald-700 text-white shadow-xs'
+                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                          >
+                            {t('docTypeBirthReg')}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Female Nominee Photo Blur Guidance */}
+                      <div
+                        className={`p-3 rounded-xl border flex items-start gap-2.5 text-xs ${
+                          nominee.gender === 'female'
+                            ? 'border-emerald-300/80 dark:border-emerald-800/80 bg-emerald-50/75 dark:bg-emerald-950/35 text-emerald-900 dark:text-emerald-200'
+                            : 'border-slate-200/80 dark:border-slate-800/80 bg-slate-50/75 dark:bg-slate-950/50 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        <Info
+                          className={`w-4 h-4 shrink-0 mt-0.5 ${
+                            nominee.gender === 'female'
+                              ? 'text-emerald-700 dark:text-emerald-400'
+                              : 'text-slate-500 dark:text-slate-400'
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <div className="space-y-0.5 min-w-0">
+                          <p className="font-semibold">{t('femaleNidBlurTitle')}</p>
+                          <p className="text-[11px] leading-relaxed opacity-90">
+                            {t('femaleNidBlurInstruction')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Nominee Identity Front Side (Required for both NID & Birth Reg) */}
+                        <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/50 space-y-2 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                              {nominee.identityDocType === 'birth_reg'
+                                ? t('birthRegFrontLabel')
+                                : t('nomineeIdentityFrontLabel')}{' '}
+                              <span className="text-red-500">*</span>
+                            </span>
+                            {nominee.identityFrontUrl && (
+                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 shrink-0">
+                                <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>{t('uploaded')}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {nominee.identityFrontUrl ? (
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={nominee.identityFrontUrl}
+                                alt={`Nominee ${idx + 1} identity front`}
+                                referrerPolicy="no-referrer"
+                                className="w-20 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
+                              />
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                                  <span>
+                                    {nominee.identityFrontUploading ? t('uploading') : t('replaceDoc')}
+                                  </span>
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    disabled={nominee.identityFrontUploading}
+                                    onChange={(e) => void handleNomineeIdentityUpload(idx, 'front', e)}
+                                    className="sr-only"
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => updateNomineeField(idx, 'identityFrontUrl', '')}
+                                  className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                >
+                                  {tCommon('remove')}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                              {nominee.identityFrontUploading ? (
+                                <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                              ) : (
+                                <ImagePlus className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                              )}
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {nominee.identityFrontUploading
+                                  ? t('uploadingToCloud')
+                                  : t('chooseDocFront')}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                disabled={nominee.identityFrontUploading}
+                                onChange={(e) => void handleNomineeIdentityUpload(idx, 'front', e)}
+                                className="sr-only"
+                              />
+                            </label>
+                          )}
+                        </div>
+
+                        {/* Nominee Identity Back Side (Required for NID, Optional for Birth Reg) */}
+                        <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/50 space-y-2 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                              {nominee.identityDocType === 'birth_reg'
+                                ? t('birthRegBackLabel')
+                                : t('nomineeIdentityBackLabel')}{' '}
+                              {nominee.identityDocType === 'nid' ? (
+                                <span className="text-red-500">*</span>
+                              ) : (
+                                <span className="text-slate-500 dark:text-slate-400 font-normal">
+                                  {t('optionalForBirthReg')}
+                                </span>
+                              )}
+                            </span>
+                            {nominee.identityBackUrl && (
+                              <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 shrink-0">
+                                <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                                <span>{t('uploaded')}</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {nominee.identityBackUrl ? (
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={nominee.identityBackUrl}
+                                alt={`Nominee ${idx + 1} identity back`}
+                                referrerPolicy="no-referrer"
+                                className="w-20 h-14 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
+                              />
+                              <div className="flex flex-col gap-1 min-w-0">
+                                <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                                  <span>
+                                    {nominee.identityBackUploading ? t('uploading') : t('replaceDoc')}
+                                  </span>
+                                  <input
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    disabled={nominee.identityBackUploading}
+                                    onChange={(e) => void handleNomineeIdentityUpload(idx, 'back', e)}
+                                    className="sr-only"
+                                  />
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => updateNomineeField(idx, 'identityBackUrl', '')}
+                                  className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                                >
+                                  {tCommon('remove')}
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                              {nominee.identityBackUploading ? (
+                                <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                              ) : (
+                                <ImagePlus className="w-4 h-4 text-slate-400" aria-hidden="true" />
+                              )}
+                              <span className="text-xs text-slate-600 dark:text-slate-400">
+                                {nominee.identityBackUploading
+                                  ? t('uploadingToCloud')
+                                  : t('chooseDocBack')}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                disabled={nominee.identityBackUploading}
+                                onChange={(e) => void handleNomineeIdentityUpload(idx, 'back', e)}
+                                className="sr-only"
+                              />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -2267,7 +2636,7 @@ export function SignUpForm() {
               </div>
             </div>
 
-            {/* Section 5: Identity Photo, Signature & Digital Membership Agreement */}
+            {/* Section 5: Identity Documents, Photo, Signature & Digital Membership Agreement */}
             <div className="space-y-4 pt-5 border-t border-slate-200/70 dark:border-slate-800/80">
               <div>
                 <h2 className="text-xs font-semibold tracking-wide text-emerald-700 dark:text-emerald-400">
@@ -2276,6 +2645,152 @@ export function SignUpForm() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Applicant NID Front & Back Side Scans (Mandatory, Max 2 MB each) */}
+                <div className="sm:col-span-2 p-4 rounded-2xl border border-slate-200/85 dark:border-slate-800/85 bg-slate-50/75 dark:bg-slate-950/60 space-y-3.5 min-w-0">
+                  <div className="space-y-0.5">
+                    <h3 className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                      {t('applicantNidSectionTitle')} <span className="text-red-500">*</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      {t('applicantNidSectionHint')}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* NID Front Side */}
+                    <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/75 space-y-2.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {t('nidFrontLabel')} <span className="text-red-500">*</span>
+                        </span>
+                        {nidFrontUrl && (
+                          <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 shrink-0">
+                            <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{t('uploaded')}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {nidFrontUrl ? (
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={nidFrontUrl}
+                            alt={t('nidFrontLabel')}
+                            referrerPolicy="no-referrer"
+                            className="w-24 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
+                          />
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                              <span>{nidFrontUploading ? t('uploading') : t('replaceDoc')}</span>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                disabled={nidFrontUploading}
+                                onChange={(e) => void handleApplicantNidUpload('front', e)}
+                                className="sr-only"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setNidFrontUrl('')}
+                              className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                            >
+                              {tCommon('remove')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                          {nidFrontUploading ? (
+                            <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                          ) : (
+                            <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                          )}
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            {nidFrontUploading ? t('uploadingToCloud') : t('chooseNidFront')}
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {t('maxTwoMbHint')}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            disabled={nidFrontUploading}
+                            onChange={(e) => void handleApplicantNidUpload('front', e)}
+                            className="sr-only"
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* NID Back Side */}
+                    <div className="p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/75 space-y-2.5 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                          {t('nidBackLabel')} <span className="text-red-500">*</span>
+                        </span>
+                        {nidBackUrl && (
+                          <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 shrink-0">
+                            <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>{t('uploaded')}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {nidBackUrl ? (
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={nidBackUrl}
+                            alt={t('nidBackLabel')}
+                            referrerPolicy="no-referrer"
+                            className="w-24 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0"
+                          />
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <label className="text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer">
+                              <span>{nidBackUploading ? t('uploading') : t('replaceDoc')}</span>
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                disabled={nidBackUploading}
+                                onChange={(e) => void handleApplicantNidUpload('back', e)}
+                                className="sr-only"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setNidBackUrl('')}
+                              className="text-left text-xs font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer"
+                            >
+                              {tCommon('remove')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center gap-1.5 py-4 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-500 cursor-pointer text-center transition-colors">
+                          {nidBackUploading ? (
+                            <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                          ) : (
+                            <ImagePlus className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                          )}
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                            {nidBackUploading ? t('uploadingToCloud') : t('chooseNidBack')}
+                          </span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                            {t('maxTwoMbHint')}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            disabled={nidBackUploading}
+                            onChange={(e) => void handleApplicantNidUpload('back', e)}
+                            className="sr-only"
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Member Photo (Not required when female) */}
                 <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/55 space-y-3">
                   <div className="flex items-center justify-between gap-2">
@@ -2505,8 +3020,11 @@ export function SignUpForm() {
                 disabled={
                   submitting ||
                   photoUploading ||
+                  nidFrontUploading ||
+                  nidBackUploading ||
                   signatureUploading ||
-                  anyNomineePhotoUploading
+                  anyNomineePhotoUploading ||
+                  anyNomineeIdentityUploading
                 }
                 className="px-6 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-emerald-600 dark:hover:bg-emerald-500 disabled:opacity-60 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-sm shadow-emerald-900/15 hover:shadow-md active:scale-[0.98] transition-all duration-150 cursor-pointer shrink-0 whitespace-nowrap"
               >

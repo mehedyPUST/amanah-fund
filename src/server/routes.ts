@@ -90,6 +90,7 @@ import {
   hydrateHalalProjectForViewer,
   hydrateLoanForViewer,
   hydrateProfileChangeRequestsForViewer,
+  isSafeUploadedUrl,
   queueEmailNotification,
   validateAndNormalizeNominees,
   verifyDigitalAgreementByToken,
@@ -749,9 +750,13 @@ apiRouter.get('/uploads/:filename', (req, res) => {
 const ALLOWED_UPLOAD_CATEGORIES = new Set<UploadDocumentCategory>([
   'cooperative-constitution',
   'member-kyc-photo',
+  'member-nid-front',
+  'member-nid-back',
   'member-signature',
   'member-signed-agreement',
   'nominee-kyc-photo',
+  'nominee-identity-front',
+  'nominee-identity-back',
   'contribution-receipt',
   'loan-repayment-slip',
   'community-post-photo',
@@ -1059,6 +1064,8 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       (permanentAddressDetails ? formatBdAddress(permanentAddressDetails) : '');
     const socialMedia = normalizeSocialMedia(req.body?.socialMedia);
     const photoUrl = gender === 'female' ? '' : String(req.body?.photoUrl || '').trim();
+    const nidFrontUrl = String(req.body?.nidFrontUrl || '').trim();
+    const nidBackUrl = String(req.body?.nidBackUrl || '').trim();
     const signatureUrl = String(req.body?.signatureUrl || '').trim();
     const agreementPhotoUrl = String(req.body?.agreementPhotoUrl || '').trim();
 
@@ -1088,6 +1095,19 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       res.status(400).json({
         error:
           'All required registration fields (including photo unless female, father/mother name, gender, marital status, NID, DOB, reference member, mobile, occupation, organization, and addresses) must be completed.',
+      });
+      return;
+    }
+
+    if (!nidFrontUrl || !nidBackUrl) {
+      res.status(400).json({
+        error: 'Both front and back scans of your National ID (NID) (max 2 MB each) are required.',
+      });
+      return;
+    }
+    if (!isSafeUploadedUrl(nidFrontUrl) || !isSafeUploadedUrl(nidBackUrl)) {
+      res.status(400).json({
+        error: 'Invalid National ID (NID) document attachment URL.',
       });
       return;
     }
@@ -1140,7 +1160,9 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       }
     }
 
-    const nomineeValidation = validateAndNormalizeNominees(req.body?.nominees);
+    const nomineeValidation = validateAndNormalizeNominees(req.body?.nominees, {
+      requireIdentityDocs: true,
+    });
     if ('error' in nomineeValidation) {
       res.status(400).json({ error: nomineeValidation.error });
       return;
@@ -1168,6 +1190,8 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       permanentAddressDetails,
       socialMedia,
       photoUrl,
+      nidFrontUrl,
+      nidBackUrl,
       signatureUrl: signatureUrl || undefined,
       agreementPhotoUrl: agreementPhotoUrl || undefined,
       nominees: nomineeValidation.nominees,
@@ -1987,8 +2011,17 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
     const socialMedia = hasSocialMedia ? normalizeSocialMedia(req.body?.socialMedia) : undefined;
     const hasPhotoUrl = req.body?.photoUrl !== undefined;
     const photoUrl = hasPhotoUrl ? String(req.body.photoUrl || '').trim() : undefined;
+    const hasNidFrontUrl = req.body?.nidFrontUrl !== undefined;
+    const nidFrontUrl = hasNidFrontUrl ? String(req.body.nidFrontUrl || '').trim() : undefined;
+    const hasNidBackUrl = req.body?.nidBackUrl !== undefined;
+    const nidBackUrl = hasNidBackUrl ? String(req.body.nidBackUrl || '').trim() : undefined;
     const hasSignatureUrl = req.body?.signatureUrl !== undefined;
     const signatureUrl = hasSignatureUrl ? String(req.body.signatureUrl || '').trim() : undefined;
+
+    if ((nidFrontUrl && !isSafeUploadedUrl(nidFrontUrl)) || (nidBackUrl && !isSafeUploadedUrl(nidBackUrl))) {
+      res.status(400).json({ error: 'Invalid National ID (NID) document attachment URL.' });
+      return;
+    }
 
     if (!mobile || !presentAddress || !permanentAddress) {
       res.status(400).json({
@@ -2056,7 +2089,15 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
     const hasNominees = req.body?.nominees !== undefined;
     let validatedNominees: UserRegistrationDetails['nominees'] | undefined;
     if (hasNominees) {
-      const nomineeValidation = validateAndNormalizeNominees(req.body.nominees);
+      const hasAnyNomineeIdentityFields =
+        Array.isArray(req.body.nominees) &&
+        req.body.nominees.some(
+          (n: Record<string, unknown>) =>
+            Boolean(n?.identityDocType || n?.identityFrontUrl || n?.identityBackUrl)
+        );
+      const nomineeValidation = validateAndNormalizeNominees(req.body.nominees, {
+        requireIdentityDocs: hasAnyNomineeIdentityFields,
+      });
       if ('error' in nomineeValidation) {
         res.status(400).json({ error: nomineeValidation.error });
         return;
@@ -2208,6 +2249,14 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
           (normStr(photoUrl) !== '' || (gender ?? regDetails?.gender) === 'female')
         ) {
           requestedChanges.photoUrl = photoUrl || '';
+        }
+
+        if (hasNidFrontUrl && normStr(nidFrontUrl) !== normStr(regDetails?.nidFrontUrl)) {
+          requestedChanges.nidFrontUrl = nidFrontUrl || '';
+        }
+
+        if (hasNidBackUrl && normStr(nidBackUrl) !== normStr(regDetails?.nidBackUrl)) {
+          requestedChanges.nidBackUrl = nidBackUrl || '';
         }
 
         if (
@@ -2391,6 +2440,8 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
           (gender ?? existingDetails.gender) === 'female' && hasPhotoUrl && !photoUrl
             ? ''
             : photoUrl || existingDetails.photoUrl,
+        nidFrontUrl: hasNidFrontUrl ? nidFrontUrl || undefined : existingDetails.nidFrontUrl,
+        nidBackUrl: hasNidBackUrl ? nidBackUrl || undefined : existingDetails.nidBackUrl,
         signatureUrl: hasSignatureUrl ? signatureUrl || undefined : existingDetails.signatureUrl,
         nominees: hasNominees && validatedNominees ? validatedNominees : existingDetails.nominees,
       };
@@ -2612,6 +2663,14 @@ apiRouter.patch(
             socialMedia: nextSocial,
             photoUrl:
               ch.photoUrl !== undefined ? ch.photoUrl : existingDetails.photoUrl,
+            nidFrontUrl:
+              ch.nidFrontUrl !== undefined
+                ? ch.nidFrontUrl || undefined
+                : existingDetails.nidFrontUrl,
+            nidBackUrl:
+              ch.nidBackUrl !== undefined
+                ? ch.nidBackUrl || undefined
+                : existingDetails.nidBackUrl,
             signatureUrl:
               ch.signatureUrl !== undefined
                 ? ch.signatureUrl || undefined

@@ -165,6 +165,11 @@ export function MemberAgreementPaperPreview({
   const isChanged = (key: string) => Boolean(changedFields?.has(key));
 
   const nominees = reg.nominees || [];
+  const hasIdentityAttachments = Boolean(
+    reg.nidFrontUrl ||
+      reg.nidBackUrl ||
+      nominees.some((n) => Boolean(n.identityFrontUrl || n.identityBackUrl))
+  );
   const social = reg.socialMedia;
   const hasSocial = Boolean(social?.whatsapp || social?.facebook || social?.linkedin);
   const showSpouse = Boolean(
@@ -600,7 +605,7 @@ export function MemberAgreementPaperPreview({
             title="DIGITAL AGREEMENT DECLARATION, VERIFICATION & SIGNATURES"
           />
 
-          <div className="rounded-lg overflow-hidden border border-slate-200 grid grid-cols-1 sm:grid-cols-3">
+          <div className="rounded-lg overflow-hidden border border-slate-200 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <PaperCell
               label="Member Portrait Photo"
               value={
@@ -611,6 +616,17 @@ export function MemberAgreementPaperPreview({
                     : 'Not Attached'
               }
               changed={isChanged('photoUrl')}
+            />
+            <PaperCell
+              label="Applicant NID Scans"
+              value={
+                reg.nidFrontUrl && reg.nidBackUrl
+                  ? 'Attached (Front & Back)'
+                  : reg.nidFrontUrl || reg.nidBackUrl
+                    ? 'Partial Upload'
+                    : 'Not Attached'
+              }
+              changed={isChanged('nidFrontUrl') || isChanged('nidBackUrl')}
             />
             <PaperCell
               label="Signature (300 × 80 px)"
@@ -734,6 +750,176 @@ export function MemberAgreementPaperPreview({
             </div>
           </div>
         </div>
+
+        {/* APPENDIX PAGE: OFFICIAL IDENTITY DOCUMENT ATTACHMENTS */}
+        {hasIdentityAttachments && (
+          <div className="pt-4 border-t-2 border-dashed border-slate-300 print:break-before-page space-y-3">
+            <SectionBar num="APX" title="OFFICIAL IDENTITY DOCUMENT ATTACHMENTS" />
+
+            {(reg.nidFrontUrl || reg.nidBackUrl) && (
+              <PaperCardContainer changed={isChanged('nidFrontUrl') || isChanged('nidBackUrl')}>
+                <div className="px-3 py-1.5 bg-emerald-50/70 border-b border-emerald-200 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-bold text-emerald-900">
+                    A. Applicant National ID (NID) — Front &amp; Back
+                  </span>
+                  <span className="text-[10.5px] font-mono font-bold text-slate-800">
+                    NID: {reg.nid || '—'}
+                  </span>
+                </div>
+
+                <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    {
+                      label: 'Applicant NID — Front Side',
+                      url: reg.nidFrontUrl,
+                      changed: isChanged('nidFrontUrl'),
+                    },
+                    {
+                      label: 'Applicant NID — Back Side',
+                      url: reg.nidBackUrl,
+                      changed: isChanged('nidBackUrl'),
+                    },
+                  ].map((docSlot) => (
+                    <div
+                      key={docSlot.label}
+                      className={`rounded-lg border p-2.5 flex flex-col gap-2 ${
+                        docSlot.changed
+                          ? 'border-amber-300 bg-amber-50/75'
+                          : 'border-slate-200 bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                          {docSlot.label}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {docSlot.changed && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[8.5px] font-bold uppercase">
+                              Updated
+                            </span>
+                          )}
+                          {docSlot.url && (
+                            <a
+                              href={docSlot.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                            >
+                              <span>Open</span>
+                              <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <div className="aspect-[16/10] w-full rounded border border-slate-200 bg-white overflow-hidden flex items-center justify-center p-1">
+                        {docSlot.url ? (
+                          <img
+                            src={docSlot.url}
+                            alt={docSlot.label}
+                            referrerPolicy="no-referrer"
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-[10.5px] text-slate-400">Not uploaded</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </PaperCardContainer>
+            )}
+
+            {nominees.map((nominee, idx) => {
+              if (!nominee.identityFrontUrl && !nominee.identityBackUrl) return null;
+              const isBirthReg = nominee.identityDocType === 'birth_reg';
+              const docLabel = isBirthReg ? 'Birth Registration Certificate' : 'National ID (NID)';
+
+              return (
+                <PaperCardContainer
+                  key={`apx-nominee-${nominee.name}-${idx}`}
+                  changed={isChanged('nominees')}
+                >
+                  <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold text-slate-900">
+                      {nominees.length > 1
+                        ? `B.${idx + 1}. Nominee #${idx + 1}`
+                        : 'B. Primary Nominee'}
+                      : {nominee.name} ({normalizeRelationToEnglish(nominee.relation)}) · {docLabel}
+                    </span>
+                    <span className="text-[10.5px] font-mono font-semibold text-slate-700">
+                      ID: {nominee.nidOrBirthReg || '—'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {[
+                        {
+                          label: isBirthReg
+                            ? 'Birth Registration — Front / Certificate'
+                            : 'Nominee NID — Front Side',
+                          url: nominee.identityFrontUrl,
+                          emptyText: 'Front side not uploaded',
+                        },
+                        {
+                          label: isBirthReg
+                            ? 'Birth Registration — Back Side (Optional)'
+                            : 'Nominee NID — Back Side',
+                          url: nominee.identityBackUrl,
+                          emptyText: isBirthReg
+                            ? 'Optional (Birth Registration)'
+                            : 'Back side not uploaded',
+                        },
+                      ].map((docSlot) => (
+                        <div
+                          key={docSlot.label}
+                          className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 flex flex-col gap-2"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                              {docSlot.label}
+                            </span>
+                            {docSlot.url && (
+                              <a
+                                href={docSlot.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                              >
+                                <span>Open</span>
+                                <ExternalLink className="w-2.5 h-2.5" aria-hidden="true" />
+                              </a>
+                            )}
+                          </div>
+                          <div className="aspect-[16/10] w-full rounded border border-slate-200 bg-white overflow-hidden flex items-center justify-center p-1">
+                            {docSlot.url ? (
+                              <img
+                                src={docSlot.url}
+                                alt={`${nominee.name} — ${docSlot.label}`}
+                                referrerPolicy="no-referrer"
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            ) : (
+                              <span className="text-[10.5px] text-slate-400 text-center px-2">
+                                {docSlot.emptyText}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {nominee.gender === 'female' && !isBirthReg && (
+                      <p className="text-[10px] italic text-emerald-700">
+                        Privacy Note: Photo on female nominee NID may be blurred by the applicant
+                        prior to upload.
+                      </p>
+                    )}
+                  </div>
+                </PaperCardContainer>
+              );
+            })}
+          </div>
+        )}
 
         {/* Paper Footer */}
         <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-[10.5px] text-slate-500">

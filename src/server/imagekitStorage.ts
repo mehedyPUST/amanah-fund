@@ -28,9 +28,13 @@ const MIME_TO_EXT: Record<string, string> = {
 const CATEGORY_DEFAULT_SLUG: Record<UploadDocumentCategory, string> = {
   'cooperative-constitution': 'cooperative-constitution',
   'member-kyc-photo': 'member-kyc-photo',
+  'member-nid-front': 'member-nid-front',
+  'member-nid-back': 'member-nid-back',
   'member-signature': 'member-signature',
   'member-signed-agreement': 'member-signed-agreement',
   'nominee-kyc-photo': 'nominee-kyc-photo',
+  'nominee-identity-front': 'nominee-identity-front',
+  'nominee-identity-back': 'nominee-identity-back',
   'contribution-receipt': 'contribution-receipt',
   'loan-repayment-slip': 'loan-repayment-slip',
   'community-post-photo': 'community-post-photo',
@@ -40,14 +44,49 @@ const CATEGORY_DEFAULT_SLUG: Record<UploadDocumentCategory, string> = {
 const CATEGORY_SUBFOLDER: Record<UploadDocumentCategory, string> = {
   'cooperative-constitution': 'governance',
   'member-kyc-photo': 'kyc',
+  'member-nid-front': 'kyc',
+  'member-nid-back': 'kyc',
   'member-signature': 'kyc',
   'member-signed-agreement': 'kyc',
   'nominee-kyc-photo': 'kyc',
+  'nominee-identity-front': 'kyc',
+  'nominee-identity-back': 'kyc',
   'contribution-receipt': 'receipts',
   'loan-repayment-slip': 'receipts',
   'community-post-photo': 'community',
   document: 'documents',
 };
+
+export const IDENTITY_DOC_CATEGORIES = new Set<UploadDocumentCategory>([
+  'member-nid-front',
+  'member-nid-back',
+  'nominee-identity-front',
+  'nominee-identity-back',
+]);
+
+export const MAX_IDENTITY_DOC_BYTES = 2 * 1024 * 1024;
+
+function hasValidRasterSignature(buffer: Buffer, mimeType: string): boolean {
+  if (buffer.length < 12) return false;
+  if (mimeType === 'image/png') {
+    return (
+      buffer[0] === 0x89 &&
+      buffer[1] === 0x50 &&
+      buffer[2] === 0x4e &&
+      buffer[3] === 0x47
+    );
+  }
+  if (mimeType === 'image/jpeg') {
+    return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+  if (mimeType === 'image/webp') {
+    return (
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+    );
+  }
+  return false;
+}
 
 let warnedPartialImageKitConfig = false;
 
@@ -229,22 +268,34 @@ export function validateAndDecodeUpload(params: {
     throw new Error('Only PDF documents and PNG/JPG/WEBP/GIF images are allowed.');
   }
 
+  const category: UploadDocumentCategory =
+    params.category && CATEGORY_DEFAULT_SLUG[params.category] ? params.category : 'document';
+  const isIdentityDoc = IDENTITY_DOC_CATEGORIES.has(category);
+
   const buffer = Buffer.from(base64Payload, 'base64');
-  const maxBytes = 10 * 1024 * 1024;
+  const maxBytes = isIdentityDoc ? MAX_IDENTITY_DOC_BYTES : 10 * 1024 * 1024;
   if (buffer.length === 0 || buffer.length > maxBytes) {
-    throw new Error('Uploaded file must be a valid PDF or photo under 10 MB.');
+    throw new Error(
+      isIdentityDoc
+        ? 'Identity document image must be valid and must not exceed 2 MB.'
+        : 'Uploaded file must be a valid PDF or photo under 10 MB.'
+    );
   }
 
   const isPdf = mimeType === 'application/pdf';
-  if (isPdf) {
+  if (isIdentityDoc) {
+    if (mimeType !== 'image/png' && mimeType !== 'image/jpeg' && mimeType !== 'image/webp') {
+      throw new Error('Identity documents must be uploaded as PNG, JPG, or WEBP images (max 2 MB).');
+    }
+    if (!hasValidRasterSignature(buffer, mimeType)) {
+      throw new Error('Invalid image file signature. Please upload a genuine PNG, JPG, or WEBP scan.');
+    }
+  } else if (isPdf) {
     const headerSlice = buffer.subarray(0, 1024).toString('latin1');
     if (!headerSlice.includes('%PDF-')) {
       throw new Error('Invalid PDF file signature. Please upload a genuine PDF document.');
     }
   }
-
-  const category: UploadDocumentCategory =
-    params.category && CATEGORY_DEFAULT_SLUG[params.category] ? params.category : 'document';
 
   const filename = buildSemanticFileName({
     category: params.category,

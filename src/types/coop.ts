@@ -75,6 +75,7 @@ export interface MobileMemberOverviewIconsConfig {
 export type NomineeGender = 'male' | 'female' | 'other';
 export type MemberGender = NomineeGender;
 export type MaritalStatus = 'single' | 'married' | 'widowed' | 'divorced';
+export type IdentityDocType = 'nid' | 'birth_reg';
 
 export interface NomineeInfo {
   name: string;
@@ -85,6 +86,9 @@ export interface NomineeInfo {
   relation: string;
   sharePercentage: number;
   nidOrBirthReg: string;
+  identityDocType?: IdentityDocType;
+  identityFrontUrl?: string;
+  identityBackUrl?: string;
   mobile?: string;
   address: string;
   photoUrl?: string;
@@ -153,6 +157,8 @@ export interface UserRegistrationDetails {
   permanentAddressDetails?: StructuredBdAddress;
   socialMedia?: MemberSocialMedia;
   photoUrl: string;
+  nidFrontUrl?: string;
+  nidBackUrl?: string;
   signatureUrl?: string;
   agreementPhotoUrl?: string;
   nominees?: NomineeInfo[];
@@ -315,9 +321,13 @@ export interface FaqItem {
 export type UploadDocumentCategory =
   | 'cooperative-constitution'
   | 'member-kyc-photo'
+  | 'member-nid-front'
+  | 'member-nid-back'
   | 'member-signature'
   | 'member-signed-agreement'
   | 'nominee-kyc-photo'
+  | 'nominee-identity-front'
+  | 'nominee-identity-back'
   | 'contribution-receipt'
   | 'loan-repayment-slip'
   | 'community-post-photo'
@@ -641,6 +651,8 @@ export interface ProfileChangePayload {
   permanentAddressDetails?: StructuredBdAddress;
   socialMedia?: MemberSocialMedia;
   photoUrl?: string;
+  nidFrontUrl?: string;
+  nidBackUrl?: string;
   signatureUrl?: string;
   nominees?: NomineeInfo[];
 }

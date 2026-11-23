@@ -12,7 +12,7 @@ interface NomineeDetailsListProps {
 
 export function NomineeDetailsList({ nominees, compact = false }: NomineeDetailsListProps) {
   const t = useTranslations('Common.nominees');
-  const [brokenPhotos, setBrokenPhotos] = useState<Record<number, boolean>>({});
+  const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({});
 
   if (!nominees || nominees.length === 0) {
     return null;
@@ -40,7 +40,12 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
 
       <div className="space-y-2.5">
         {nominees.map((nominee, idx) => {
-          const hasPhoto = Boolean(nominee.photoUrl) && !brokenPhotos[idx];
+          const hasPhoto = Boolean(nominee.photoUrl) && !brokenImages[`photo-${idx}`];
+          const hasIdFront = Boolean(nominee.identityFrontUrl) && !brokenImages[`idfront-${idx}`];
+          const hasIdBack = Boolean(nominee.identityBackUrl) && !brokenImages[`idback-${idx}`];
+          const isBirthReg = nominee.identityDocType === 'birth_reg';
+          const docTypeLabel = isBirthReg ? t('docTypeBirthReg') : t('docTypeNid');
+
           return (
             <div
               key={`${nominee.name}-${idx}`}
@@ -97,13 +102,20 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
                 </div>
 
                 <div>
+                  <div className="text-slate-500 dark:text-slate-400">{t('identityDocType')}</div>
+                  <div className="mt-0.5 font-semibold text-slate-900 dark:text-white">
+                    {docTypeLabel}
+                  </div>
+                </div>
+
+                <div>
                   <div className="text-slate-500 dark:text-slate-400">{t('mobile')}</div>
                   <div className="mt-0.5 font-mono font-semibold tabular-nums text-slate-900 dark:text-white">
                     {nominee.mobile || t('notProvided')}
                   </div>
                 </div>
 
-                <div className={compact ? 'sm:col-span-2' : 'sm:col-span-2'}>
+                <div className={compact ? 'sm:col-span-2' : 'sm:col-span-3'}>
                   <div className="text-slate-500 dark:text-slate-400">{t('address')}</div>
                   <div className="mt-0.5 text-slate-900 dark:text-slate-100 leading-relaxed">
                     {nominee.address}
@@ -111,33 +123,101 @@ export function NomineeDetailsList({ nominees, compact = false }: NomineeDetails
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800 flex items-center justify-between gap-3">
-                <span className="text-slate-500 dark:text-slate-400">{t('photo')}</span>
-                {hasPhoto ? (
-                  <a
-                    href={nominee.photoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
-                  >
-                    <img
-                      src={nominee.photoUrl}
-                      alt={`${nominee.name}`}
-                      referrerPolicy="no-referrer"
-                      onError={() => setBrokenPhotos((prev) => ({ ...prev, [idx]: true }))}
-                      className="w-8 h-8 rounded object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                    />
-                    <span>{t('openPhoto')}</span>
-                    <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                  </a>
-                ) : nominee.gender === 'female' ? (
-                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                    {t('femaleExempt')}
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {t('notProvided')}
-                  </span>
+              <div className="pt-2 border-t border-slate-200/70 dark:border-slate-800 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-slate-500 dark:text-slate-400">{t('photo')}</span>
+                  {hasPhoto ? (
+                    <a
+                      href={nominee.photoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 text-emerald-700 dark:text-emerald-400 hover:underline font-medium"
+                    >
+                      <img
+                        src={nominee.photoUrl}
+                        alt={`${nominee.name}`}
+                        referrerPolicy="no-referrer"
+                        onError={() =>
+                          setBrokenImages((prev) => ({ ...prev, [`photo-${idx}`]: true }))
+                        }
+                        className="w-8 h-8 rounded object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                      />
+                      <span>{t('openPhoto')}</span>
+                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                    </a>
+                  ) : nominee.gender === 'female' ? (
+                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                      {t('femaleExempt')}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {t('notProvided')}
+                    </span>
+                  )}
+                </div>
+
+                {(nominee.identityFrontUrl || nominee.identityBackUrl) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <div className="rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/70 p-2 flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        {t('identityFront')}
+                      </span>
+                      {hasIdFront ? (
+                        <a
+                          href={nominee.identityFrontUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline shrink-0"
+                        >
+                          <img
+                            src={nominee.identityFrontUrl}
+                            alt={`${nominee.name} ${t('identityFront')}`}
+                            referrerPolicy="no-referrer"
+                            onError={() =>
+                              setBrokenImages((prev) => ({ ...prev, [`idfront-${idx}`]: true }))
+                            }
+                            className="w-8 h-6 rounded object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          />
+                          <span>{t('openIdentityFront')}</span>
+                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {t('notProvided')}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="rounded-lg border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/70 p-2 flex items-center justify-between gap-2">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        {t('identityBack')}
+                      </span>
+                      {hasIdBack ? (
+                        <a
+                          href={nominee.identityBackUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:underline shrink-0"
+                        >
+                          <img
+                            src={nominee.identityBackUrl}
+                            alt={`${nominee.name} ${t('identityBack')}`}
+                            referrerPolicy="no-referrer"
+                            onError={() =>
+                              setBrokenImages((prev) => ({ ...prev, [`idback-${idx}`]: true }))
+                            }
+                            className="w-8 h-6 rounded object-cover border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          />
+                          <span>{t('openIdentityBack')}</span>
+                          <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {isBirthReg ? t('backOptionalBirthReg') : t('notProvided')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>

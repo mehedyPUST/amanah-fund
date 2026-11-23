@@ -63,7 +63,8 @@ function sanitizeFileSegment(value: string): string {
  */
 async function loadImageForPdf(
   url?: string,
-  preferPng = false
+  preferPng = false,
+  maxDimOverride?: number
 ): Promise<LoadedPdfImage | null> {
   if (!url || typeof window === 'undefined' || typeof document === 'undefined') {
     return null;
@@ -87,7 +88,7 @@ async function loadImageForPdf(
       try {
         const w = img.naturalWidth || 300;
         const h = img.naturalHeight || 300;
-        const maxDim = preferPng ? 600 : 520;
+        const maxDim = maxDimOverride ?? (preferPng ? 600 : 520);
         const scale = Math.min(1, maxDim / Math.max(w, h));
         const cw = Math.max(1, Math.round(w * scale));
         const ch = Math.max(1, Math.round(h * scale));
@@ -107,7 +108,7 @@ async function loadImageForPdf(
         const format: 'PNG' | 'JPEG' = preferPng ? 'PNG' : 'JPEG';
         const dataUrl = preferPng
           ? canvas.toDataURL('image/png')
-          : canvas.toDataURL('image/jpeg', 0.9);
+          : canvas.toDataURL('image/jpeg', maxDimOverride ? 0.92 : 0.9);
         finish({ dataUrl, format, width: cw, height: ch });
       } catch {
         finish(null);
@@ -245,23 +246,28 @@ export async function downloadMembershipApplicationPdf(
     registrationDetails: reg,
   });
 
-  // Load logo, photos, QR seal, and render optional Bangla names to high-DPI PNGs in parallel
+  // Load logo, photos, QR seal, identity scans, and render optional Bangla names to high-DPI PNGs in parallel
   const [
     projectLogoImg,
     qrDataUrl,
     memberPhoto,
     signatureImg,
+    nidFrontImg,
+    nidBackImg,
     nameBnImg,
     fatherNameBnImg,
     motherNameBnImg,
     spouseNameBnImg,
     nomineePhotos,
+    nomineeIdentityImgs,
     nomineeNameBnImgs,
   ] = await Promise.all([
     loadImageForPdf('/brand-logo.png', true),
     generateAgreementQrDataUrl(qrPayload, 240),
     reg.gender === 'female' ? Promise.resolve(null) : loadImageForPdf(reg.photoUrl, false),
     loadImageForPdf(reg.signatureUrl, true),
+    loadImageForPdf(reg.nidFrontUrl, false, 1200),
+    loadImageForPdf(reg.nidBackUrl, false, 1200),
     renderBanglaNameImage(reg.nameBn),
     renderBanglaNameImage(reg.fatherNameBn),
     renderBanglaNameImage(reg.motherNameBn),
@@ -269,6 +275,14 @@ export async function downloadMembershipApplicationPdf(
     Promise.all(
       nominees.map((n) =>
         n.gender === 'female' ? Promise.resolve(null) : loadImageForPdf(n.photoUrl, false)
+      )
+    ),
+    Promise.all(
+      nominees.map((n) =>
+        Promise.all([
+          loadImageForPdf(n.identityFrontUrl, false, 1200),
+          loadImageForPdf(n.identityBackUrl, false, 1200),
+        ])
       )
     ),
     Promise.all(nominees.map((n) => renderBanglaNameImage(n.nameBn))),
@@ -876,7 +890,19 @@ export async function downloadMembershipApplicationPdf(
             ? 'Exempt (Female)'
             : 'Not Attached',
       },
-      { label: 'Signature (300 × 80 px)', value: reg.signatureUrl ? 'Attached (Verified)' : 'Not Attached' },
+      {
+        label: 'Applicant NID Scans',
+        value:
+          reg.nidFrontUrl && reg.nidBackUrl
+            ? 'Attached (Front & Back)'
+            : reg.nidFrontUrl || reg.nidBackUrl
+              ? 'Partial Upload'
+              : 'Not Attached',
+      },
+      {
+        label: 'Signature (300 × 80 px)',
+        value: reg.signatureUrl ? 'Attached (Verified)' : 'Not Attached',
+      },
       {
         label: 'Digital Membership Agreement',
         value: agreement
@@ -1010,6 +1036,254 @@ export async function downloadMembershipApplicationPdf(
     align: 'center',
     maxWidth: sigBoxW - 14,
   });
+
+  // =========================================================================
+  // APPENDIX PAGE(S): OFFICIAL IDENTITY DOCUMENT ATTACHMENTS
+  // Automatically appended whenever Applicant NID or Nominee Identity scans exist
+  // =========================================================================
+  const hasAnyIdentityAttachments = Boolean(
+    reg.nidFrontUrl ||
+      reg.nidBackUrl ||
+      nominees.some((n) => Boolean(n.identityFrontUrl || n.identityBackUrl))
+  );
+
+  if (hasAnyIdentityAttachments) {
+    doc.addPage();
+    y = 18;
+
+    // Top Emerald Institutional Strip on Appendix Page
+    doc.setFillColor(5, 150, 105);
+    doc.rect(margin, y, contentWidth, 3.5, 'F');
+    y += 12;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
+    doc.text('APPENDIX — OFFICIAL IDENTITY DOCUMENT ATTACHMENTS', margin, y);
+    y += 11;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.6);
+    doc.setTextColor(71, 85, 105);
+    const appendixMeta = [
+      `Applicant: ${applicantName}`,
+      memberCode ? `Member ID: ${memberCode}` : null,
+      agreement ? `Agreement ID: ${agreement.agreementId}` : null,
+    ]
+      .filter(Boolean)
+      .join('  ·  ');
+    doc.text(appendixMeta, margin, y, { maxWidth: contentWidth });
+    y += 7;
+
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.7);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 10;
+
+    const drawAttachmentSlot = (
+      slotX: number,
+      slotY: number,
+      slotW: number,
+      slotH: number,
+      title: string,
+      img: LoadedPdfImage | null,
+      sourceUrl?: string,
+      emptyNote = 'Not uploaded'
+    ) => {
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.55);
+      doc.roundedRect(slotX, slotY, slotW, slotH, 3.5, 3.5, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.2);
+      doc.setTextColor(51, 65, 85);
+      doc.text(title, slotX + 7, slotY + 11.5);
+
+      const frameX = slotX + 6;
+      const frameY = slotY + 16;
+      const frameW = slotW - 12;
+      const frameH = slotH - 22;
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(frameX, frameY, frameW, frameH, 2.5, 2.5, 'FD');
+
+      if (img) {
+        drawFittedImage(doc, img, frameX, frameY, frameW, frameH, 3);
+        if (sourceUrl && /^https?:\/\//i.test(sourceUrl)) {
+          doc.link(frameX, frameY, frameW, frameH, { url: sourceUrl });
+        }
+      } else if (sourceUrl) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(5, 150, 105);
+        doc.text('Uploaded on file (click to open original scan)', frameX + frameW / 2, frameY + frameH / 2 - 4, {
+          align: 'center',
+          maxWidth: frameW - 14,
+        });
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(6);
+        doc.setTextColor(100, 116, 139);
+        doc.text(sourceUrl.slice(0, 56), frameX + frameW / 2, frameY + frameH / 2 + 8, {
+          align: 'center',
+          maxWidth: frameW - 14,
+        });
+        if (/^https?:\/\//i.test(sourceUrl)) {
+          doc.link(frameX, frameY, frameW, frameH, { url: sourceUrl });
+        }
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.2);
+        doc.setTextColor(148, 163, 184);
+        doc.text(emptyNote, frameX + frameW / 2, frameY + frameH / 2 + 2, {
+          align: 'center',
+          maxWidth: frameW - 16,
+        });
+      }
+    };
+
+    // Applicant NID Card (Front & Back)
+    if (reg.nidFrontUrl || reg.nidBackUrl) {
+      const cardHeaderH = 18;
+      const slotH = 152;
+      const cardH = cardHeaderH + slotH + 14;
+      ensureSpace(cardH + 8);
+
+      const cardY = y;
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.65);
+      doc.roundedRect(margin, cardY, contentWidth, cardH, 4, 4, 'FD');
+
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(margin, cardY, contentWidth, cardHeaderH, 4, 4, 'F');
+      doc.rect(margin, cardY + 12, contentWidth, 6, 'F');
+      doc.setDrawColor(167, 243, 208);
+      doc.line(margin, cardY + cardHeaderH, margin + contentWidth, cardY + cardHeaderH);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.1);
+      doc.setTextColor(6, 95, 70);
+      doc.text('A. APPLICANT NATIONAL ID (NID) — FRONT & BACK', margin + 8, cardY + 12);
+
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(7.3);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`NID: ${reg.nid || '—'}`, margin + contentWidth - 8, cardY + 12, { align: 'right' });
+
+      const slotGap = 10;
+      const slotW = (contentWidth - 16 - slotGap) / 2;
+      const slotY = cardY + cardHeaderH + 7;
+      drawAttachmentSlot(
+        margin + 8,
+        slotY,
+        slotW,
+        slotH,
+        'Applicant NID — Front Side',
+        nidFrontImg,
+        reg.nidFrontUrl,
+        'NID front side not uploaded'
+      );
+      drawAttachmentSlot(
+        margin + 8 + slotW + slotGap,
+        slotY,
+        slotW,
+        slotH,
+        'Applicant NID — Back Side',
+        nidBackImg,
+        reg.nidBackUrl,
+        'NID back side not uploaded'
+      );
+
+      y = cardY + cardH + 10;
+    }
+
+    // Nominee Identity Documents (NID Front & Back / Birth Registration)
+    nominees.forEach((nominee, idx) => {
+      const [nFrontImg, nBackImg] = nomineeIdentityImgs[idx] || [null, null];
+      const hasNomineeDocs = Boolean(nominee.identityFrontUrl || nominee.identityBackUrl);
+      if (!hasNomineeDocs) return;
+
+      const isBirthReg = nominee.identityDocType === 'birth_reg';
+      const docTypeLabel = isBirthReg ? 'Birth Registration Certificate' : 'National ID (NID)';
+      const hasFemaleBlurNote = nominee.gender === 'female' && !isBirthReg;
+
+      const cardHeaderH = 20;
+      const slotH = 148;
+      const noteH = hasFemaleBlurNote ? 12 : 0;
+      const cardH = cardHeaderH + slotH + 14 + noteH;
+      ensureSpace(cardH + 8);
+
+      const cardY = y;
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.65);
+      doc.roundedRect(margin, cardY, contentWidth, cardH, 4, 4, 'FD');
+
+      doc.setFillColor(241, 245, 249);
+      doc.roundedRect(margin, cardY, contentWidth, cardHeaderH, 4, 4, 'F');
+      doc.rect(margin, cardY + 14, contentWidth, 6, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.line(margin, cardY + cardHeaderH, margin + contentWidth, cardY + cardHeaderH);
+
+      const nomTitle =
+        nominees.length > 1 ? `B.${idx + 1}. Nominee #${idx + 1}` : 'B. Primary Nominee';
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(15, 23, 42);
+      doc.text(
+        `${nomTitle}: ${nominee.name} (${normalizeRelationToEnglish(nominee.relation)}) · ${docTypeLabel}`,
+        margin + 8,
+        cardY + 13,
+        { maxWidth: contentWidth - 135 }
+      );
+
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(7.1);
+      doc.setTextColor(51, 65, 85);
+      doc.text(`ID: ${nominee.nidOrBirthReg || '—'}`, margin + contentWidth - 8, cardY + 13, {
+        align: 'right',
+      });
+
+      const slotGap = 10;
+      const slotW = (contentWidth - 16 - slotGap) / 2;
+      const slotY = cardY + cardHeaderH + 7;
+      drawAttachmentSlot(
+        margin + 8,
+        slotY,
+        slotW,
+        slotH,
+        isBirthReg ? 'Birth Registration — Front / Certificate' : 'Nominee NID — Front Side',
+        nFrontImg,
+        nominee.identityFrontUrl,
+        'Front side not uploaded'
+      );
+      drawAttachmentSlot(
+        margin + 8 + slotW + slotGap,
+        slotY,
+        slotW,
+        slotH,
+        isBirthReg ? 'Birth Registration — Back Side (Optional)' : 'Nominee NID — Back Side',
+        nBackImg,
+        nominee.identityBackUrl,
+        isBirthReg ? 'Optional for Birth Registration (Not Uploaded)' : 'Back side not uploaded'
+      );
+
+      if (hasFemaleBlurNote) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(6.8);
+        doc.setTextColor(5, 150, 105);
+        doc.text(
+          'Privacy Note: Photo on female nominee NID may be blurred by the applicant prior to submission.',
+          margin + 8,
+          slotY + slotH + 11
+        );
+      }
+
+      y = cardY + cardH + 10;
+    });
+  }
 
   // =========================================================================
   // FOOTER ON EVERY PAGE
