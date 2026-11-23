@@ -1852,7 +1852,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                                     status={profile.status}
                                     submittedAt={profile.joinedAt}
                                     registrationDetails={reg}
-                                    footerRightText={t('legalFormatFooter')}
+                                    footerRightText={t('a4FormatFooter')}
                                   />
                                 ),
                                 secondaryAction: {

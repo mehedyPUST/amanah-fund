@@ -209,7 +209,7 @@ function drawLeftAlignedTextImage(
 }
 
 /**
- * Generates and downloads a well-organized, official Legal (8.5 × 14 in) PDF of a
+ * Generates and downloads a well-organized, official A4 PDF of a
  * submitted Amanah Cooperative Membership Application Form, laid out compactly so
  * maximum content fits cleanly onto a single page.
  *
@@ -258,14 +258,14 @@ export async function downloadMembershipApplicationPdf(
     Promise.all(nominees.map((n) => renderBanglaNameImage(n.nameBn))),
   ]);
 
-  // US Legal (612 × 1008 pt) maximizes single-page dossier capacity cleanly
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'legal' });
-  const pageWidth = doc.internal.pageSize.getWidth(); // 612
-  const pageHeight = doc.internal.pageSize.getHeight(); // 1008
-  const margin = 28;
-  const contentWidth = pageWidth - margin * 2; // 556
-  const bottomLimit = pageHeight - 28; // 980
-  let y = 18;
+  // Standard A4 (595.28 × 841.89 pt) kept compact for clean single-page dossier fit
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth(); // 595.28
+  const pageHeight = doc.internal.pageSize.getHeight(); // 841.89
+  const margin = 24;
+  const contentWidth = pageWidth - margin * 2; // 547.28
+  const bottomLimit = pageHeight - 25; // 816.89
+  let y = 16;
 
   const ensureSpace = (needed: number) => {
     if (y + needed > bottomLimit) {
@@ -948,7 +948,7 @@ export async function downloadMembershipApplicationPdf(
     doc.setFontSize(7);
     doc.setTextColor(100, 116, 139);
     doc.text(
-      `${fundName} · Official Digital Membership Agreement · Legal (8.5 × 14 in)`,
+      `${fundName} · Official Digital Membership Agreement · A4`,
       margin,
       pageHeight - 11
     );
