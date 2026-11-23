@@ -5,6 +5,10 @@ import type {
   UserRegistrationDetails,
   UserStatus,
 } from '../types/coop.ts';
+import {
+  buildDigitalAgreementQrPayload,
+  generateAgreementQrDataUrl,
+} from './agreementQr.ts';
 import { formatDateTime } from './format.ts';
 import {
   normalizeGenderToEnglish,
@@ -232,9 +236,19 @@ export async function downloadMembershipApplicationPdf(
   } = input;
 
   const nominees = reg.nominees || [];
+  const qrPayload = buildDigitalAgreementQrPayload({
+    applicantName,
+    memberCode,
+    status,
+    submittedAt,
+    fundName,
+    registrationDetails: reg,
+  });
 
-  // Load photos and render optional Bangla names to high-DPI PNGs in parallel
+  // Load logo, photos, QR seal, and render optional Bangla names to high-DPI PNGs in parallel
   const [
+    projectLogoImg,
+    qrDataUrl,
     memberPhoto,
     signatureImg,
     nameBnImg,
@@ -244,6 +258,8 @@ export async function downloadMembershipApplicationPdf(
     nomineePhotos,
     nomineeNameBnImgs,
   ] = await Promise.all([
+    loadImageForPdf('/brand-logo.png', true),
+    generateAgreementQrDataUrl(qrPayload, 240),
     loadImageForPdf(reg.photoUrl, false),
     loadImageForPdf(reg.signatureUrl, true),
     renderBanglaNameImage(reg.nameBn),
@@ -296,34 +312,47 @@ export async function downloadMembershipApplicationPdf(
   doc.rect(margin, y, contentWidth, 3.5, 'F');
   y += 8;
 
-  // Header Left: Cooperative Identity (Dynamic vertical flow — zero overlap for multi-line names)
-  const refBoxW = 196;
-  const headerLeftW = contentWidth - refBoxW - 12;
+  // Header Left: Project Logo + Cooperative Identity (Dynamic vertical flow — zero overlap)
+  const refBoxW = 192;
   const headerTopY = y;
+  const logoSize = projectLogoImg ? 34 : 0;
+  const headerTextX = margin + (projectLogoImg ? logoSize + 8 : 0);
+  const headerLeftW = contentWidth - refBoxW - 12 - (projectLogoImg ? logoSize + 8 : 0);
+
+  if (projectLogoImg) {
+    doc.setFillColor(4, 120, 87); // #047857 institutional emerald tile matching AmanahLogo
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(margin, headerTopY + 2, logoSize, logoSize, 6, 6, 'FD');
+    drawFittedImage(doc, projectLogoImg, margin + 1, headerTopY + 3, logoSize - 2, logoSize - 2, 1);
+  }
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(12.6);
   doc.setTextColor(15, 23, 42);
   const titleLines = doc.splitTextToSize(fundName, headerLeftW) as string[];
-  const titleLineH = 14;
-  doc.text(titleLines, margin, headerTopY + 10.5);
+  const titleLineH = 13.5;
+  doc.text(titleLines, headerTextX, headerTopY + 10.5);
 
-  const subtitleY = headerTopY + 10.5 + (titleLines.length - 1) * titleLineH + 11.5;
+  const subtitleY = headerTopY + 10.5 + (titleLines.length - 1) * titleLineH + 11;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.4);
+  doc.setFontSize(8.2);
   doc.setTextColor(5, 150, 105);
-  doc.text('OFFICIAL MEMBERSHIP APPLICATION & DIGITAL AGREEMENT', margin, subtitleY);
+  doc.text('OFFICIAL MEMBERSHIP APPLICATION & DIGITAL AGREEMENT', headerTextX, subtitleY);
 
-  const charterY = subtitleY + 10;
+  const charterY = subtitleY + 9.5;
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.4);
+  doc.setFontSize(7.2);
   doc.setTextColor(71, 85, 105);
   const charterLines = doc.splitTextToSize(
     'Shariah-Compliant · Interest-Free Qard Hasan · Constitution Charter (§4–§6 · VISION-36)',
     headerLeftW
   ) as string[];
-  doc.text(charterLines, margin, charterY);
-  const leftBottomY = charterY + (charterLines.length - 1) * 9 + 4;
+  doc.text(charterLines, headerTextX, charterY);
+  const leftBottomY = Math.max(
+    headerTopY + 2 + logoSize + 3,
+    charterY + (charterLines.length - 1) * 8.8 + 4
+  );
 
   // Header Right: Application Reference Box
   const refBoxX = pageWidth - margin - refBoxW;
@@ -805,10 +834,15 @@ export async function downloadMembershipApplicationPdf(
       }  ·  SHA-256: ${agreement.sha256Hash.slice(0, 16).toUpperCase()}…`
     : null;
 
+  const hasQr = Boolean(qrDataUrl);
+  const qrColW = hasQr ? 68 : 0;
+  const declTextW = contentWidth - 16 - (hasQr ? qrColW + 6 : 0);
+
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  const declLines = doc.splitTextToSize(declarationText, contentWidth - 16) as string[];
-  const declH = declLines.length * 9.2 + (agreementMetaLine ? 20 : 10);
+  doc.setFontSize(7.4);
+  const declLines = doc.splitTextToSize(declarationText, declTextW) as string[];
+  const declTextH = declLines.length * 9 + (agreementMetaLine ? 19 : 9);
+  const declH = Math.max(declTextH, hasQr ? 66 : 0);
   const sigBoxH = 66;
   const totalSection4H = 19.5 + 22 + 5 + declH + 6 + sigBoxH;
 
@@ -836,24 +870,47 @@ export async function downloadMembershipApplicationPdf(
   );
   y += 5;
 
-  // Declaration Box
+  // Declaration Box + Embedded QR Verification Seal
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.55);
   doc.roundedRect(margin, y, contentWidth, declH, 4, 4, 'FD');
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7.4);
   doc.setTextColor(51, 65, 85);
   doc.text(declLines, margin + 8, y + 10);
   if (agreementMetaLine) {
-    const metaY = y + 10 + declLines.length * 9.2 + 3.5;
+    const metaY = y + 10 + declLines.length * 9 + 3;
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.4);
-    doc.line(margin + 8, metaY - 5.5, margin + contentWidth - 8, metaY - 5.5);
+    doc.line(margin + 8, metaY - 5, margin + 8 + declTextW, metaY - 5);
     doc.setFont('courier', 'bold');
-    doc.setFontSize(6.7);
+    doc.setFontSize(6.5);
     doc.setTextColor(5, 150, 105);
-    doc.text(agreementMetaLine, margin + 8, metaY + 1.5, { maxWidth: contentWidth - 16 });
+    doc.text(agreementMetaLine, margin + 8, metaY + 1.5, { maxWidth: declTextW });
+  }
+
+  if (qrDataUrl) {
+    const qrDividerX = margin + contentWidth - qrColW - 4;
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.45);
+    doc.line(qrDividerX, y + 5, qrDividerX, y + declH - 5);
+
+    const qrBoxSize = 48;
+    const qrX = qrDividerX + (qrColW + 4 - qrBoxSize) / 2;
+    const qrY = y + 4.5;
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(qrX, qrY, qrBoxSize, qrBoxSize, 2.5, 2.5, 'FD');
+    doc.addImage(qrDataUrl, 'PNG', qrX + 1.5, qrY + 1.5, qrBoxSize - 3, qrBoxSize - 3, undefined, 'FAST');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(51, 65, 85);
+    doc.text('SCAN TO VERIFY', qrDividerX + (qrColW + 4) / 2, qrY + qrBoxSize + 7.5, {
+      align: 'center',
+    });
   }
   y += declH + 6;
 

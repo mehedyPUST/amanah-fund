@@ -4845,6 +4845,7 @@
     "previewDigitalAgreement": "ডিজিটাল চুক্তিপত্র প্রিভিউ",
     "previewAgreementModalDesc": "আপনার নিবন্ধিত সদস্যপদ আবেদন ও ডিজিটাল চুক্তিপত্রের A4 সাইজ আনুষ্ঠানিক প্রিভিউ।",
     "a4FormatFooter": "A4 ফরম্যাট (২১০ × ২৯৭ মিমি) · আনুষ্ঠানিক রেকর্ড",
+    "qrVerifyBadge": "QR যাচাই",
     "downloadApplicationPdf": "ডিজিটাল চুক্তিপত্র ডাউনলোড (PDF)",
     "generatingPdf": "পিডিএফ তৈরি হচ্ছে…",
     "fieldFatherName": "পিতার নাম",

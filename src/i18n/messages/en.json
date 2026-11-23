@@ -4845,6 +4845,7 @@
     "previewDigitalAgreement": "Preview Digital Agreement",
     "previewAgreementModalDesc": "Official A4-size formatted preview of your registered membership application and digital agreement.",
     "a4FormatFooter": "A4 Format (210 × 297 mm) · Official Record",
+    "qrVerifyBadge": "QR Verify",
     "downloadApplicationPdf": "Download Digital Agreement (PDF)",
     "generatingPdf": "Preparing PDF…",
     "fieldFatherName": "Father's Name",

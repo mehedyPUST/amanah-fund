@@ -1,17 +1,22 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type {
   StructuredBdAddress,
   UserRegistrationDetails,
   UserStatus,
 } from '../types/coop.ts';
+import {
+  buildDigitalAgreementQrPayload,
+  generateAgreementQrDataUrl,
+} from '../utils/agreementQr.ts';
 import { formatDateTime } from '../utils/format.ts';
 import {
   normalizeGenderToEnglish,
   normalizeMaritalStatusToEnglish,
   normalizeRelationToEnglish,
 } from '../utils/inputLanguage.ts';
+import { AmanahLogo } from './AmanahLogo.tsx';
 
 export interface MemberAgreementPaperPreviewProps {
   applicantName: string;
@@ -179,23 +184,53 @@ export function MemberAgreementPaperPreview({
   const nomineeSecNum = `0${sectionNum++}`;
   const agreementSecNum = `0${sectionNum}`;
 
+  const qrPayload = useMemo(
+    () =>
+      buildDigitalAgreementQrPayload({
+        applicantName,
+        memberCode,
+        status,
+        submittedAt,
+        fundName,
+        registrationDetails: reg,
+      }),
+    [applicantName, memberCode, status, submittedAt, fundName, reg]
+  );
+
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void generateAgreementQrDataUrl(qrPayload, 220).then((url) => {
+      if (!cancelled) {
+        setQrDataUrl(url);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [qrPayload]);
+
   return (
     <div className="rounded-xl border border-slate-300 bg-white text-slate-900 shadow-sm overflow-hidden text-left">
       {/* Top Emerald Institutional Strip */}
       <div className="h-1.5 w-full bg-emerald-600" aria-hidden="true" />
 
       <div className="p-3.5 sm:p-5 space-y-4">
-        {/* Institutional Header & Reference Box */}
+        {/* Institutional Header with Project Logo & Reference Box */}
         <div className="flex flex-col md:flex-row md:items-stretch justify-between gap-3 pb-3 border-b border-slate-200">
-          <div className="space-y-1 min-w-0">
-            <div className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
-              {fundName}
-            </div>
-            <div className="text-[11px] font-bold tracking-wide text-emerald-700 uppercase">
-              OFFICIAL MEMBERSHIP APPLICATION &amp; DIGITAL AGREEMENT
-            </div>
-            <div className="text-[11px] text-slate-600">
-              Shariah-Compliant · Interest-Free Qard Hasan · Constitution Charter (§4–§6 · VISION-36)
+          <div className="flex items-start gap-3 min-w-0">
+            <AmanahLogo size="md" variant="mark" decorative className="mt-0.5 shrink-0" />
+            <div className="space-y-1 min-w-0">
+              <div className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                {fundName}
+              </div>
+              <div className="text-[11px] font-bold tracking-wide text-emerald-700 uppercase">
+                OFFICIAL MEMBERSHIP APPLICATION &amp; DIGITAL AGREEMENT
+              </div>
+              <div className="text-[11px] text-slate-600">
+                Shariah-Compliant · Interest-Free Qard Hasan · Constitution Charter (§4–§6 · VISION-36)
+              </div>
             </div>
           </div>
 
@@ -566,17 +601,41 @@ export function MemberAgreementPaperPreview({
             />
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-            <p className="text-[11px] leading-relaxed text-slate-700">{declarationText}</p>
-            {agreement && (
-              <div className="pt-2 border-t border-slate-200 text-[10px] font-mono font-bold text-emerald-700 break-all">
-                Agreement ID: {agreement.agreementId} · Signed: {formatDateTime(agreement.signedAt)}
-                {agreement.activatedAt
-                  ? ` · Activated: ${formatDateTime(agreement.activatedAt)}`
-                  : ''}{' '}
-                · SHA-256: {agreement.sha256Hash.slice(0, 16).toUpperCase()}…
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+            <div className="flex-1 min-w-0 space-y-2">
+              <p className="text-[11px] leading-relaxed text-slate-700">{declarationText}</p>
+              {agreement && (
+                <div className="pt-2 border-t border-slate-200 text-[10px] font-mono font-bold text-emerald-700 break-all">
+                  Agreement ID: {agreement.agreementId} · Signed: {formatDateTime(agreement.signedAt)}
+                  {agreement.activatedAt
+                    ? ` · Activated: ${formatDateTime(agreement.activatedAt)}`
+                    : ''}{' '}
+                  · SHA-256: {agreement.sha256Hash.slice(0, 16).toUpperCase()}…
+                </div>
+              )}
+            </div>
+
+            <div className="shrink-0 sm:pl-3.5 sm:border-l border-slate-200 flex sm:flex-col items-center gap-2.5 sm:gap-1 self-start sm:self-center">
+              <div className="w-[82px] h-[82px] rounded-lg border border-slate-300 bg-white p-1 flex items-center justify-center shadow-2xs">
+                {qrDataUrl ? (
+                  <img
+                    src={qrDataUrl}
+                    alt={`Verification QR code for ${agreement?.agreementId || applicantName}`}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded bg-slate-100 animate-pulse" />
+                )}
               </div>
-            )}
+              <div className="text-left sm:text-center leading-tight">
+                <div className="text-[9px] font-bold uppercase tracking-wider text-slate-700">
+                  Scan to Verify
+                </div>
+                <div className="text-[8.5px] font-mono text-slate-500">
+                  {agreement?.agreementId ? agreement.agreementId.slice(0, 18) : memberCode || 'Digital Seal'}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

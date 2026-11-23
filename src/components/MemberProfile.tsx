@@ -54,6 +54,10 @@ import {
 } from '../utils/fcmClient.ts';
 import { downloadMembershipApplicationPdf } from '../utils/applicationFormPdf.ts';
 import {
+  buildDigitalAgreementQrPayload,
+  generateAgreementQrDataUrl,
+} from '../utils/agreementQr.ts';
+import {
   areBdAddressesEqual,
   createEmptyBdAddress,
   formatBdAddress,
@@ -81,11 +85,83 @@ import {
   type NomineeDraft,
 } from '../utils/profileChanges.ts';
 import { ActionModal, type ActionModalDetailItem } from './ActionModal.tsx';
+import { AmanahLogo } from './AmanahLogo.tsx';
 import { useCoopSession } from './AppProviders.tsx';
 import { MemberAgreementPaperPreview } from './MemberAgreementPaperPreview.tsx';
 import { NomineeDetailsList } from './NomineeDetailsList.tsx';
 import { TeletalkAddressFields } from './TeletalkAddressFields.tsx';
 import { useToast } from './ToastProvider.tsx';
+
+function AgreementQrThumbnail({
+  applicantName,
+  memberCode,
+  status,
+  submittedAt,
+  registrationDetails,
+  alt,
+  caption,
+  onClick,
+}: {
+  applicantName: string;
+  memberCode?: string;
+  status?: PublicUser['status'];
+  submittedAt?: string;
+  registrationDetails: UserRegistrationDetails;
+  alt: string;
+  caption: string;
+  onClick: () => void;
+}) {
+  const payload = useMemo(
+    () =>
+      buildDigitalAgreementQrPayload({
+        applicantName,
+        memberCode,
+        status,
+        submittedAt,
+        registrationDetails,
+      }),
+    [applicantName, memberCode, status, submittedAt, registrationDetails]
+  );
+
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void generateAgreementQrDataUrl(payload, 180).then((url) => {
+      if (!cancelled) {
+        setQrUrl(url);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [payload]);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={alt}
+      title={alt}
+      className="group/qr shrink-0 flex flex-col items-center gap-1 rounded-xl border border-emerald-200/90 dark:border-emerald-800/70 bg-white dark:bg-slate-900 p-1.5 shadow-2xs hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors cursor-pointer"
+    >
+      <div className="w-14 h-14 rounded-lg bg-white p-0.5 flex items-center justify-center overflow-hidden">
+        {qrUrl ? (
+          <img
+            src={qrUrl}
+            alt={alt}
+            className="w-full h-full object-contain group-hover/qr:scale-[1.03] transition-transform"
+          />
+        ) : (
+          <div className="w-full h-full rounded bg-slate-100 animate-pulse" />
+        )}
+      </div>
+      <span className="text-[9px] font-mono font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+        {caption}
+      </span>
+    </button>
+  );
+}
 
 interface MemberProfileProps {
   user: PublicUser;
@@ -1783,11 +1859,8 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                     <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
                       <div className="p-3.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/45 dark:bg-emerald-950/25 space-y-2.5">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-                            <ShieldCheck
-                              className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0"
-                              aria-hidden="true"
-                            />
+                          <div className="flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
+                            <AmanahLogo size="xs" variant="mark" decorative className="w-5 h-5 rounded-md" />
                             <span>{t('digitalAgreementTitle')}</span>
                           </div>
                           <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
@@ -1795,121 +1868,143 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                           </span>
                         </div>
 
-                        {reg.digitalAgreement ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600 dark:text-slate-300">
-                            <div>
-                              <span className="text-slate-500 dark:text-slate-400">
-                                {t('agreementIdLabel')}:{' '}
-                              </span>
-                              <span className="font-mono font-semibold text-slate-900 dark:text-white">
-                                {reg.digitalAgreement.agreementId}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-slate-500 dark:text-slate-400">
-                                {t('agreementSignedLabel')}:{' '}
-                              </span>
-                              <span className="font-mono">
-                                {formatDateTime(reg.digitalAgreement.signedAt)}
-                              </span>
-                            </div>
-                            {reg.digitalAgreement.activatedAt && (
-                              <div>
-                                <span className="text-slate-500 dark:text-slate-400">
-                                  {t('agreementActivatedLabel')}:{' '}
-                                </span>
-                                <span className="font-mono text-emerald-700 dark:text-emerald-400">
-                                  {formatDateTime(reg.digitalAgreement.activatedAt)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                              SHA-256: {reg.digitalAgreement.sha256Hash.slice(0, 16).toUpperCase()}…
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                            {t('digitalAgreementDesc')}
-                          </p>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (!reg) return;
-                              setModal({
-                                mode: 'notice',
-                                tone: 'slate',
-                                maxWidthClass: 'max-w-4xl',
-                                title: t('digitalAgreementTitle'),
-                                description: t('previewAgreementModalDesc'),
-                                customContent: (
-                                  <MemberAgreementPaperPreview
-                                    applicantName={profile.name}
-                                    email={profile.email}
-                                    memberCode={profile.memberCode}
-                                    status={profile.status}
-                                    submittedAt={profile.joinedAt}
-                                    registrationDetails={reg}
-                                    footerRightText={t('a4FormatFooter')}
-                                  />
-                                ),
-                                secondaryAction: {
-                                  label: t('downloadApplicationPdf'),
-                                  onClick: () => {
-                                    void downloadMembershipApplicationPdf({
-                                      applicantName: profile.name,
-                                      email: profile.email,
-                                      memberCode: profile.memberCode,
-                                      status: profile.status,
-                                      submittedAt: profile.joinedAt,
-                                      registrationDetails: reg,
-                                      locale,
-                                    });
-                                  },
+                        {(() => {
+                          const openAgreementPaperPreview = () => {
+                            setModal({
+                              mode: 'notice',
+                              tone: 'slate',
+                              maxWidthClass: 'max-w-4xl',
+                              title: t('digitalAgreementTitle'),
+                              description: t('previewAgreementModalDesc'),
+                              customContent: (
+                                <MemberAgreementPaperPreview
+                                  applicantName={profile.name}
+                                  email={profile.email}
+                                  memberCode={profile.memberCode}
+                                  status={profile.status}
+                                  submittedAt={profile.joinedAt}
+                                  registrationDetails={reg}
+                                  footerRightText={t('a4FormatFooter')}
+                                />
+                              ),
+                              secondaryAction: {
+                                label: t('downloadApplicationPdf'),
+                                onClick: () => {
+                                  void downloadMembershipApplicationPdf({
+                                    applicantName: profile.name,
+                                    email: profile.email,
+                                    memberCode: profile.memberCode,
+                                    status: profile.status,
+                                    submittedAt: profile.joinedAt,
+                                    registrationDetails: reg,
+                                    locale,
+                                  });
                                 },
-                                confirmLabel: tCommon('close'),
-                              });
-                            }}
-                            className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>{t('previewDigitalAgreement')}</span>
-                          </button>
+                              },
+                              confirmLabel: tCommon('close'),
+                            });
+                          };
 
-                          <button
-                            type="button"
-                            disabled={downloadingAppPdf}
-                            onClick={async () => {
-                              if (!reg || downloadingAppPdf) return;
-                              setDownloadingAppPdf(true);
-                              try {
-                                await downloadMembershipApplicationPdf({
-                                  applicantName: profile.name,
-                                  email: profile.email,
-                                  memberCode: profile.memberCode,
-                                  status: profile.status,
-                                  submittedAt: profile.joinedAt,
-                                  registrationDetails: reg,
-                                  locale,
-                                });
-                              } finally {
-                                setDownloadingAppPdf(false);
-                              }
-                            }}
-                            className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-55 transition-colors"
-                          >
-                            {downloadingAppPdf ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                            ) : (
-                              <Download className="w-3.5 h-3.5" aria-hidden="true" />
-                            )}
-                            <span>
-                              {downloadingAppPdf ? t('generatingPdf') : t('downloadApplicationPdf')}
-                            </span>
-                          </button>
-                        </div>
+                          return (
+                            <>
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex-1 min-w-0">
+                                  {reg.digitalAgreement ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600 dark:text-slate-300">
+                                      <div>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                          {t('agreementIdLabel')}:{' '}
+                                        </span>
+                                        <span className="font-mono font-semibold text-slate-900 dark:text-white">
+                                          {reg.digitalAgreement.agreementId}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="text-slate-500 dark:text-slate-400">
+                                          {t('agreementSignedLabel')}:{' '}
+                                        </span>
+                                        <span className="font-mono">
+                                          {formatDateTime(reg.digitalAgreement.signedAt)}
+                                        </span>
+                                      </div>
+                                      {reg.digitalAgreement.activatedAt && (
+                                        <div>
+                                          <span className="text-slate-500 dark:text-slate-400">
+                                            {t('agreementActivatedLabel')}:{' '}
+                                          </span>
+                                          <span className="font-mono text-emerald-700 dark:text-emerald-400">
+                                            {formatDateTime(reg.digitalAgreement.activatedAt)}
+                                          </span>
+                                        </div>
+                                      )}
+                                      <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                                        SHA-256: {reg.digitalAgreement.sha256Hash.slice(0, 16).toUpperCase()}…
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                                      {t('digitalAgreementDesc')}
+                                    </p>
+                                  )}
+                                </div>
+
+                                <AgreementQrThumbnail
+                                  applicantName={profile.name}
+                                  memberCode={profile.memberCode}
+                                  status={profile.status}
+                                  submittedAt={profile.joinedAt}
+                                  registrationDetails={reg}
+                                  alt={t('previewDigitalAgreement')}
+                                  caption={t('qrVerifyBadge')}
+                                  onClick={openAgreementPaperPreview}
+                                />
+                              </div>
+
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={openAgreementPaperPreview}
+                                  className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                                >
+                                  <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                                  <span>{t('previewDigitalAgreement')}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  disabled={downloadingAppPdf}
+                                  onClick={async () => {
+                                    if (!reg || downloadingAppPdf) return;
+                                    setDownloadingAppPdf(true);
+                                    try {
+                                      await downloadMembershipApplicationPdf({
+                                        applicantName: profile.name,
+                                        email: profile.email,
+                                        memberCode: profile.memberCode,
+                                        status: profile.status,
+                                        submittedAt: profile.joinedAt,
+                                        registrationDetails: reg,
+                                        locale,
+                                      });
+                                    } finally {
+                                      setDownloadingAppPdf(false);
+                                    }
+                                  }}
+                                  className="w-full sm:w-auto justify-center min-h-[42px] sm:min-h-0 px-3.5 py-2 rounded-xl border border-emerald-300 dark:border-emerald-800/80 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-xs font-semibold text-emerald-800 dark:text-emerald-300 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-55 transition-colors"
+                                >
+                                  {downloadingAppPdf ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                                  ) : (
+                                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                                  )}
+                                  <span>
+                                    {downloadingAppPdf ? t('generatingPdf') : t('downloadApplicationPdf')}
+                                  </span>
+                                </button>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
