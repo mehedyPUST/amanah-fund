@@ -10,14 +10,16 @@ import {
   BadgeCheck,
   Banknote,
   BellRing,
-  BriefcaseBusiness,
-  CalendarRange,
+  CalendarSync,
   ChartColumn,
   CheckCircle2,
   ChevronRight,
+  CircleUserRound,
+  ClipboardCheck,
   FileSpreadsheet,
   HandCoins,
   Home,
+  LayoutDashboard,
   LogOut,
   Menu,
   MessagesSquare,
@@ -27,13 +29,15 @@ import {
   ReceiptText,
   RefreshCw,
   Settings2,
+  ShieldCheck,
   Sun,
-  UserRound,
+  UserCheck,
+  UserCog,
   UsersRound,
   Vote,
-  WalletCards,
   X,
   XCircle,
+  Wallet,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
@@ -108,53 +112,108 @@ const EMPTY_MEETINGS: CoopMeeting[] = [];
 const EMPTY_PROFILE_REQUESTS: ProfileChangeRequest[] = [];
 const EMPTY_NOTIFICATIONS: EmailNotification[] = [];
 
+type NavIconColor = 'emerald' | 'teal' | 'amber' | 'sky' | 'violet' | 'rose' | 'slate';
+type NavGroupKey = 'moneyTreasury' | 'cooperativeShura' | 'manager' | 'admin' | 'accountApp';
+
 interface NavItemConfig {
   id: DashboardSectionId;
   label: string;
   Icon: typeof ChartColumn;
-  group: 'member' | 'manager' | 'admin';
+  group: NavGroupKey;
+  iconColor: NavIconColor;
 }
 
 const MEMBER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Overview', Icon: ChartColumn, group: 'member' },
-  { id: 'my-amanah', label: 'My Amanah', Icon: WalletCards, group: 'member' },
-  { id: 'monthly-contribution', label: 'Contributions', Icon: Banknote, group: 'member' },
-  { id: 'quard-hasan', label: 'Qard Hasan', Icon: HandCoins, group: 'member' },
-  { id: 'transaction-history', label: 'Transactions', Icon: ReceiptText, group: 'member' },
-  { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'member' },
-  { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
-  { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'member' },
-  { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'member' },
-  { id: 'members', label: 'Members', Icon: UsersRound, group: 'member' },
-  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarRange, group: 'member' },
-  { id: 'my-profile', label: 'Profile', Icon: UserRound, group: 'member' },
+  { id: 'fund-overview', label: 'Overview', Icon: LayoutDashboard, group: 'moneyTreasury', iconColor: 'emerald' },
+  { id: 'monthly-contribution', label: 'Contributions', Icon: Banknote, group: 'moneyTreasury', iconColor: 'emerald' },
+  { id: 'quard-hasan', label: 'Qard Hasan', Icon: HandCoins, group: 'moneyTreasury', iconColor: 'amber' },
+  { id: 'my-amanah', label: 'My Amanah', Icon: Wallet, group: 'moneyTreasury', iconColor: 'teal' },
+  { id: 'transaction-history', label: 'Transactions', Icon: ReceiptText, group: 'moneyTreasury', iconColor: 'violet' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'moneyTreasury', iconColor: 'teal' },
+  { id: 'ballot', label: 'Voting', Icon: Vote, group: 'cooperativeShura', iconColor: 'amber' },
+  { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'cooperativeShura', iconColor: 'sky' },
+  { id: 'members', label: 'Members', Icon: UsersRound, group: 'cooperativeShura', iconColor: 'sky' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarSync, group: 'cooperativeShura', iconColor: 'amber' },
+  { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'cooperativeShura', iconColor: 'emerald' },
+  { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'accountApp', iconColor: 'amber' },
+  { id: 'my-profile', label: 'Profile', Icon: CircleUserRound, group: 'accountApp', iconColor: 'slate' },
 ];
 
 const MANAGER_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'manager-desk', label: 'Manager Desk', Icon: BriefcaseBusiness, group: 'manager' },
-  { id: 'member-registry', label: 'Member Registry', Icon: UsersRound, group: 'manager' },
+  { id: 'manager-desk', label: 'Manager Desk', Icon: ClipboardCheck, group: 'manager', iconColor: 'amber' },
+  { id: 'member-registry', label: 'Member Registry', Icon: UserCheck, group: 'manager', iconColor: 'sky' },
 ];
 
 const ADMIN_PRIMARY_ITEMS: NavItemConfig[] = [
-  { id: 'fund-overview', label: 'Overview', Icon: ChartColumn, group: 'member' },
-  { id: 'transaction-history', label: 'Transactions', Icon: ReceiptText, group: 'member' },
-  { id: 'ballot', label: 'Voting', Icon: Vote, group: 'member' },
-  { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'member' },
-  { id: 'members', label: 'Members', Icon: UsersRound, group: 'member' },
-  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'member' },
-  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarRange, group: 'member' },
-  { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'member' },
-  { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'member' },
-  { id: 'my-profile', label: 'Profile', Icon: UserRound, group: 'member' },
+  { id: 'fund-overview', label: 'Overview', Icon: LayoutDashboard, group: 'moneyTreasury', iconColor: 'emerald' },
+  { id: 'transaction-history', label: 'Transactions', Icon: ReceiptText, group: 'moneyTreasury', iconColor: 'violet' },
+  { id: 'statistics', label: 'Statistics', Icon: ChartColumn, group: 'moneyTreasury', iconColor: 'emerald' },
+  { id: 'balance-sheet', label: 'Balance Sheet', Icon: FileSpreadsheet, group: 'moneyTreasury', iconColor: 'teal' },
+  { id: 'ballot', label: 'Voting', Icon: Vote, group: 'cooperativeShura', iconColor: 'amber' },
+  { id: 'community', label: 'Community', Icon: MessagesSquare, group: 'cooperativeShura', iconColor: 'sky' },
+  { id: 'members', label: 'Members', Icon: UsersRound, group: 'cooperativeShura', iconColor: 'sky' },
+  { id: 'manager-cycle', label: 'Manager Cycle', Icon: CalendarSync, group: 'cooperativeShura', iconColor: 'amber' },
+  { id: 'notification', label: 'Notifications', Icon: BellRing, group: 'accountApp', iconColor: 'amber' },
+  { id: 'my-profile', label: 'Profile', Icon: CircleUserRound, group: 'accountApp', iconColor: 'slate' },
 ];
 
 const ADMIN_NAV_ITEMS: NavItemConfig[] = [
-  { id: 'member-registry', label: 'Users & Roles', Icon: UsersRound, group: 'admin' },
-  { id: 'manager-desk', label: 'Governance Desk', Icon: BriefcaseBusiness, group: 'admin' },
-  { id: 'site-settings', label: 'Site Settings', Icon: Settings2, group: 'admin' },
-  { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin' },
+  { id: 'member-registry', label: 'Users & Roles', Icon: UserCog, group: 'admin', iconColor: 'sky' },
+  { id: 'manager-desk', label: 'Governance Desk', Icon: ShieldCheck, group: 'admin', iconColor: 'amber' },
+  { id: 'site-settings', label: 'Site Settings', Icon: Settings2, group: 'admin', iconColor: 'slate' },
+  { id: 'site-activity', label: 'Site Activity', Icon: Activity, group: 'admin', iconColor: 'rose' },
 ];
+
+const SECTION_ICON_COLOR_MAP: Partial<Record<DashboardSectionId, NavIconColor>> = {
+  'fund-overview': 'emerald',
+  'monthly-contribution': 'emerald',
+  'quard-hasan': 'amber',
+  'my-amanah': 'teal',
+  'transaction-history': 'violet',
+  'balance-sheet': 'teal',
+  ballot: 'amber',
+  community: 'sky',
+  members: 'sky',
+  'manager-cycle': 'amber',
+  statistics: 'emerald',
+  'manager-desk': 'amber',
+  'member-registry': 'sky',
+  'site-settings': 'slate',
+  'site-activity': 'rose',
+  notification: 'amber',
+  'my-profile': 'slate',
+};
+
+const NAV_ICON_CHIP_STYLES: Record<NavIconColor, { box: string; icon: string }> = {
+  emerald: {
+    box: 'bg-emerald-50/90 dark:bg-[#00684A]/25 border-emerald-200/80 dark:border-emerald-500/25 group-hover:bg-emerald-100/90 dark:group-hover:bg-[#00684A]/40 group-hover:border-emerald-300/90 dark:group-hover:border-emerald-400/45',
+    icon: 'text-emerald-700 dark:text-emerald-300',
+  },
+  teal: {
+    box: 'bg-teal-50/90 dark:bg-teal-950/55 border-teal-200/80 dark:border-teal-500/25 group-hover:bg-teal-100/90 dark:group-hover:bg-teal-900/55 group-hover:border-teal-300/90 dark:group-hover:border-teal-400/45',
+    icon: 'text-teal-700 dark:text-teal-300',
+  },
+  amber: {
+    box: 'bg-amber-50/95 dark:bg-amber-950/45 border-amber-200/85 dark:border-amber-500/25 group-hover:bg-amber-100/90 dark:group-hover:bg-amber-900/50 group-hover:border-amber-300/90 dark:group-hover:border-amber-400/45',
+    icon: 'text-amber-700 dark:text-amber-300',
+  },
+  sky: {
+    box: 'bg-sky-50/95 dark:bg-sky-950/50 border-sky-200/85 dark:border-sky-500/25 group-hover:bg-sky-100/90 dark:group-hover:bg-sky-900/55 group-hover:border-sky-300/90 dark:group-hover:border-sky-400/45',
+    icon: 'text-sky-700 dark:text-sky-300',
+  },
+  violet: {
+    box: 'bg-violet-50/95 dark:bg-violet-950/45 border-violet-200/85 dark:border-violet-500/25 group-hover:bg-violet-100/90 dark:group-hover:bg-violet-900/50 group-hover:border-violet-300/90 dark:group-hover:border-violet-400/45',
+    icon: 'text-violet-700 dark:text-violet-300',
+  },
+  rose: {
+    box: 'bg-rose-50/95 dark:bg-rose-950/45 border-rose-200/85 dark:border-rose-500/25 group-hover:bg-rose-100/90 dark:group-hover:bg-rose-900/50 group-hover:border-rose-300/90 dark:group-hover:border-rose-400/45',
+    icon: 'text-rose-700 dark:text-rose-300',
+  },
+  slate: {
+    box: 'bg-slate-100/90 dark:bg-slate-800/75 border-slate-200/85 dark:border-slate-700/65 group-hover:bg-slate-200/75 dark:group-hover:bg-slate-800 group-hover:border-slate-300/90 dark:group-hover:border-slate-600/80',
+    icon: 'text-slate-600 dark:text-slate-300',
+  },
+};
 
 type SectionAccentTone = 'emerald' | 'amber';
 
@@ -1332,6 +1391,7 @@ export function DashboardShell() {
     const active = activeSection === item.id;
     const count = pendingBadgeCount(item.id);
     const toneStyle = SIDEBAR_TONE_STYLES[SECTION_TONE_MAP[item.id] || 'emerald'];
+    const chipTone = NAV_ICON_CHIP_STYLES[item.iconColor || 'emerald'];
     const collapsed = !isMobile && sidebarCollapsed;
     const label = getDashboardSectionLabel(item.id, user?.role, locale);
     return (
@@ -1343,10 +1403,10 @@ export function DashboardShell() {
         title={collapsed ? label : undefined}
         aria-label={collapsed ? label : undefined}
         className={`relative group w-full rounded-xl flex items-center transition-colors duration-150 cursor-pointer whitespace-nowrap ${
-          collapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2 justify-between gap-3 text-left'
-        } text-sm ${active
+          collapsed ? 'px-2 py-2 justify-center' : 'px-2.5 py-1.5 justify-between gap-2.5 text-left'
+        } text-[13.5px] ${active
           ? toneStyle.activeText
-          : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/75 dark:hover:bg-slate-800/45'
+          : 'text-slate-600 dark:text-slate-300 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/75 dark:hover:bg-slate-800/45'
           }`}
       >
         {active && (
@@ -1359,16 +1419,17 @@ export function DashboardShell() {
         )}
         <span className={`relative z-10 flex items-center ${collapsed ? 'justify-center' : 'gap-2.5 min-w-0'}`}>
           <span
-            className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${active
+            className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-all duration-150 ${active
               ? toneStyle.activeIconBox
-              : 'bg-slate-100/85 dark:bg-slate-800/75 border-slate-200/70 dark:border-slate-700/60 group-hover:bg-white dark:group-hover:bg-slate-800 group-hover:border-slate-300/80 dark:group-hover:border-slate-600/80'
+              : `${chipTone.box} shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:scale-[1.03]`
               }`}
           >
             <Icon
-              className={`w-[17px] h-[17px] shrink-0 transition-colors ${active
+              className={`w-[16px] h-[16px] shrink-0 transition-colors ${active
                 ? toneStyle.activeIcon
-                : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'
+                : chipTone.icon
                 }`}
+              strokeWidth={active ? 2 : 1.75}
               aria-hidden="true"
             />
           </span>
@@ -1416,37 +1477,39 @@ export function DashboardShell() {
   function renderDashboardNavItems(isMobile = false) {
     const primaryItems = isAdmin ? ADMIN_PRIMARY_ITEMS : MEMBER_NAV_ITEMS;
     const collapsed = !isMobile && sidebarCollapsed;
-    return (
-      <div className="space-y-4">
-        <div className="space-y-0.5">
-          {primaryItems.map((item) => renderNavButton(item, isMobile))}
+    const moneyItems = primaryItems.filter((item) => item.group === 'moneyTreasury');
+    const shuraItems = primaryItems.filter((item) => item.group === 'cooperativeShura');
+    const accountItems = primaryItems.filter((item) => item.group === 'accountApp');
+
+    const renderGroup = (
+      groupTitle: string,
+      items: NavItemConfig[],
+      withTopBorder: boolean
+    ) => {
+      if (items.length === 0) return null;
+      return (
+        <div
+          className={`${withTopBorder ? 'pt-2.5 border-t border-slate-200/75 dark:border-slate-800/80' : ''} space-y-1`}
+        >
+          {!collapsed && (
+            <div className="px-2.5 pb-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
+              {groupTitle}
+            </div>
+          )}
+          <div className="space-y-0.5">
+            {items.map((item) => renderNavButton(item, isMobile))}
+          </div>
         </div>
+      );
+    };
 
-        {isManager && (
-          <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800/80 space-y-1">
-            {!collapsed && (
-              <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {tNav('groups.manager')}
-              </div>
-            )}
-            <div className="space-y-0.5">
-              {MANAGER_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
-            </div>
-          </div>
-        )}
-
-        {isAdmin && (
-          <div className="pt-3 border-t border-slate-200/75 dark:border-slate-800/80 space-y-1">
-            {!collapsed && (
-              <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {tNav('groups.admin')}
-              </div>
-            )}
-            <div className="space-y-0.5">
-              {ADMIN_NAV_ITEMS.map((item) => renderNavButton(item, isMobile))}
-            </div>
-          </div>
-        )}
+    return (
+      <div className={collapsed ? 'space-y-2.5' : 'space-y-3'}>
+        {renderGroup(tNav('groups.moneyTreasury'), moneyItems, false)}
+        {renderGroup(tNav('groups.cooperativeShura'), shuraItems, true)}
+        {isManager && renderGroup(tNav('groups.managerOperations'), MANAGER_NAV_ITEMS, true)}
+        {isAdmin && renderGroup(tNav('groups.administration'), ADMIN_NAV_ITEMS, true)}
+        {renderGroup(tNav('groups.accountApp'), accountItems, true)}
       </div>
     );
   }
@@ -1456,7 +1519,8 @@ export function DashboardShell() {
     items: Array<{
       id: string;
       label: string;
-      Icon: typeof Home;
+      Icon: typeof LayoutDashboard;
+      iconColor?: NavIconColor;
       badge?: number;
       blink?: 'amber' | 'red';
       active?: boolean;
@@ -1473,13 +1537,19 @@ export function DashboardShell() {
           {items.map((item) => {
             const Icon = item.Icon;
             const toneStyle = SIDEBAR_TONE_STYLES[item.accent || 'emerald'];
+            const chipTone =
+              NAV_ICON_CHIP_STYLES[
+                item.iconColor ||
+                  SECTION_ICON_COLOR_MAP[item.id as DashboardSectionId] ||
+                  'emerald'
+              ];
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={item.onClick}
                 aria-current={item.active ? 'page' : undefined}
-                className={`relative w-full min-h-[40px] px-2.5 py-2 text-[14px] leading-snug rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer text-left ${
+                className={`relative group w-full min-h-[40px] px-2.5 py-2 text-[14px] leading-snug rounded-xl flex items-center justify-between gap-2 transition-colors cursor-pointer text-left ${
                   item.active
                     ? toneStyle.activeText
                     : 'text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100/70 dark:hover:bg-slate-800/70'
@@ -1498,14 +1568,14 @@ export function DashboardShell() {
                     className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
                       item.active
                         ? toneStyle.activeIconBox
-                        : 'bg-gradient-to-b from-slate-50 to-slate-100/90 dark:from-slate-800/85 dark:to-slate-900/85 border-slate-200/85 dark:border-slate-700/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                        : `${chipTone.box} shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]`
                     }`}
                   >
                     <Icon
                       className={`w-[16px] h-[16px] shrink-0 ${
-                        item.active ? toneStyle.activeIcon : 'text-slate-600 dark:text-slate-300'
+                        item.active ? toneStyle.activeIcon : chipTone.icon
                       }`}
-                      strokeWidth={1.75}
+                      strokeWidth={item.active ? 2 : 1.75}
                       aria-hidden="true"
                     />
                   </span>
@@ -1545,7 +1615,8 @@ export function DashboardShell() {
           {
             id: 'fund-overview',
             label: tNav('overview'),
-            Icon: Home,
+            Icon: LayoutDashboard,
+            iconColor: 'emerald' as NavIconColor,
             active: activeSection === 'fund-overview',
             onClick: () => navigateToPage('fund-overview', true),
           },
@@ -1553,6 +1624,7 @@ export function DashboardShell() {
             id: 'transaction-history',
             label: tNav('transactions'),
             Icon: ReceiptText,
+            iconColor: 'violet' as NavIconColor,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
           },
@@ -1560,6 +1632,7 @@ export function DashboardShell() {
             id: 'statistics',
             label: tNav('statistics'),
             Icon: ChartColumn,
+            iconColor: 'emerald' as NavIconColor,
             active: activeSection === 'statistics',
             onClick: () => navigateToPage('statistics', true),
           },
@@ -1567,6 +1640,7 @@ export function DashboardShell() {
             id: 'balance-sheet',
             label: tNav('balanceSheet'),
             Icon: FileSpreadsheet,
+            iconColor: 'teal' as NavIconColor,
             active: activeSection === 'balance-sheet',
             onClick: () => navigateToPage('balance-sheet', true),
           },
@@ -1575,7 +1649,8 @@ export function DashboardShell() {
           {
             id: 'fund-overview',
             label: tNav('overview'),
-            Icon: Home,
+            Icon: LayoutDashboard,
+            iconColor: 'emerald' as NavIconColor,
             active: activeSection === 'fund-overview',
             onClick: () => navigateToPage('fund-overview', true),
           },
@@ -1583,6 +1658,7 @@ export function DashboardShell() {
             id: 'monthly-contribution',
             label: tNav('contributions'),
             Icon: Banknote,
+            iconColor: 'emerald' as NavIconColor,
             badge: isManager ? pendingBadgeCount('monthly-contribution') : 0,
             active: activeSection === 'monthly-contribution',
             onClick: () => navigateToPage('monthly-contribution', true),
@@ -1591,13 +1667,15 @@ export function DashboardShell() {
             id: 'quard-hasan',
             label: tNav('qardHasan'),
             Icon: HandCoins,
+            iconColor: 'amber' as NavIconColor,
             active: activeSection === 'quard-hasan',
             onClick: () => navigateToPage('quard-hasan', true),
           },
           {
             id: 'my-amanah',
             label: tNav('myAmanah'),
-            Icon: WalletCards,
+            Icon: Wallet,
+            iconColor: 'teal' as NavIconColor,
             active: activeSection === 'my-amanah',
             onClick: () => navigateToPage('my-amanah', true),
           },
@@ -1605,6 +1683,7 @@ export function DashboardShell() {
             id: 'transaction-history',
             label: tNav('transactions'),
             Icon: ReceiptText,
+            iconColor: 'violet' as NavIconColor,
             active: activeSection === 'transaction-history',
             onClick: () => navigateToPage('transaction-history', true),
           },
@@ -1612,6 +1691,7 @@ export function DashboardShell() {
             id: 'balance-sheet',
             label: tNav('balanceSheet'),
             Icon: FileSpreadsheet,
+            iconColor: 'teal' as NavIconColor,
             active: activeSection === 'balance-sheet',
             onClick: () => navigateToPage('balance-sheet', true),
           },
@@ -1622,6 +1702,7 @@ export function DashboardShell() {
         id: 'ballot',
         label: tNav('voting'),
         Icon: Vote,
+        iconColor: 'amber' as NavIconColor,
         badge: pendingBadgeCount('ballot'),
         active: activeSection === 'ballot',
         accent: 'amber' as const,
@@ -1631,6 +1712,7 @@ export function DashboardShell() {
         id: 'community',
         label: tNav('community'),
         Icon: MessagesSquare,
+        iconColor: 'sky' as NavIconColor,
         badge: pendingBadgeCount('community'),
         active: activeSection === 'community',
         onClick: () => navigateToPage('community', true),
@@ -1639,13 +1721,15 @@ export function DashboardShell() {
         id: 'members',
         label: tNav('members'),
         Icon: UsersRound,
+        iconColor: 'sky' as NavIconColor,
         active: activeSection === 'members',
         onClick: () => navigateToPage('members', true),
       },
       {
         id: 'manager-cycle',
         label: tNav('managerCycle'),
-        Icon: CalendarRange,
+        Icon: CalendarSync,
+        iconColor: 'amber' as NavIconColor,
         active: activeSection === 'manager-cycle',
         accent: 'amber' as const,
         onClick: () => navigateToPage('manager-cycle', true),
@@ -1656,6 +1740,7 @@ export function DashboardShell() {
               id: 'statistics',
               label: tNav('statistics'),
               Icon: ChartColumn,
+              iconColor: 'emerald' as NavIconColor,
               active: activeSection === 'statistics',
               onClick: () => navigateToPage('statistics', true),
             },
@@ -1668,6 +1753,7 @@ export function DashboardShell() {
           id: item.id,
           label: getDashboardSectionLabel(item.id, user?.role, locale),
           Icon: item.Icon,
+          iconColor: item.iconColor,
           badge: pendingBadgeCount(item.id),
           active: activeSection === item.id,
           accent: SECTION_TONE_MAP[item.id] || 'emerald',
@@ -1678,6 +1764,7 @@ export function DashboardShell() {
             id: item.id,
             label: getDashboardSectionLabel(item.id, user?.role, locale),
             Icon: item.Icon,
+            iconColor: item.iconColor,
             badge: pendingBadgeCount(item.id),
             active: activeSection === item.id,
             accent: SECTION_TONE_MAP[item.id] || 'amber',
@@ -1690,6 +1777,7 @@ export function DashboardShell() {
         id: 'notification',
         label: tNav('notifications'),
         Icon: BellRing,
+        iconColor: 'amber' as NavIconColor,
         badge: pendingBadgeCount('notification'),
         blink:
           pendingBadgeCount('notification') > 0
@@ -1704,7 +1792,8 @@ export function DashboardShell() {
       {
         id: 'my-profile',
         label: tNav('profile'),
-        Icon: UserRound,
+        Icon: CircleUserRound,
+        iconColor: 'slate' as NavIconColor,
         active: activeSection === 'my-profile',
         onClick: () => navigateToPage('my-profile', true),
       },
