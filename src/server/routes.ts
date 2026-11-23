@@ -1058,7 +1058,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       String(req.body?.permanentAddress || '').trim() ||
       (permanentAddressDetails ? formatBdAddress(permanentAddressDetails) : '');
     const socialMedia = normalizeSocialMedia(req.body?.socialMedia);
-    const photoUrl = String(req.body?.photoUrl || '').trim();
+    const photoUrl = gender === 'female' ? '' : String(req.body?.photoUrl || '').trim();
     const signatureUrl = String(req.body?.signatureUrl || '').trim();
     const agreementPhotoUrl = String(req.body?.agreementPhotoUrl || '').trim();
 
@@ -1083,11 +1083,11 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
       !nid ||
       !presentAddress ||
       !permanentAddress ||
-      !photoUrl
+      (gender !== 'female' && !photoUrl)
     ) {
       res.status(400).json({
         error:
-          'All required registration fields (including photo, father/mother name, gender, marital status, NID, DOB, reference member, mobile, occupation, organization, and addresses) must be completed.',
+          'All required registration fields (including photo unless female, father/mother name, gender, marital status, NID, DOB, reference member, mobile, occupation, organization, and addresses) must be completed.',
       });
       return;
     }
@@ -1212,7 +1212,7 @@ apiRouter.post('/auth/register', authRateLimiter, async (req, res) => {
         status: isBootstrapAdmin ? 'active' : 'pending_approval',
         joinedAt: joinedAtIso,
         phoneMasked: maskReference(mobile),
-        photoUrl,
+        ...(photoUrl ? { photoUrl } : {}),
         encryptedRegistrationDetails: encryptSensitiveObject(registrationDetails),
       };
 
@@ -2204,10 +2204,10 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
 
         if (
           hasPhotoUrl &&
-          normStr(photoUrl) &&
-          normStr(photoUrl) !== normStr(regDetails?.photoUrl || target.photoUrl)
+          normStr(photoUrl) !== normStr(regDetails?.photoUrl || target.photoUrl) &&
+          (normStr(photoUrl) !== '' || (gender ?? regDetails?.gender) === 'female')
         ) {
-          requestedChanges.photoUrl = photoUrl;
+          requestedChanges.photoUrl = photoUrl || '';
         }
 
         if (
@@ -2345,6 +2345,10 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
         }
       }
 
+      if (hasPhotoUrl && !photoUrl && (gender ?? existingDetails.gender) === 'female') {
+        target.photoUrl = undefined;
+      }
+
       const nextMaritalStatus = maritalStatus ?? existingDetails.maritalStatus;
       const nextDetails: UserRegistrationDetails = {
         ...existingDetails,
@@ -2383,7 +2387,10 @@ apiRouter.patch('/profile', requireAuth, async (req: AuthenticatedRequest, res) 
         presentAddressDetails: presentAddressDetails ?? existingDetails.presentAddressDetails,
         permanentAddressDetails: permanentAddressDetails ?? existingDetails.permanentAddressDetails,
         socialMedia: hasSocialMedia ? socialMedia : existingDetails.socialMedia,
-        photoUrl: photoUrl || existingDetails.photoUrl,
+        photoUrl:
+          (gender ?? existingDetails.gender) === 'female' && hasPhotoUrl && !photoUrl
+            ? ''
+            : photoUrl || existingDetails.photoUrl,
         signatureUrl: hasSignatureUrl ? signatureUrl || undefined : existingDetails.signatureUrl,
         nominees: hasNominees && validatedNominees ? validatedNominees : existingDetails.nominees,
       };
@@ -2528,6 +2535,10 @@ apiRouter.patch(
             }
           }
 
+          if (ch.photoUrl === '' && (ch.gender ?? existingDetails.gender) === 'female') {
+            member.photoUrl = undefined;
+          }
+
           if (!targetReq.previousValues) {
             targetReq.previousValues = extractPreviousProfileValues(
               targetReq.requestedChanges,
@@ -2599,7 +2610,8 @@ apiRouter.patch(
             permanentAddressDetails:
               ch.permanentAddressDetails ?? existingDetails.permanentAddressDetails,
             socialMedia: nextSocial,
-            photoUrl: ch.photoUrl || existingDetails.photoUrl,
+            photoUrl:
+              ch.photoUrl !== undefined ? ch.photoUrl : existingDetails.photoUrl,
             signatureUrl:
               ch.signatureUrl !== undefined
                 ? ch.signatureUrl || undefined

@@ -799,6 +799,7 @@
       "notNeededFemale": "(মহিলাদের জন্য আবশ্যক নয়)",
       "uploaded": "আপলোড সম্পন্ন",
       "femalePhotoExempt": "মহিলা নমিনির ক্ষেত্রে ছবি আপলোড আবশ্যক নয়।",
+      "femaleMemberPhotoExempt": "মহিলা সদস্যদের ক্ষেত্রে ছবি আপলোড আবশ্যক নয়।",
       "replacePhoto": "ছবি বদলান",
       "uploading": "আপলোড হচ্ছে…",
       "uploadingToCloud": "ছবি আপলোড হচ্ছে…",
@@ -5124,6 +5125,14 @@
     "activeTrueHint": "কার্যকর সদস্যপদ",
     "activeFalseSuspended": "স্থগিত",
     "activeFalsePending": "সক্রিয়করণের অপেক্ষায়",
+    "timelineHeading": "সদস্যপদ মাইলফলক",
+    "milestoneSubmitted": "আবেদন জমা",
+    "milestoneApproved": "অ্যাডমিন অনুমোদিত",
+    "milestoneActive": "সম্পূর্ণ সক্রিয়",
+    "milestonePendingReview": "পর্যালোচনার অপেক্ষায়",
+    "milestoneAwaitingOtp": "ওটিপি সক্রিয়করণ অপেক্ষমাণ",
+    "milestoneUpcoming": "অনুমোদনের অপেক্ষায়",
+    "milestoneSuspended": "সদস্যপদ স্থগিত",
     "privacyNote": "এই পাবলিক যাচাই পাতায় কেবল প্রাথমিক সদস্যপদ তথ্য দেখানো হয়। ব্যক্তিগত কেওয়াইসি নথি সম্পূর্ণ এনক্রিপ্টেড থাকে।",
     "backToHome": "হোম পেজে ফিরে যান"
   }

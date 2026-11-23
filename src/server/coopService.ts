@@ -2410,6 +2410,12 @@ export function verifyDigitalAgreementByToken(
     }
 
     const approvalDate = resolveMemberApprovalDate(state, user, reg);
+    const activationDate =
+      user.status === 'active' || user.status === 'suspended'
+        ? user.activationMeta?.activatedAt ||
+          reg?.digitalAgreement?.activatedAt ||
+          (user.status === 'active' ? approvalDate || user.joinedAt : null)
+        : null;
     const verified =
       user.status === 'active' ||
       (user.status === 'suspended' &&
@@ -2427,6 +2433,7 @@ export function verifyDigitalAgreementByToken(
         : {}),
       joiningDate: user.joinedAt,
       approvalDate,
+      activationDate,
       verified,
       active,
       status: user.status,

@@ -329,6 +329,9 @@ export function SignUpForm() {
 
   function handleApplicantGenderChange(nextGender: '' | MemberGender) {
     setGender(nextGender);
+    if (nextGender === 'female') {
+      setPhotoUrl('');
+    }
     setNominees((prev) =>
       prev.map((item) => {
         if (!item.gender || !item.relation || item.relation === OTHER_RELATION_VALUE) {
@@ -619,7 +622,7 @@ export function SignUpForm() {
       setError(t('errPermanentAddressIncomplete'));
       return;
     }
-    if (!photoUrl) {
+    if (gender !== 'female' && !photoUrl) {
       setError(t('errPhotoRequired'));
       return;
     }
@@ -759,7 +762,7 @@ export function SignUpForm() {
         presentAddressDetails,
         permanentAddressDetails: effectivePermanentAddressDetails,
         socialMedia: hasSocialMedia ? cleanedSocial : undefined,
-        photoUrl,
+        photoUrl: gender === 'female' ? '' : photoUrl,
         signatureUrl,
         nominees: preparedNominees,
       });
@@ -792,7 +795,7 @@ export function SignUpForm() {
           presentAddressDetails: { ...presentAddressDetails },
           permanentAddressDetails: { ...effectivePermanentAddressDetails },
           socialMedia: hasSocialMedia ? cleanedSocial : undefined,
-          photoUrl,
+          photoUrl: gender === 'female' ? '' : photoUrl,
           signatureUrl,
           nominees: preparedNominees,
           digitalAgreement: res.digitalAgreement,
@@ -2273,13 +2276,20 @@ export function SignUpForm() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Member Photo (Required) */}
+                {/* Member Photo (Not required when female) */}
                 <div className="p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-slate-50/65 dark:bg-slate-950/55 space-y-3">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                      {t('memberPhoto')} <span className="text-red-500">*</span>
+                      {t('memberPhoto')}{' '}
+                      {gender === 'female' ? (
+                        <span className="text-emerald-700 dark:text-emerald-400 font-normal">
+                          {t('notNeededFemale')}
+                        </span>
+                      ) : (
+                        <span className="text-red-500">*</span>
+                      )}
                     </span>
-                    {photoUrl && (
+                    {photoUrl && gender !== 'female' && (
                       <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                         <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{t('uploaded')}</span>
@@ -2287,7 +2297,11 @@ export function SignUpForm() {
                     )}
                   </div>
 
-                  {photoUrl ? (
+                  {gender === 'female' ? (
+                    <div className="py-5 px-3 rounded-xl border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
+                      {t('femaleMemberPhotoExempt')}
+                    </div>
+                  ) : photoUrl ? (
                     <div className="flex items-center gap-3">
                       <img
                         src={photoUrl}

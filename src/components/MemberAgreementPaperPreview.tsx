@@ -398,6 +398,12 @@ export function MemberAgreementPaperPreview({
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                   />
+                ) : reg.gender === 'female' ? (
+                  <span className="text-[11px] font-medium text-emerald-700 text-center px-2 leading-snug">
+                    Female
+                    <br />
+                    Photo Exempt
+                  </span>
                 ) : (
                   <span className="text-[11px] text-slate-400 text-center px-2">
                     Applicant Photo
@@ -597,7 +603,13 @@ export function MemberAgreementPaperPreview({
           <div className="rounded-lg overflow-hidden border border-slate-200 grid grid-cols-1 sm:grid-cols-3">
             <PaperCell
               label="Member Portrait Photo"
-              value={reg.photoUrl ? 'Attached' : 'Not Attached'}
+              value={
+                reg.photoUrl
+                  ? 'Attached'
+                  : reg.gender === 'female'
+                    ? 'Exempt (Female)'
+                    : 'Not Attached'
+              }
               changed={isChanged('photoUrl')}
             />
             <PaperCell
@@ -673,7 +685,7 @@ export function MemberAgreementPaperPreview({
                   : 'border-slate-300 bg-white'
               }`}
             >
-              <div className="w-full max-w-[180px] aspect-[15/4] rounded border border-slate-200 bg-white flex items-center justify-center overflow-hidden p-1">
+              <div className="w-full max-w-[180px] aspect-[15/4] bg-white flex items-center justify-center overflow-hidden">
                 {reg.signatureUrl ? (
                   <img
                     src={reg.signatureUrl}

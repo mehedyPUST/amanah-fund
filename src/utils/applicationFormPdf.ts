@@ -260,7 +260,7 @@ export async function downloadMembershipApplicationPdf(
   ] = await Promise.all([
     loadImageForPdf('/brand-logo.png', true),
     generateAgreementQrDataUrl(qrPayload, 240),
-    loadImageForPdf(reg.photoUrl, false),
+    reg.gender === 'female' ? Promise.resolve(null) : loadImageForPdf(reg.photoUrl, false),
     loadImageForPdf(reg.signatureUrl, true),
     renderBanglaNameImage(reg.nameBn),
     renderBanglaNameImage(reg.fatherNameBn),
@@ -533,6 +533,20 @@ export async function downloadMembershipApplicationPdf(
 
   if (memberPhoto) {
     drawFittedImage(doc, memberPhoto, photoBoxX + 4, section1TopY + 4, photoBoxW - 8, photoInnerH - 4, 1);
+  } else if (reg.gender === 'female') {
+    doc.setDrawColor(167, 243, 208);
+    doc.setLineDashPattern([3, 2], 0);
+    doc.rect(photoBoxX + 6, section1TopY + 6, photoBoxW - 12, photoInnerH - 8);
+    doc.setLineDashPattern([], 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.2);
+    doc.setTextColor(5, 150, 105);
+    doc.text('Female', photoBoxX + photoBoxW / 2, section1TopY + photoInnerH / 2 - 4, {
+      align: 'center',
+    });
+    doc.text('Photo Exempt', photoBoxX + photoBoxW / 2, section1TopY + photoInnerH / 2 + 6, {
+      align: 'center',
+    });
   } else {
     doc.setDrawColor(203, 213, 225);
     doc.setLineDashPattern([3, 2], 0);
@@ -854,7 +868,14 @@ export async function downloadMembershipApplicationPdf(
     margin,
     contentWidth,
     [
-      { label: 'Member Portrait Photo', value: reg.photoUrl ? 'Attached' : 'Not Attached' },
+      {
+        label: 'Member Portrait Photo',
+        value: reg.photoUrl
+          ? 'Attached'
+          : reg.gender === 'female'
+            ? 'Exempt (Female)'
+            : 'Not Attached',
+      },
       { label: 'Signature (300 × 80 px)', value: reg.signatureUrl ? 'Attached (Verified)' : 'Not Attached' },
       {
         label: 'Digital Membership Agreement',
@@ -931,10 +952,6 @@ export async function downloadMembershipApplicationPdf(
   const sigFrameH = 32; // exact 300x80 (15:4) proportion
   const sigFrameX = margin + (sigBoxW - sigFrameW) / 2;
   const sigFrameY = y + 5;
-
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(sigFrameX, sigFrameY, sigFrameW, sigFrameH, 2, 2, 'FD');
 
   if (signatureImg) {
     drawFittedImage(doc, signatureImg, sigFrameX, sigFrameY, sigFrameW, sigFrameH, 2);

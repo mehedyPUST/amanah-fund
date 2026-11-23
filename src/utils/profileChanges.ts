@@ -237,7 +237,16 @@ export function formatProfileChangeEntries(
 
     if (key === 'photoUrl' || key === 'signatureUrl') {
       const str = String(raw).trim();
-      if (!str) continue;
+      if (!str) {
+        if (key === 'photoUrl') {
+          entries.push({
+            key,
+            label,
+            value: 'Exempt (Female)',
+          });
+        }
+        continue;
+      }
       entries.push({
         key,
         label,
@@ -393,7 +402,19 @@ export function buildProfileDiffEntries(
     if (key === 'photoUrl' || key === 'signatureUrl') {
       const nextImg = String(rawNext || '').trim();
       const prevImg = String(prev[key] || '').trim();
-      if (!nextImg) continue;
+      if (!nextImg) {
+        if (key === 'photoUrl') {
+          entries.push({
+            key,
+            label,
+            previousValue: prevImg ? 'Previous image' : 'Not provided',
+            updatedValue: 'Exempt (Female)',
+            kind: 'image',
+            previousImageUrl: prevImg || undefined,
+          });
+        }
+        continue;
+      }
       entries.push({
         key,
         label,

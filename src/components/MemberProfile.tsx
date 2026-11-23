@@ -520,6 +520,9 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
 
   function handleApplicantGenderChange(nextGender: '' | MemberGender) {
     setGender(nextGender);
+    if (nextGender === 'female') {
+      setPhotoUrl('');
+    }
     setNominees((prev) =>
       prev.map((item) => {
         if (!item.gender || !item.relation || item.relation === OTHER_RELATION_VALUE) {
@@ -817,7 +820,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
       setCredError(tSignUp('errPermanentAddressIncomplete'));
       return;
     }
-    if (!photoUrl) {
+    if (gender !== 'female' && !photoUrl) {
       setCredError(tSignUp('errPhotoRequired'));
       return;
     }
@@ -935,7 +938,7 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
         facebook: facebook.trim() || undefined,
         linkedin: linkedin.trim() || undefined,
       },
-      photoUrl,
+      photoUrl: gender === 'female' ? '' : photoUrl,
       signatureUrl,
       nominees: preparedNominees,
     };
@@ -3091,13 +3094,20 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                         {t('sec5IdentityMedia')}
                       </h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                        {/* Member Photo */}
+                        {/* Member Photo (Not required when female) */}
                         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/60 space-y-2.5">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-xs font-medium text-slate-800 dark:text-slate-200">
-                              {tSignUp('memberPhoto')} <span className="text-red-500">*</span>
+                              {tSignUp('memberPhoto')}{' '}
+                              {gender === 'female' ? (
+                                <span className="text-emerald-700 dark:text-emerald-400 font-normal">
+                                  {tSignUp('notNeededFemale')}
+                                </span>
+                              ) : (
+                                <span className="text-red-500">*</span>
+                              )}
                             </span>
-                            {photoUrl && (
+                            {photoUrl && gender !== 'female' && (
                               <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1">
                                 <FileCheck2 className="w-3.5 h-3.5" aria-hidden="true" />
                                 <span>{tSignUp('uploaded')}</span>
@@ -3105,7 +3115,11 @@ export function MemberProfile({ user, onRefresh }: MemberProfileProps) {
                             )}
                           </div>
 
-                          {photoUrl ? (
+                          {gender === 'female' ? (
+                            <div className="py-4 px-3 rounded-lg border border-dashed border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs text-emerald-800 dark:text-emerald-300 text-center">
+                              {tSignUp('femaleMemberPhotoExempt')}
+                            </div>
+                          ) : photoUrl ? (
                             <div className="flex items-center gap-3">
                               <img
                                 src={photoUrl}

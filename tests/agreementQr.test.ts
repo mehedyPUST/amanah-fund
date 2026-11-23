@@ -263,6 +263,7 @@ describe('Digital Agreement QR link generator & verification lookup', () => {
       agreementId: 'AGR-20261122-AB12CD34',
       joiningDate: '2026-11-22T10:00:00.000Z',
       approvalDate: '2026-11-22T10:45:00.000Z',
+      activationDate: '2026-11-22T11:30:00.000Z',
       verified: true,
       active: true,
       status: 'active',
@@ -286,6 +287,7 @@ describe('Digital Agreement QR link generator & verification lookup', () => {
       memberCode: 'Pending',
       joiningDate: '2026-11-23T08:00:00.000Z',
       approvalDate: null,
+      activationDate: null,
       verified: false,
       active: false,
       status: 'pending_approval',
@@ -297,6 +299,7 @@ describe('Digital Agreement QR link generator & verification lookup', () => {
       memberCode: 'AC008',
       joiningDate: '2026-11-24T09:00:00.000Z',
       approvalDate: '2026-11-24T12:15:00.000Z',
+      activationDate: null,
       verified: false,
       active: false,
       status: 'pending_activation',
@@ -306,6 +309,7 @@ describe('Digital Agreement QR link generator & verification lookup', () => {
     expect(suspended).toMatchObject({
       name: 'Suspended Member',
       memberCode: 'AC009',
+      activationDate: '2026-11-20T12:00:00.000Z',
       verified: true,
       active: false,
       status: 'suspended',
@@ -323,6 +327,7 @@ describe('Digital Agreement QR link generator & verification lookup', () => {
     const legacyVerified = verifyDigitalAgreementByToken(state, legacyToken);
     expect(legacyVerified).toMatchObject({
       name: 'Bootstrap Founder',
+      activationDate: '2026-01-01T00:00:00.000Z',
       verified: true,
       active: true,
     });

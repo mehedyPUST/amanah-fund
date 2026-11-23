@@ -9,8 +9,10 @@ import {
   BadgeCheck,
   CheckCircle2,
   Clock,
+  FileCheck2,
   Search,
   ShieldAlert,
+  ShieldCheck,
   XCircle,
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -22,6 +24,54 @@ interface AgreementVerificationCardProps {
   verification: PublicAgreementVerification | null;
   projectHeading: string;
   searchedToken?: string;
+}
+
+type MilestoneVisualState = 'completed' | 'current' | 'upcoming' | 'suspended';
+
+interface VerificationMilestone {
+  id: 'submitted' | 'approved' | 'active';
+  label: string;
+  caption: string;
+  state: MilestoneVisualState;
+  isMonoCaption: boolean;
+}
+
+function getMilestoneIcon(
+  id: VerificationMilestone['id'],
+  state: MilestoneVisualState
+) {
+  if (state === 'suspended') {
+    return <ShieldAlert className="w-4 h-4 shrink-0" aria-hidden="true" />;
+  }
+  if (id === 'submitted') {
+    return <FileCheck2 className="w-4 h-4 shrink-0" aria-hidden="true" />;
+  }
+  if (id === 'approved') {
+    return state === 'completed' ? (
+      <ShieldCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+    ) : (
+      <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
+    );
+  }
+  return state === 'completed' ? (
+    <BadgeCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+  ) : (
+    <Clock className="w-4 h-4 shrink-0" aria-hidden="true" />
+  );
+}
+
+function getMilestoneNodeClasses(state: MilestoneVisualState): string {
+  switch (state) {
+    case 'completed':
+      return 'border-emerald-200 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400';
+    case 'current':
+      return 'border-amber-200 dark:border-amber-800/80 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400';
+    case 'suspended':
+      return 'border-rose-200 dark:border-rose-800/80 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400';
+    case 'upcoming':
+    default:
+      return 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-400 dark:text-slate-500';
+  }
 }
 
 export function AgreementVerificationCard({
@@ -59,6 +109,62 @@ export function AgreementVerificationCard({
         ? t('activeFalseSuspended')
         : t('activeFalsePending')
     : '';
+
+  const isApprovedReached = Boolean(
+    verification &&
+      (verification.approvalDate ||
+        verification.status === 'pending_activation' ||
+        verification.status === 'active' ||
+        (verification.status === 'suspended' && verification.verified))
+  );
+
+  const milestones: VerificationMilestone[] = verification
+    ? [
+        {
+          id: 'submitted',
+          label: t('milestoneSubmitted'),
+          caption: formatShortDate(verification.joiningDate),
+          state: 'completed',
+          isMonoCaption: true,
+        },
+        {
+          id: 'approved',
+          label: t('milestoneApproved'),
+          caption: verification.approvalDate
+            ? formatShortDate(verification.approvalDate)
+            : isApprovedReached
+              ? formatShortDate(verification.joiningDate)
+              : t('milestonePendingReview'),
+          state: isApprovedReached ? 'completed' : 'current',
+          isMonoCaption: Boolean(verification.approvalDate || isApprovedReached),
+        },
+        {
+          id: 'active',
+          label: t('milestoneActive'),
+          caption:
+            verification.status === 'active'
+              ? formatShortDate(
+                  verification.activationDate ||
+                    verification.approvalDate ||
+                    verification.joiningDate
+                )
+              : verification.status === 'suspended'
+                ? t('milestoneSuspended')
+                : verification.status === 'pending_activation'
+                  ? t('milestoneAwaitingOtp')
+                  : t('milestoneUpcoming'),
+          state:
+            verification.status === 'active'
+              ? 'completed'
+              : verification.status === 'suspended'
+                ? 'suspended'
+                : verification.status === 'pending_activation'
+                  ? 'current'
+                  : 'upcoming',
+          isMonoCaption: verification.status === 'active',
+        },
+      ]
+    : [];
 
   return (
     <section className="py-4 sm:py-8">
@@ -120,8 +226,101 @@ export function AgreementVerificationCard({
           </div>
 
           {verification ? (
-            <div className="px-5 sm:px-7 py-2">
-              <dl className="divide-y divide-slate-100 dark:divide-slate-800/80">
+            <>
+              {/* Membership Milestone Timeline */}
+              <div
+                aria-label={t('timelineHeading')}
+                className="px-5 sm:px-7 py-4 bg-slate-50/70 dark:bg-slate-950/35 border-b border-slate-100 dark:border-slate-800"
+              >
+                <p className="text-[10.5px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">
+                  {t('timelineHeading')}
+                </p>
+                <ol className="grid grid-cols-1 sm:grid-cols-3 gap-0 sm:gap-2">
+                  {milestones.map((step, idx) => {
+                    const isLast = idx === milestones.length - 1;
+                    const nextStep = milestones[idx + 1];
+                    const nextConnectorActive =
+                      step.state === 'completed' &&
+                      nextStep &&
+                      (nextStep.state === 'completed' || nextStep.state === 'current');
+
+                    return (
+                      <li
+                        key={step.id}
+                        className={`relative flex sm:flex-col items-start gap-3 sm:gap-2 ${
+                          isLast ? 'pb-0' : 'pb-4 sm:pb-0'
+                        }`}
+                      >
+                        {/* Top row: Icon Node + Horizontal Desktop Connector */}
+                        <div className="flex sm:w-full items-center gap-2 shrink-0">
+                          <div
+                            className={`relative z-10 w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${getMilestoneNodeClasses(
+                              step.state
+                            )}`}
+                          >
+                            {getMilestoneIcon(step.id, step.state)}
+                          </div>
+                          {!isLast && (
+                            <div
+                              aria-hidden="true"
+                              className={`hidden sm:block h-px flex-1 ${
+                                nextConnectorActive
+                                  ? 'bg-emerald-300 dark:bg-emerald-800'
+                                  : 'bg-slate-200 dark:bg-slate-800'
+                              }`}
+                            />
+                          )}
+                        </div>
+
+                        {/* Mobile Vertical Connector */}
+                        {!isLast && (
+                          <div
+                            aria-hidden="true"
+                            className={`sm:hidden absolute left-4 top-8 bottom-0 w-px -translate-x-1/2 ${
+                              nextConnectorActive
+                                ? 'bg-emerald-300 dark:bg-emerald-800'
+                                : 'bg-slate-200 dark:bg-slate-800'
+                            }`}
+                          />
+                        )}
+
+                        {/* Step Label & Date / Status */}
+                        <div className="min-w-0 pt-0.5 sm:pt-0">
+                          <div
+                            className={`text-xs font-semibold leading-snug ${
+                              step.state === 'upcoming'
+                                ? 'text-slate-500 dark:text-slate-400'
+                                : step.state === 'suspended'
+                                  ? 'text-rose-700 dark:text-rose-400'
+                                  : 'text-slate-900 dark:text-slate-100'
+                            }`}
+                          >
+                            {step.label}
+                          </div>
+                          <div
+                            className={`mt-0.5 text-[11px] leading-snug ${
+                              step.isMonoCaption ? 'font-mono tabular-nums' : ''
+                            } ${
+                              step.state === 'completed'
+                                ? 'text-emerald-700 dark:text-emerald-400'
+                                : step.state === 'current'
+                                  ? 'text-amber-700 dark:text-amber-400'
+                                  : step.state === 'suspended'
+                                    ? 'text-rose-600 dark:text-rose-400'
+                                    : 'text-slate-500 dark:text-slate-400'
+                            }`}
+                          >
+                            {step.caption}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+
+              <div className="px-5 sm:px-7 py-2">
+                <dl className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {/* Member Name */}
                 <div className="py-3.5 grid grid-cols-1 sm:grid-cols-12 gap-1 sm:gap-4 items-baseline">
                   <dt className="sm:col-span-5 text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -232,6 +431,7 @@ export function AgreementVerificationCard({
                 </div>
               )}
             </div>
+            </>
           ) : searchedToken ? (
             <div className="px-5 sm:px-7 py-6 space-y-2">
               <div className="inline-flex items-center gap-2 text-sm font-semibold text-rose-700 dark:text-rose-400">

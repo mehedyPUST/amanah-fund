@@ -799,6 +799,7 @@
       "notNeededFemale": "(Not needed for female)",
       "uploaded": "Uploaded",
       "femalePhotoExempt": "Photo upload is not required for female nominees.",
+      "femaleMemberPhotoExempt": "Photo upload is not required for female members.",
       "replacePhoto": "Replace Photo",
       "uploading": "Uploading…",
       "uploadingToCloud": "Uploading to ImageKit.io…",
@@ -5124,6 +5125,14 @@
     "activeTrueHint": "In good standing",
     "activeFalseSuspended": "Suspended",
     "activeFalsePending": "Awaiting activation",
+    "timelineHeading": "Membership Milestones",
+    "milestoneSubmitted": "Application Submitted",
+    "milestoneApproved": "Admin Approved",
+    "milestoneActive": "Fully Active",
+    "milestonePendingReview": "Pending review",
+    "milestoneAwaitingOtp": "Awaiting OTP activation",
+    "milestoneUpcoming": "Awaiting approval",
+    "milestoneSuspended": "Membership suspended",
     "privacyNote": "Public verification displays strictly non-sensitive credential status. Personal KYC documents remain encrypted.",
     "backToHome": "Back to Home"
   }

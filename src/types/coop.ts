@@ -125,6 +125,7 @@ export interface PublicAgreementVerification {
   agreementId?: string;
   joiningDate: string;
   approvalDate: string | null;
+  activationDate?: string | null;
   verified: boolean;
   active: boolean;
   status: UserStatus;
