@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,8 +37,44 @@ export function Navbar() {
   const [failedMenuPhotoUrl, setFailedMenuPhotoUrl] = useState<string | null>(null);
   const [signingOut, setSigningOut] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const toggleButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const isAuthenticated = !authChecking && Boolean(user);
+
+  // Close mobile drawer when clicking outside (including header blank space) or pressing Escape
+  useEffect(() => {
+    if (!mobileOpen || typeof document === 'undefined') return;
+
+    const handlePointerDownOutside = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (drawerRef.current?.contains(target) || toggleButtonRef.current?.contains(target)) {
+        return;
+      }
+      triggerHaptic('drawer');
+      setMobileOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        triggerHaptic('drawer');
+        setMobileOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDownOutside, true);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDownOutside, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileOpen]);
+
+  // Close drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   // Allow mobile users to slide left-to-right to open the hamburger menu (and right-to-left to close)
   useEffect(() => {
@@ -201,9 +237,10 @@ export function Navbar() {
 
   return (
     <header className="relative shrink-0 z-40 w-full">
-      <div className="w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#163948] shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,10,15,0.68)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 animate__animated animate__fadeInDown animate__faster">
+      <div className="relative z-50 w-full min-h-[54px] sm:min-h-[58px] bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/80 dark:border-[#163948] shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_8px_28px_-12px_rgba(0,10,15,0.68)] px-3.5 sm:px-6 lg:px-7 py-2 flex items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-4 animate__animated animate__fadeInDown animate__faster">
         {/* Mobile Left Hamburger Toggle */}
         <button
+          ref={toggleButtonRef}
           type="button"
           onClick={() => {
             triggerHaptic('drawer');
@@ -340,11 +377,28 @@ export function Navbar() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
+            key="mobile-nav-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            onClick={() => {
+              triggerHaptic('drawer');
+              setMobileOpen(false);
+            }}
+            aria-hidden="true"
+            className="md:hidden fixed inset-0 z-40 bg-slate-950/20 dark:bg-slate-950/45 backdrop-blur-xs"
+          />
+        )}
+        {mobileOpen && (
+          <motion.div
+            key="mobile-nav-drawer"
+            ref={drawerRef}
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden absolute left-0 top-[62px] sm:top-[64px] w-[68vw] max-w-[300px] z-50 amanah-card-emerald backdrop-blur-xl rounded-2xl border p-3 space-y-2 shadow-2xl"
+            className="md:hidden absolute left-0 top-[62px] sm:top-[64px] w-[68vw] max-w-[300px] max-h-[calc(100dvh-76px)] overflow-y-auto z-50 amanah-card-emerald backdrop-blur-xl rounded-2xl border p-3 space-y-2 shadow-2xl"
           >
             {isAuthenticated && user && (
               <Link
