@@ -1854,52 +1854,6 @@ export function DashboardShell() {
       {/* GRID 2 */}
       <header className="lg:col-start-2 lg:row-start-1 h-[54px] sm:h-[56px] lg:h-[60px] shrink-0 bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl lg:rounded-2xl border-b lg:border border-slate-200/85 dark:border-slate-800/85 lg:ring-1 lg:ring-inset lg:ring-white/75 lg:dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] px-3 sm:px-5 flex items-center justify-between gap-2 sm:gap-4 z-[45] min-w-0">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="relative hidden lg:flex items-center group/sidebar-toggle shrink-0">
-            <button
-              type="button"
-              onClick={toggleSidebarCollapsed}
-              aria-expanded={!sidebarCollapsed}
-              aria-controls="dashboard-desktop-sidebar"
-              aria-label={
-                sidebarCollapsed
-                  ? locale === 'bn'
-                    ? 'সাইডবার প্রসারিত করুন'
-                    : 'Expand sidebar'
-                  : locale === 'bn'
-                    ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
-                    : 'Collapse sidebar (icons only)'
-              }
-              className="w-9 h-9 rounded-xl border border-slate-200/90 dark:border-slate-700/80 bg-slate-50/75 dark:bg-slate-800/55 text-slate-600 dark:text-slate-300 hover:bg-emerald-50/85 dark:hover:bg-emerald-950/40 hover:border-emerald-300 dark:hover:border-emerald-700/80 hover:text-emerald-700 dark:hover:text-emerald-300 active:scale-[0.96] transition-all duration-150 flex items-center justify-center cursor-pointer shadow-2xs"
-            >
-              {sidebarCollapsed ? (
-                <PanelLeftOpen
-                  className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-toggle:translate-x-0.5"
-                  aria-hidden="true"
-                />
-              ) : (
-                <PanelLeftClose
-                  className="w-4 h-4 transition-transform duration-150 group-hover/sidebar-toggle:-translate-x-0.5"
-                  aria-hidden="true"
-                />
-              )}
-            </button>
-            <span
-              role="tooltip"
-              className="pointer-events-none absolute left-0 top-full mt-2 z-50 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg border border-slate-800 dark:border-slate-700 opacity-0 -translate-y-0.5 group-hover/sidebar-toggle:opacity-100 group-hover/sidebar-toggle:translate-y-0 group-focus-within/sidebar-toggle:opacity-100 group-focus-within/sidebar-toggle:translate-y-0 transition-all duration-150"
-            >
-              {sidebarCollapsed
-                ? locale === 'bn'
-                  ? 'সাইডবার প্রসারিত করুন'
-                  : 'Expand sidebar'
-                : locale === 'bn'
-                  ? 'সাইডবার সংকুচিত করুন'
-                  : 'Collapse sidebar'}
-            </span>
-          </div>
-          <span
-            aria-hidden="true"
-            className="hidden lg:block h-5 w-px bg-slate-200/90 dark:bg-slate-800 shrink-0"
-          />
           <button
             type="button"
             onClick={() => (mobileNavOpen ? closeMobileDrawer() : openMobileDrawer())}
@@ -2024,18 +1978,19 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <aside
-        id="dashboard-desktop-sidebar"
-        className="hidden lg:flex lg:col-start-1 lg:row-start-2 lg:flex-col min-h-0 h-full overflow-hidden bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)]"
-      >
-        <nav
-          className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
-            sidebarCollapsed ? 'px-2' : 'px-2.5'
-          }`}
-          aria-label={tNav('primaryNav')}
+      <div className="relative hidden lg:flex lg:col-start-1 lg:row-start-2 min-h-0 h-full z-30">
+        <aside
+          id="dashboard-desktop-sidebar"
+          className="w-full h-full flex flex-col min-h-0 overflow-hidden bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)]"
         >
-          {renderDashboardNavItems(false)}
-        </nav>
+          <nav
+            className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
+              sidebarCollapsed ? 'px-2' : 'px-2.5'
+            }`}
+            aria-label={tNav('primaryNav')}
+          >
+            {renderDashboardNavItems(false)}
+          </nav>
 
         <div
           className={`border-t border-slate-200/75 dark:border-slate-800/80 ${
@@ -2161,7 +2116,52 @@ export function DashboardShell() {
             </>
           )}
         </div>
-      </aside>
+        </aside>
+
+        {/* Sidebar Scrollbar-Edge Collapse / Expand Control */}
+        <div className="group/sidebar-toggle absolute -right-3 top-1/2 -translate-y-1/2 z-30 flex items-center">
+          <button
+            type="button"
+            onClick={toggleSidebarCollapsed}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="dashboard-desktop-sidebar"
+            aria-label={
+              sidebarCollapsed
+                ? locale === 'bn'
+                  ? 'সাইডবার প্রসারিত করুন'
+                  : 'Expand sidebar'
+                : locale === 'bn'
+                  ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
+                  : 'Collapse sidebar (icons only)'
+            }
+            className="w-6 h-10 rounded-xl border border-slate-200/95 dark:border-[#163948] bg-white/95 dark:bg-[#02232D] text-slate-500 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-[#00684A]/35 hover:border-emerald-300 dark:hover:border-[#00ED64]/55 hover:text-emerald-700 dark:hover:text-[#00ED64] active:scale-95 transition-all duration-150 flex items-center justify-center cursor-pointer shadow-sm shadow-slate-900/10 dark:shadow-black/45"
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen
+                className="w-3.5 h-3.5 transition-transform duration-150 group-hover/sidebar-toggle:translate-x-0.5"
+                aria-hidden="true"
+              />
+            ) : (
+              <PanelLeftClose
+                className="w-3.5 h-3.5 transition-transform duration-150 group-hover/sidebar-toggle:-translate-x-0.5"
+                aria-hidden="true"
+              />
+            )}
+          </button>
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute left-full ml-2 top-1/2 -translate-y-1/2 z-50 px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-[11px] font-medium whitespace-nowrap shadow-lg border border-slate-800 dark:border-slate-700 opacity-0 -translate-x-1 group-hover/sidebar-toggle:opacity-100 group-hover/sidebar-toggle:translate-x-0 group-focus-within/sidebar-toggle:opacity-100 group-focus-within/sidebar-toggle:translate-x-0 transition-all duration-150"
+          >
+            {sidebarCollapsed
+              ? locale === 'bn'
+                ? 'সাইডবার প্রসারিত করুন'
+                : 'Expand sidebar'
+              : locale === 'bn'
+                ? 'সাইডবার সংকুচিত করুন'
+                : 'Collapse sidebar'}
+          </span>
+        </div>
+      </div>
 
       {/* Mobile Floating Navigation Drawer (matches homepage glassmorphic emerald menu card) */}
       <AnimatePresence>
