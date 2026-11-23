@@ -305,7 +305,7 @@ export function HalalProjectsView({
             <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">
               {t('heading')}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
               {overview?.config.halalInvestmentThesis}
             </p>
           </div>
@@ -408,7 +408,7 @@ export function HalalProjectsView({
                         <h4 className="text-base font-semibold text-slate-900 dark:text-white">
                           {proj.title}
                         </h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                           {proj.shariahScholarNote}
                         </p>
                         <div className="pt-0.5 flex flex-wrap items-center gap-3 text-xs font-mono tabular-nums text-slate-700 dark:text-slate-300">

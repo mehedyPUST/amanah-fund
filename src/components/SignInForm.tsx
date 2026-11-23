@@ -324,7 +324,7 @@ export function SignInForm() {
                 ? tAuth('signInPage.headingActivation')
                 : tAuth('signInPage.heading')}
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg">
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify max-w-lg">
               {activationChallenge
                 ? tAuth('signInPage.subtitleActivation')
                 : tAuth('signInPage.subtitle')}
@@ -476,7 +476,7 @@ export function SignInForm() {
 
               <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400">
                 <Mail className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-                <p className="leading-relaxed">{tAuth('activation.phoneHelp')}</p>
+                <p className="leading-relaxed text-justify">{tAuth('activation.phoneHelp')}</p>
               </div>
             </div>
           ) : hasRegisteredPinAccount && !usePasswordMode ? (

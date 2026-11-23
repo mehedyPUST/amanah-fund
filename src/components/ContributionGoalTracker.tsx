@@ -308,7 +308,7 @@ export function ContributionGoalTracker({
               )}
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed text-justify">
               {currentMonthSummary.state === 'paid' &&
                 t('verifiedStatusDesc', {
                   paid: formatMoney(currentMonthSummary.approvedAmount, ccy),

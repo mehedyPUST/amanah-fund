@@ -1047,7 +1047,7 @@ export function VotingView({
                             )}{' '}
                             ({loan.borrowerCode}) — {formatMoney(loan.amount, ccy)}
                           </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-300">
+                          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-justify">
                             {loan.purpose}
                           </p>
                           <div className="text-xs text-slate-500 dark:text-slate-400 font-mono tabular-nums">
@@ -1459,7 +1459,7 @@ export function VotingView({
                             {poll.title}
                           </h4>
                           {poll.description && (
-                            <p className="text-sm text-slate-600 dark:text-slate-300">
+                            <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-justify">
                               {poll.description}
                             </p>
                           )}
@@ -1709,7 +1709,7 @@ export function VotingView({
                           <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                             {proj.title} — {formatMoney(proj.targetAllocation, ccy)}
                           </h4>
-                          <p className="text-sm text-slate-600 dark:text-slate-300">
+                          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-justify">
                             {proj.shariahScholarNote}
                           </p>
                           <div className="text-xs font-mono text-slate-500 dark:text-slate-400">

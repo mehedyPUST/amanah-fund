@@ -295,7 +295,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
           >
             {tFaq('heading')}
           </HeadingTag>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
             {tFaq('subheading')}
           </p>
         </div>
@@ -667,7 +667,7 @@ export function FAQSection({ embedded = true }: { embedded?: boolean }) {
                       className="overflow-hidden"
                     >
                       <div className="px-5 pb-5 pt-3 border-t border-slate-200/70 dark:border-slate-800/80">
-                        <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                        <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed text-justify whitespace-pre-line">
                           {item.answer}
                         </p>
                       </div>

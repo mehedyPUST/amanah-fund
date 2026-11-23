@@ -2522,7 +2522,7 @@ export function CommunityView({
                         </h3>
                         <FormattedCommunityText
                           text={post.content}
-                          className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                          className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify"
                         />
                         <CommunityPostLinksList
                           links={post.links}
@@ -2794,7 +2794,7 @@ export function CommunityView({
                                 ) : (
                                   <FormattedCommunityText
                                     text={comment.content}
-                                    className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                                    className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify"
                                   />
                                 )}
                               </div>

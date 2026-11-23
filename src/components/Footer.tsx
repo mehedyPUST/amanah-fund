@@ -26,7 +26,7 @@ export function Footer() {
                 {tCommon('brandName')}
               </span>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
               {tFooter('description')}
             </p>
           </div>

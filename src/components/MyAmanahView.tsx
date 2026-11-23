@@ -394,7 +394,7 @@ export function MyAmanahView({
                           ? t('reasonActive')
                           : t('reasonDefault')}
                   </div>
-                  <p className="text-amber-800 dark:text-amber-300 leading-relaxed">
+                  <p className="text-amber-800 dark:text-amber-300 leading-relaxed text-justify">
                     {eligibility.reasons[0]}
                   </p>
                 </div>

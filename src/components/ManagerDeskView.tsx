@@ -1094,7 +1094,7 @@ export function ManagerDeskView({
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>{' '}
                         {t('monthsInline', { months: loan.installmentMonths })}
                       </div>
-                      <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-justify">{loan.purpose}</p>
                       {loan.decryptedSensitiveNotes && (
                         <div className="font-mono text-slate-500 dark:text-slate-400">
                           {t('payoutPrefix', {
@@ -1172,7 +1172,7 @@ export function ManagerDeskView({
                         <span className="font-mono">{formatMoney(loan.amount, ccy)}</span>{' '}
                         {t('monthsInline', { months: loan.installmentMonths })}
                       </div>
-                      <p className="text-slate-600 dark:text-slate-300">{loan.purpose}</p>
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-justify">{loan.purpose}</p>
                       <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-slate-600 dark:text-slate-400">
                         <span>{t('guarantorsLabel')}</span>
                         {(loan.guarantors || []).map((g) => (
@@ -1945,7 +1945,7 @@ export function ManagerDeskView({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 whitespace-pre-wrap">
+                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify line-clamp-3 whitespace-pre-wrap">
                         {draft.content}
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-500">

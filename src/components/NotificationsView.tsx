@@ -847,7 +847,7 @@ export function NotificationsView({
                       {t('push.devicesRegistered', { count: pushStatus?.devicesCount || 0 })}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                     {pushCaps.isIosSafariNeedsInstall
                       ? t('push.iosInstallRequired')
                       : !pushCaps.supported
@@ -1046,7 +1046,7 @@ export function NotificationsView({
                     >
                       <div className="px-3.5 pb-4 pt-2 sm:px-5 sm:pb-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 border-t border-slate-200/70 dark:border-slate-800/80">
                         <div className="space-y-2.5 min-w-0 flex-1">
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed text-justify max-w-3xl">
                             {group.body}
                           </p>
 

@@ -902,7 +902,7 @@ export function MemberPublicProfileView({
                       </h4>
                       <FormattedCommunityText
                         text={post.content}
-                        className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed"
+                        className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify"
                       />
 
                       <CommunityPostLinksList
@@ -1054,7 +1054,7 @@ export function MemberPublicProfileView({
                                   {formatDateTime(comment.createdAt)}
                                 </span>
                               </div>
-                              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">
+                              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed text-justify whitespace-pre-wrap">
                                 {comment.content}
                               </p>
                             </div>

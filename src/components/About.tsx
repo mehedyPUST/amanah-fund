@@ -128,7 +128,7 @@ export function About({ embedded = false }: { embedded?: boolean }) {
                 <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                   {pillar.title}
                 </h3>
-                <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                   {pillar.description}
                 </p>
               </MotionCard>

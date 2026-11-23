@@ -203,7 +203,7 @@ export function HomeCommunitySection({ embedded = false }: { embedded?: boolean 
                 <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                   {t('verificationTitle')}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                   {t('verificationDesc')}
                 </p>
               </div>

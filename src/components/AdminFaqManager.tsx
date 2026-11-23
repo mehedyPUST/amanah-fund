@@ -539,7 +539,7 @@ export function AdminFaqManager() {
                       transition={{ duration: 0.16 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-4 pb-4 pt-2.5 border-t border-slate-200/70 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                      <div className="px-4 pb-4 pt-2.5 border-t border-slate-200/70 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 leading-relaxed text-justify whitespace-pre-line">
                         {item.answer}
                       </div>
                     </motion.div>

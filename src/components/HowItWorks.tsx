@@ -184,7 +184,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
             </HeadingTag>
             <p
               key={currentGuide.key}
-              className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed animate__animated animate__fadeIn animate__faster"
+              className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed text-justify animate__animated animate__fadeIn animate__faster"
             >
               {currentGuide.headline}
             </p>
@@ -276,7 +276,7 @@ export function HowItWorks({ embedded = true }: { embedded?: boolean }) {
                     <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                       {step.summary}
                     </p>
                   </div>

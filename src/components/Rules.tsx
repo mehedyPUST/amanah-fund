@@ -296,7 +296,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
             >
               {tRules('heading')}
             </HeadingTag>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed text-justify">
               {tRules('subheading')}
             </p>
           </div>
@@ -522,7 +522,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                       />
                     </button>
                   </div>
-                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed text-justify">
                     {rule.summary}
                   </p>
                   <AnimatePresence initial={false}>
@@ -543,7 +543,7 @@ export function Rules({ embedded = false }: { embedded?: boolean }) {
                               className="w-3.5 h-3.5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400"
                               aria-hidden="true"
                             />
-                            <span>{pt}</span>
+                            <span className="text-justify">{pt}</span>
                           </li>
                         ))}
                       </motion.ul>

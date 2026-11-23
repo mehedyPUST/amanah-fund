@@ -728,7 +728,7 @@ export function HomeNoticeBoardSection({ embedded = false }: { embedded?: boolea
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-line break-words">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed text-justify whitespace-pre-line break-words">
                       {notice.body}
                     </p>
                   </div>
