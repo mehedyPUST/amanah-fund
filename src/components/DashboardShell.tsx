@@ -2056,7 +2056,7 @@ export function DashboardShell() {
       </header>
 
       {/* GRID 3 */}
-      <div className="relative hidden lg:flex lg:col-start-1 lg:row-start-2 min-h-0 h-full z-30">
+      <div className="group/sidebar relative hidden lg:flex lg:col-start-1 lg:row-start-2 min-h-0 h-full z-30">
         <aside
           id="dashboard-desktop-sidebar"
           className="w-full h-full flex flex-col min-h-0 overflow-hidden bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)]"
@@ -2207,7 +2207,7 @@ export function DashboardShell() {
                   ? 'সাইডবার সংকুচিত করুন (শুধু আইকন)'
                   : 'Collapse sidebar (icons only)'
             }
-            className="peer pointer-events-auto absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-slate-200/95 dark:border-[#1c4657] bg-white dark:bg-[#02232D] ring-1 ring-inset ring-white/80 dark:ring-white/5 text-slate-500 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-[#00ED64] hover:border-emerald-400/75 dark:hover:border-[#00ED64]/55 hover:bg-emerald-50/95 dark:hover:bg-[#03323e] hover:scale-105 active:scale-95 transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center cursor-pointer shadow-[0_2px_8px_-2px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.65)] hover:shadow-[0_4px_14px_-3px_rgba(5,150,105,0.28)]"
+            className="peer pointer-events-none group-hover/sidebar:pointer-events-auto focus-visible:pointer-events-auto opacity-0 scale-90 group-hover/sidebar:opacity-100 group-hover/sidebar:scale-100 focus-visible:opacity-100 focus-visible:scale-100 absolute top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-slate-200/95 dark:border-[#1c4657] bg-white dark:bg-[#02232D] ring-1 ring-inset ring-white/80 dark:ring-white/5 text-slate-500 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-[#00ED64] hover:border-emerald-400/75 dark:hover:border-[#00ED64]/55 hover:bg-emerald-50/95 dark:hover:bg-[#03323e] hover:scale-105 active:scale-95 transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center cursor-pointer shadow-[0_2px_8px_-2px_rgba(15,23,42,0.14),0_1px_2px_rgba(15,23,42,0.06)] dark:shadow-[0_4px_12px_-2px_rgba(0,0,0,0.65)] hover:shadow-[0_4px_14px_-3px_rgba(5,150,105,0.28)]"
           >
             <ChevronLeft
               strokeWidth={2.1}
