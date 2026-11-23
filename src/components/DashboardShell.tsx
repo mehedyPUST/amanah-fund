@@ -1401,8 +1401,10 @@ export function DashboardShell() {
         aria-current={active ? 'page' : undefined}
         title={collapsed ? label : undefined}
         aria-label={collapsed ? label : undefined}
-        className={`relative group w-full rounded-xl flex items-center transition-colors duration-150 cursor-pointer whitespace-nowrap ${
-          collapsed ? 'px-2 py-2 justify-center' : 'px-2.5 py-1.5 justify-between gap-2.5 text-left'
+        className={`relative group w-full rounded-xl flex items-center overflow-hidden transition-colors duration-150 cursor-pointer whitespace-nowrap ${
+          isMobile
+            ? 'px-2.5 py-1.5 justify-between gap-2.5 text-left'
+            : 'px-[13px] py-[7px] justify-between gap-2.5 text-left'
         } text-[13.5px] ${active
           ? toneStyle.activeText
           : 'text-slate-600 dark:text-slate-300 font-medium hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/75 dark:hover:bg-slate-800/45'
@@ -1416,7 +1418,7 @@ export function DashboardShell() {
             aria-hidden="true"
           />
         )}
-        <span className={`relative z-10 flex items-center ${collapsed ? 'justify-center' : 'gap-2.5 min-w-0'}`}>
+        <span className="relative z-10 flex items-center gap-2.5 min-w-0 flex-1">
           <span
             className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 transition-all duration-150 ${active
               ? toneStyle.activeIconBox
@@ -1432,43 +1434,104 @@ export function DashboardShell() {
               aria-hidden="true"
             />
           </span>
-          {!collapsed && <span className="truncate">{label}</span>}
+          {isMobile ? (
+            <span className="truncate">{label}</span>
+          ) : (
+            <span
+              aria-hidden={collapsed || undefined}
+              className={`truncate transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                collapsed
+                  ? 'opacity-0 -translate-x-2 pointer-events-none'
+                  : 'opacity-100 translate-x-0 delay-75'
+              }`}
+            >
+              {label}
+            </span>
+          )}
         </span>
-        {count > 0 &&
-          (collapsed ? (
+        {count > 0 && (
+          isMobile ? (
             item.id === 'notification' ? (
-              <NotificationBlinkMarker
-                variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
-                size="sm"
-                className="absolute top-1.5 right-2 z-10"
-              />
+              <span className="relative z-10 inline-flex items-center gap-1.5 shrink-0">
+                <NotificationBlinkMarker
+                  variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
+                  size="sm"
+                />
+                <span
+                  className={`font-mono text-xs tabular-nums font-semibold ${
+                    hasUnreadPriorityNotification
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-amber-700 dark:text-amber-400'
+                  }`}
+                >
+                  {count}
+                </span>
+              </span>
             ) : (
-              <span
-                className="absolute top-1.5 right-2 z-10 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900"
-                aria-hidden="true"
-              />
-            )
-          ) : item.id === 'notification' ? (
-            <span className="relative z-10 inline-flex items-center gap-1.5 shrink-0">
-              <NotificationBlinkMarker
-                variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
-                size="sm"
-              />
-              <span
-                className={`font-mono text-xs tabular-nums font-semibold ${
-                  hasUnreadPriorityNotification
-                    ? 'text-red-600 dark:text-red-400'
-                    : 'text-amber-700 dark:text-amber-400'
-                }`}
-              >
+              <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
                 {count}
               </span>
-            </span>
+            )
           ) : (
-            <span className="relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold">
-              {count}
-            </span>
-          ))}
+            <>
+              {item.id === 'notification' ? (
+                <NotificationBlinkMarker
+                  variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
+                  size="sm"
+                  className={`absolute top-1.5 right-2 z-10 transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    collapsed
+                      ? 'opacity-100 scale-100 delay-75'
+                      : 'opacity-0 scale-75 pointer-events-none'
+                  }`}
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-1.5 right-2 z-10 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900 transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    collapsed
+                      ? 'opacity-100 scale-100 delay-75'
+                      : 'opacity-0 scale-75 pointer-events-none'
+                  }`}
+                />
+              )}
+              {item.id === 'notification' ? (
+                <span
+                  aria-hidden={collapsed || undefined}
+                  className={`relative z-10 inline-flex items-center gap-1.5 shrink-0 transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    collapsed
+                      ? 'opacity-0 translate-x-1 pointer-events-none'
+                      : 'opacity-100 translate-x-0 delay-75'
+                  }`}
+                >
+                  <NotificationBlinkMarker
+                    variant={hasUnreadPriorityNotification ? 'red' : 'amber'}
+                    size="sm"
+                  />
+                  <span
+                    className={`font-mono text-xs tabular-nums font-semibold ${
+                      hasUnreadPriorityNotification
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-amber-700 dark:text-amber-400'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </span>
+              ) : (
+                <span
+                  aria-hidden={collapsed || undefined}
+                  className={`relative z-10 font-mono text-xs tabular-nums text-amber-700 dark:text-amber-400 font-semibold shrink-0 transition-[opacity,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    collapsed
+                      ? 'opacity-0 translate-x-1 pointer-events-none'
+                      : 'opacity-100 translate-x-0 delay-75'
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </>
+          )
+        )}
       </button>
     );
   }
@@ -1488,11 +1551,26 @@ export function DashboardShell() {
       if (items.length === 0) return null;
       return (
         <div
-          className={`${withTopBorder ? 'pt-2.5 border-t border-slate-200/75 dark:border-slate-800/80' : ''} space-y-1`}
+          className={`${withTopBorder ? 'pt-2.5 border-t border-slate-200/75 dark:border-slate-800/80' : ''}`}
         >
-          {!collapsed && (
-            <div className="px-2.5 pb-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
+          {isMobile ? (
+            <div className="px-2.5 pb-1 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate">
               {groupTitle}
+            </div>
+          ) : (
+            <div
+              aria-hidden={collapsed || undefined}
+              className={`grid transition-[grid-template-rows,opacity,margin] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                collapsed
+                  ? 'grid-rows-[0fr] opacity-0 mb-0 pointer-events-none'
+                  : 'grid-rows-[1fr] opacity-100 mb-1 delay-[40ms]'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div className="px-2.5 pb-0.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 truncate whitespace-nowrap">
+                  {groupTitle}
+                </div>
+              </div>
             </div>
           )}
           <div className="space-y-0.5">
@@ -1503,7 +1581,7 @@ export function DashboardShell() {
     };
 
     return (
-      <div className={collapsed ? 'space-y-2.5' : 'space-y-3'}>
+      <div className="space-y-2.5">
         {renderGroup(tNav('groups.moneyTreasury'), moneyItems, false)}
         {renderGroup(tNav('groups.cooperativeShura'), shuraItems, true)}
         {isManager && renderGroup(tNav('groups.managerOperations'), MANAGER_NAV_ITEMS, true)}
@@ -1827,27 +1905,28 @@ export function DashboardShell() {
         sidebarCollapsed
           ? 'lg:grid-cols-[76px_minmax(0,1fr)]'
           : 'lg:grid-cols-[252px_minmax(0,1fr)]'
-      } lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3 lg:transition-[grid-template-columns] lg:duration-200 ${
+      } lg:grid-rows-[60px_minmax(0,1fr)] lg:gap-3 lg:transition-[grid-template-columns] lg:duration-[260ms] lg:ease-[cubic-bezier(0.22,1,0.36,1)] ${
         notificationModalOpen ? 'pointer-events-none select-none' : ''
       }`}
     >
       {/* GRID 1 */}
-      <div
-        className={`hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] z-30 ${
-          sidebarCollapsed ? 'px-2 justify-center' : 'px-4 justify-start gap-2.5'
-        }`}
-      >
+      <div className="hidden lg:flex lg:col-start-1 lg:row-start-1 h-[60px] shrink-0 items-center justify-start gap-2.5 px-[21px] overflow-hidden bg-white/95 dark:bg-slate-900/92 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-slate-800/85 ring-1 ring-inset ring-white/75 dark:ring-white/5 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,0,0,0.45)] z-30">
         <AmanahLogo size="sm" decorative />
-        {!sidebarCollapsed && (
-          <div className="min-w-0">
-            <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate">
-              {tCommon('brandName')}
-            </div>
-            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate">
-              {tCommon('dashboard')}
-            </div>
+        <div
+          aria-hidden={sidebarCollapsed || undefined}
+          className={`min-w-0 flex-1 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            sidebarCollapsed
+              ? 'opacity-0 -translate-x-2 pointer-events-none'
+              : 'opacity-100 translate-x-0 delay-75'
+          }`}
+        >
+          <div className="font-display font-bold text-sm tracking-tight text-slate-900 dark:text-white truncate whitespace-nowrap">
+            {tCommon('brandName')}
           </div>
-        )}
+          <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium truncate whitespace-nowrap">
+            {tCommon('dashboard')}
+          </div>
+        </div>
       </div>
 
       {/* GRID 2 */}
@@ -1983,138 +2062,129 @@ export function DashboardShell() {
           className="w-full h-full flex flex-col min-h-0 overflow-hidden bg-white/95 dark:bg-[#001E2B]/94 backdrop-blur-xl rounded-2xl border border-slate-200/85 dark:border-[#163948] ring-1 ring-inset ring-white/75 dark:ring-[#00ED64]/10 shadow-[0_4px_20px_-12px_rgba(15,23,42,0.08)] dark:shadow-[0_10px_28px_-14px_rgba(0,10,15,0.68)]"
         >
           <nav
-            className={`flex-1 min-h-0 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle ${
-              sidebarCollapsed ? 'px-2' : 'px-2.5'
-            }`}
+            className="flex-1 min-h-0 px-2.5 py-3.5 overflow-y-auto overflow-x-hidden scrollbar-subtle"
             aria-label={tNav('primaryNav')}
           >
             {renderDashboardNavItems(false)}
           </nav>
 
-        <div
-          className={`border-t border-slate-200/75 dark:border-slate-800/80 ${
-            sidebarCollapsed ? 'p-2.5 flex flex-col items-center gap-2' : 'p-3 space-y-2.5'
-          }`}
-        >
-          {sidebarCollapsed ? (
-            <>
-              <button
-                type="button"
-                onClick={() => navigateToPage('my-profile', false)}
-                title={`${user.name} · ${user.memberCode}`}
-                aria-label={user.name}
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white text-xs font-semibold flex items-center justify-center shadow-xs hover:brightness-105 transition-all cursor-pointer shrink-0"
-              >
+          <div className="border-t border-slate-200/75 dark:border-slate-800/80 p-2.5 space-y-2">
+            <button
+              type="button"
+              onClick={() => navigateToPage('my-profile', false)}
+              title={sidebarCollapsed ? `${user.name} · ${user.memberCode}` : undefined}
+              aria-label={sidebarCollapsed ? user.name : undefined}
+              className={`w-full text-left min-w-0 rounded-xl border px-[10px] py-2 flex items-center gap-2.5 overflow-hidden transition-[background-color,border-color] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] cursor-pointer ${
+                sidebarCollapsed
+                  ? 'border-transparent bg-transparent hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+                  : 'border-slate-200/75 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/45 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
+              }`}
+            >
+              <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white text-[11px] font-bold flex items-center justify-center shadow-2xs shrink-0">
                 {(user.name || 'AM')
                   .split(/\s+/)
                   .filter(Boolean)
                   .slice(0, 2)
                   .map((p) => p[0]?.toUpperCase() || '')
                   .join('')}
-              </button>
-              <button
-                type="button"
-                onClick={toggleDarkMode}
-                aria-pressed={darkMode}
-                title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                className="w-full h-9 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#02232D] hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 text-slate-600 dark:text-slate-200 transition-colors flex items-center justify-center cursor-pointer"
+              </span>
+              <div
+                aria-hidden={sidebarCollapsed || undefined}
+                className={`min-w-0 flex-1 transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  sidebarCollapsed
+                    ? 'opacity-0 -translate-x-2 pointer-events-none'
+                    : 'opacity-100 translate-x-0 delay-75'
+                }`}
               >
-                {darkMode ? (
-                  <Sun className="w-4 h-4 text-amber-400" aria-hidden="true" />
-                ) : (
-                  <Moon className="w-4 h-4 text-emerald-700" aria-hidden="true" />
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                title={tNav('signOut')}
-                aria-label={tNav('signOut')}
-                className="w-full h-9 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/75 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" aria-hidden="true" />
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => navigateToPage('my-profile', false)}
-                className="w-full text-left min-w-0 rounded-xl border border-slate-200/75 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-950/45 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 p-2.5 flex items-center gap-2.5 transition-colors cursor-pointer"
-              >
-                <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-700 to-teal-700 dark:from-emerald-600 dark:to-teal-600 text-white text-[11px] font-bold flex items-center justify-center shadow-2xs shrink-0">
-                  {(user.name || 'AM')
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .map((p) => p[0]?.toUpperCase() || '')
-                    .join('')}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
-                      {user.name}
-                    </span>
-                    {user.status === 'active' && (
-                      <BadgeCheck
-                        className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
-                        aria-label={tCommon('verified')}
-                      />
-                    )}
-                  </div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span>
-                  </div>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={toggleDarkMode}
-                role="switch"
-                aria-checked={darkMode}
-                title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
-                className="w-full py-2 px-3 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#02232D] hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 text-xs font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 flex items-center justify-between gap-2 cursor-pointer whitespace-nowrap"
-              >
-                <span className="flex items-center gap-2 min-w-0">
-                  {darkMode ? (
-                    <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-                  ) : (
-                    <Moon className="w-3.5 h-3.5 text-emerald-700 shrink-0" aria-hidden="true" />
-                  )}
-                  <span className="truncate">
-                    {darkMode ? tCommon('lightMode') : tCommon('darkMode')}
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="text-[13px] font-semibold text-slate-900 dark:text-white truncate whitespace-nowrap">
+                    {user.name}
                   </span>
+                  {user.status === 'active' && (
+                    <BadgeCheck
+                      className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                      aria-label={tCommon('verified')}
+                    />
+                  )}
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate whitespace-nowrap">
+                  {translateRoleLabel(user.role, locale)} · <span className="font-mono">{user.memberCode}</span>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              role="switch"
+              aria-checked={darkMode}
+              title={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+              aria-label={darkMode ? tCommon('switchToLight') : tCommon('switchToDark')}
+              className="w-full h-9 px-3 rounded-xl border border-slate-200/85 dark:border-[#163948] bg-slate-50/85 dark:bg-[#02232D] hover:bg-emerald-50/75 dark:hover:bg-[#00684A]/25 hover:border-emerald-300/80 dark:hover:border-[#00ED64]/50 text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors duration-150 flex items-center justify-between gap-2.5 overflow-hidden cursor-pointer whitespace-nowrap"
+            >
+              <span className="flex items-center gap-2.5 min-w-0 flex-1">
+                <span className="w-7 h-7 flex items-center justify-center shrink-0">
+                  {darkMode ? (
+                    <Sun className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-emerald-700 shrink-0" aria-hidden="true" />
+                  )}
                 </span>
                 <span
-                  aria-hidden="true"
-                  className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
-                    darkMode
-                      ? 'bg-[#00ED64]/20 border border-[#00ED64]/55'
-                      : 'bg-slate-200 border border-slate-300/80'
+                  aria-hidden={sidebarCollapsed || undefined}
+                  className={`truncate transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    sidebarCollapsed
+                      ? 'opacity-0 -translate-x-2 pointer-events-none'
+                      : 'opacity-100 translate-x-0 delay-75'
                   }`}
                 >
-                  <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full transition-transform duration-150 ${
-                      darkMode
-                        ? 'translate-x-3.5 bg-[#00ED64]'
-                        : 'translate-x-0.5 bg-slate-500'
-                    }`}
-                  />
+                  {darkMode ? tCommon('lightMode') : tCommon('darkMode')}
                 </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSignOut()}
-                className="w-full py-2 px-3 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/75 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              </span>
+              <span
+                aria-hidden="true"
+                className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-[opacity,transform,background-color,border-color] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  sidebarCollapsed
+                    ? 'opacity-0 scale-90 pointer-events-none'
+                    : 'opacity-100 scale-100 delay-75'
+                } ${
+                  darkMode
+                    ? 'bg-[#00ED64]/20 border border-[#00ED64]/55'
+                    : 'bg-slate-200 border border-slate-300/80'
+                }`}
               >
-                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{tNav('signOut')}</span>
-              </button>
-            </>
-          )}
-        </div>
+                <span
+                  className={`inline-block h-2.5 w-2.5 rounded-full transition-transform duration-150 ${
+                    darkMode
+                      ? 'translate-x-3.5 bg-[#00ED64]'
+                      : 'translate-x-0.5 bg-slate-500'
+                  }`}
+                />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleSignOut()}
+              title={sidebarCollapsed ? tNav('signOut') : undefined}
+              aria-label={sidebarCollapsed ? tNav('signOut') : undefined}
+              className="w-full h-9 px-3 rounded-xl border border-red-200/90 dark:border-red-900/70 bg-red-50/75 dark:bg-red-950/30 text-xs font-medium text-red-700 dark:text-red-400 hover:bg-red-600 hover:text-white hover:border-red-600 dark:hover:bg-red-600 dark:hover:text-white transition-colors duration-200 flex items-center justify-start gap-2.5 overflow-hidden cursor-pointer whitespace-nowrap"
+            >
+              <span className="w-7 h-7 flex items-center justify-center shrink-0">
+                <LogOut className="w-4 h-4 shrink-0" aria-hidden="true" />
+              </span>
+              <span
+                aria-hidden={sidebarCollapsed || undefined}
+                className={`truncate transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  sidebarCollapsed
+                    ? 'opacity-0 -translate-x-2 pointer-events-none'
+                    : 'opacity-100 translate-x-0 delay-75'
+                }`}
+              >
+                {tNav('signOut')}
+              </span>
+            </button>
+          </div>
         </aside>
 
         {/* Sidebar Scrollbar-Edge Seam Guide & Collapse/Expand Handle */}
